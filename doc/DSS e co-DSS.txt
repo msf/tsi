@@ -1,0 +1,9 @@
+Direct Sequential Simulation
+
+This is a new stochastic technique of simulating a given attribute without transforming it into a Gaussian or an indicator variable. As it deals directly with original variables, it avoids the problems related to the sequential Gaussian simulation - multiGaussian assumptions, high-entropy maps, and variograms are not properly reproduced after the back-transform - and it is a much simpler method than sequential indicator simulation to simulate continuous variables. There is no advantage in using SGS or SIS in the stochastic modelling of continuous variables. Direct Sequential Simulation - DSS - succeeds to reproduce non-stationary patterns with correction for local probabilities.
+
+Direct Sequential Co-simulation
+
+One of the main advantages of the proposed algorithm over traditional SIS and SGS is that it allows the joint simulation of Nv variables without calling for any transformation. Instead of simulating Nv variables simultaneously, each variable is simulated in turn conditioned to the previously simulated variable.
+
+This is an extremely powerful tool to incorporate secondary information in stochastic models. Dealing with original variables, this proposed algorithm allows local models of co-regionalisation to be reproduced where, for example, a pair of variables have a different correlation in space.

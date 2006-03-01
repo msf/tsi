@@ -1,0 +1,44 @@
+# PERFORMANCE.txt
+
+ indicate performance caracteristics of TSI.
+ such has:
+
+
+Required memory for a given problem size.
+=========================================
+  being x the number of points in a grid,
+  being T the number of THREADs/CPUs to use in parallel,
+  and M(x) memory required for simulate such grid:
+  
+  TSI-v4.1
+  				M(x) = 6x + 6Tx
+  TSI-v4.0
+  				M(x) = 7x + 7Tx
+  TSI-v3.2
+  				M(x) = 14x 
+
+Each grid value is represented internally with 32bits
+=========================================
+
+				
+Required time for a given problem size.
+=======================================
+  Empirically measurements:
+	28800000 points -> 
+			each simulation takes +/-600secs
+			on a Opteron 2.6Ghz
+ ======================================
+
+ 
+-  accounting performance regressions or improvements.
+  - Give some performance numbers for reference to detect anomalities
+  
+
+  
+  
+
+
+
+
+
+

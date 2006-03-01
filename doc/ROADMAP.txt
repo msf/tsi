@@ -1,0 +1,39 @@
+# ROADMAP.txt
+
+ These are high-level, planed changes that affect 
+ features and caracteristics of TSI at the architectural and design level
+  
+
+PRIORITY LEVELS:
+1 - MAX
+2 - MEDIUM
+3 - LOW
+
+1)
+	- Improve performance and scalability:
+		- Make code 64bit safe. (short term)
+		- Reduce time/space complexity of the application. (mid-term, algorithmically bound)
+			- possible to reduce memory consuption without tradeofs has of now.
+		- Port to MPI to work on multi-computer setups. (mid-long term)
+
+2)
+	- rework/restructure code for better modularity 
+		better suited to distributed setups.
+	- Better/improved accounting. (medium term)
+		- Better logger. (short term)
+		- Better resource accounting (disk, network, cpu, memory usage data)
+		for better suit deployment environments.
+
+3)
+	- re-implement MASK, to possibilitate Masking out parts of the reservoir.
+		(better simulation granularity, such has improving result on a specific reservoir area)
+	
+special) - these are long term concepts
+	- Reduce time/space complexity of the application. (long-term, algorithmically bound)
+		- find ways to paralelize the DSS.
+		- algorithmically reduce computational complexity bounds
+	- Flexible multi-computer design (speed vs memory size vs interconnect speed tradeoff, etc..)
+
+
+space complexity - http://en.wikipedia.org/wiki/Space_complexity
+time complexity - http://en.wikipedia.org/wiki/Computational_complexity

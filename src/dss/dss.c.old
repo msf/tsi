@@ -1,0 +1,5075 @@
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+int ixv[17];    /* acorni */
+
+/* ----------------------------------------------------------------------- 
+ * Fortran implementation of ACORN random number generator of order less 
+ * than or equal to 12 (higher orders can be obtained by increasing the 
+ * parameter value MAXORD). 
+ *
+ * NOTES: 1. The variable idum is a dummy variable. The common block 
+ *           IACO is used to transfer data into the function. 
+ *        2. Before the first call to ACORN the common block IACO must 
+ *           be initialised by the user, as follows. The values of 
+ *           variables in the common block must not subsequently be 
+ *           changed by the user. 
+ *             KORDEI - order of generator required ( must be =< MAXORD) 
+ *             MAXINT - modulus for generator, must be chosen small 
+ *                      enough that 2*MAXINT does not overflow 
+ *             ixv(1) - seed for random number generator 
+ *                      require 0 < ixv(1) < MAXINT 
+ *             (ixv(I+1),I=1,KORDEI) 
+ *                    - KORDEI initial values for generator 
+ *                      require 0 =< ixv(I+1) < MAXINT 
+ *        3. After initialisation, each call to ACORN generates a single 
+ *           random number between 0 and 1.
+ *        4. An example of suitable values for parameters is
+ *             KORDEI   = 10 
+ *             MAXINT   = 2**30 
+ *             ixv(1)   = an odd integer in the (approximate) range 
+ *                        (0.001 * MAXINT) to (0.999 * MAXINT) 
+ *             ixv(I+1) = 0, I=1,KORDEI 
+ *
+ * Author: R.S.Wikramaratna,                           Date: October 1990 
+ * ----------------------------------------------------------------------- 
+ */
+void newAcorni(int seed)
+{
+	int i;
+
+	/* we must guarantee that seed*2 < MAX_INT */
+	--seed;
+	seed /= 2; 
+
+#ifdef PROFILE
+	profile.newAcorni++;
+#endif
+
+	for(i = 1; i <= 16; ++i) ixv[i] = 0;
+	ixv[0] = seed;
+} /* newAcorni_ */
+
+
+
+double acorni()
+{
+	int i;
+
+#ifdef PROFILE
+	profile.acorni++;
+#endif   
+
+	for (i = 1; i <= 16; ++i) {
+		ixv[i] += ixv[i - 1];
+		/* LPL: old code */
+			if (ixv[i] >= 1073741824) {
+			ixv[i] += -1073741824;
+			}
+		/* LPL: hack only for 32 bit ints */
+		/* ixv[i] &= 1073741823; */
+	}
+
+	return (double) ((double)ixv[16] / 1073741824.f);
+} /* acorni_ */
+
+
+
+
+
+/* -----------------------------------------------------------------------
+ *
+ * Evaluate the standard normal cdf given a normal deviate x.  gcum is 
+ * the area under a unit normal curve to the left of x.  The results are 
+ * accurate only to about 5 decimal places. 
+ *
+ * ----------------------------------------------------------------------- */
+float xgcum(float z__)
+{
+	/* System generated locals */
+	float ret_val;
+
+
+
+	/* Local variables */
+	/*    static float t, z__, e2; */
+	float t;
+
+#ifdef PROFILE
+	profile.gcum++;
+#endif
+
+	/* LPL: old code */
+	/*    z__ = *x;
+
+		  if (z__ < 0.f) {    //ub
+		  z__ = -z__;
+		  }
+
+		  t = 1.f / (z__ * .2316419f + 1.f);
+		  ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
+		  1.781477937f) - .356563782f) + .31938153f);
+		  e2 = 0.f;
+		  */
+	/*  6 standard deviations out gets treated as infinity: */
+
+	/*    if (z__ <= 6.f) {       //ub
+		  e2 = exp(-z__ * z__ / 2.f) * .3989422803f;
+		  }
+
+		  ret_val = 1.f - e2 * ret_val;
+
+		  if (*x >= 0.f) {          //ub
+		  return ret_val;
+		  }
+		  ret_val = 1.f - ret_val;
+		  return ret_val;
+		  */
+
+	/* LPL: new code */
+	if (z__ < 0.f) {   /* unpredictable branch */
+		if (z__ >= -6.f) {   /* unpredictable branch */
+			t = 1.f / (z__ * -.2316419f + 1.f);
+			ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
+							1.781477937f) - .356563782f) + .31938153f);
+			ret_val = exp(-z__ * z__ / 2.f) * .3989422803f * ret_val;
+		} else {
+			ret_val = 0.f;
+		}
+	} else {
+		if (z__ <= 6.f) {   /* unpredictable branch */
+			t = 1.f / (z__ * .2316419f + 1.f);
+			ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
+							1.781477937f) - .356563782f) + .31938153f);
+			ret_val = 1.f - exp(-z__ * z__ / 2.f) * .3989422803f * ret_val;
+		} else {
+			ret_val = 1.f;
+		}
+	}
+	return ret_val;
+
+} /* gcum_ */
+
+
+
+
+/* ----------------------------------------------------------------------- 
+ *
+ * Given an array "xx" of length "n", and given a value "x", this routine 
+ * returns a value "j" such that "x" is between xx(j) and xx(j+1).  xx 
+ * must be monotonic, either increasing or decreasing.  j=is-1 or j=ie is 
+ * returned to indicate that x is out of range. 
+ *
+ * Bisection Concept From "Numerical Recipes", Press et. al. 1986  pp 90. 
+ * ----------------------------------------------------------------------- */
+int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
+{
+	int jl, jm, ju;
+
+#ifdef PROFILE
+	profile.locate++;
+#endif
+
+	/* Initialize lower and upper methods: */
+
+	/* Parameter adjustments */
+	/*    --xx;
+	*/
+	/* Function Body */
+	/*    if (*is <= 0) {
+	 *is = 1;
+	 }
+	 jl = *is - 1;
+	 ju = *ie;
+	 if (xx[*n] <= *x) {
+	 *j = *ie;
+	 return 0;
+	 }
+	 */
+	/* If we are not done then compute a midpoint: */
+
+	/*L10:
+	  if (ju - jl > 1) {
+	  jm = (ju + jl) / 2;
+	  */
+	/* Replace the lower or upper limit with the midpoint: */
+
+	/*	if (xx[*ie] > xx[*is] == *x > xx[jm]) {
+		jl = jm;
+		} else {
+		ju = jm;
+		}
+		goto L10;
+		}
+		*/
+	/* Return with the array index: */
+
+	/*    *j = jl;
+		  return 0;
+		  */
+
+	/* Initialize lower and upper methods: */
+
+	/* Parameter adjustments */
+	--xx;
+
+	/* Function Body */
+	if (*is <= 0) {
+		*is = 1;
+	}
+	jl = *is - 1;
+	ju = *ie;
+	if (xx[*n] <= *x) {
+		*j = *ie;
+		return 0;
+	}
+
+	/* If we are not done then compute a midpoint: */
+	while (ju - jl > 1) {
+		jm = (ju + jl) / 2;
+
+		/* Replace the lower or upper limit with the midpoint: */
+		if ((xx[*ie] > xx[*is]) == (*x > xx[jm])) {
+			jl = jm;
+		} else {
+			ju = jm;
+		}
+	}
+
+	/* Return with the array index: */
+	*j = jl;
+	return 0;
+} /* locate_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- 
+ *
+ * Power interpolate the value of y between (xlow,ylow) and (xhigh,yhigh) 
+ *                 for a value of x and a power pow. 
+ *
+ * ----------------------------------------------------------------------- */
+double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
+		float *xval, float *power)
+{
+	/* System generated locals */
+	float ret_val;
+	/* double d__1, d__2;*/
+
+	/* Builtin functions */
+
+#ifdef PROFILE
+	profile.powint++;
+#endif
+
+	/* LPL: old code */
+	/*    if (*xhigh - *xlow < 1e-20f) {
+		  ret_val = (*yhigh + *ylow) / 2.f;
+		  } else {
+		  d__1 = (double) ((*xval - *xlow) / (*xhigh - *xlow));
+		  d__2 = (double) (*power);
+		  ret_val = *ylow + (*yhigh - *ylow) * pow(d__1, d__2);
+		  }
+		  return ret_val;
+		  */
+
+	/* LPL: new code */
+
+	if (*xhigh - *xlow < 1e-20f) {
+		ret_val = (double) ((*yhigh + *ylow) / 2.f);
+	} else {
+		ret_val = (double) (*ylow + (*yhigh - *ylow) *
+				(float) pow((double) ((*xval - *xlow) / (*xhigh - *xlow)),
+							(double) (*power)));
+	}
+	return ret_val;
+
+} /* powint_ */
+
+
+
+/* ----------------------------------------------------------------------- 
+ *
+ *           Back Transform Univariate Data from Normal Scores 
+ *           ************************************************* 
+ *
+ * This subroutine backtransforms a standard normal deviate from a 
+ * specified back transform table and option for the tails of the 
+ * distribution.  Call once with "first" set to true then set to false 
+ * unless one of the options for the tail changes. 
+ *
+ * INPUT VARIABLES: 
+ *
+ *   vrgs             normal score value to be back transformed 
+ *   nt               number of values in the back transform tbale 
+ *   vr(nt)           original data values that were transformed 
+ *   vrg(nt)          the corresponding transformed values 
+ *   zmin,zmax        limits possibly used for linear or power model 
+ *   ltail            option to handle values less than vrg(1): 
+ *   ltpar            parameter required for option ltail 
+ *   utail            option to handle values greater than vrg(nt): 
+ *   utpar            parameter required for option utail 
+ *
+ *
+ * ----------------------------------------------------------------------- */
+double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin, 
+		float *zmax, int *ltail, float *ltpar, int *utail, float *utpar)
+{
+        /* Table of constant values */
+        float c_b2 = 0.f;
+        float c_b3 = 1.f;
+        int one = 1;
+
+	/* System generated locals */
+	int i__1, i__2;
+	float ret_val;
+	double d__1, d__2;
+
+	/* Local variables */
+	int j;
+	float cpow, cdfhi, cdfbt, cdflo, lambda;
+
+	/* parameter(EPSLON=1.0e-20) */
+
+	/* Value in the lower tail?    1=linear, 2=power, (3 and 4 are invalid): */
+
+#ifdef PROFILE
+	profile.backtr++;
+#endif
+
+
+	/* Parameter adjustments */
+	--vrg;
+	--vr;
+
+	/* Function Body */
+	if (*vrgs <= vrg[1]) {
+		ret_val = vr[1];
+		cdflo = (float) xgcum((float)vrg[1]);
+		cdfbt = (float) xgcum((float)*vrgs);
+		if (*ltail == 1) {
+			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &c_b3);
+		} else if (*ltail == 2) {
+			cpow = 1.f / *ltpar;
+			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &cpow);
+		}
+
+		/* Value in the upper tail?     1=linear, 2=power, 4=hyperbolic: */
+
+	} else if (*vrgs >= vrg[*nt]) {
+		ret_val = vr[*nt];
+		cdfhi = xgcum((float)vrg[*nt]);
+		cdfbt = xgcum((float)*vrgs);
+		if (*utail == 1) {
+			ret_val = powint(&cdfhi, &c_b3, &vr[*nt], zmax, &cdfbt, &c_b3);
+		} else if (*utail == 2) {
+			cpow = 1.f / *utpar;
+			ret_val = powint(&cdfhi, &c_b3, &vr[*nt], zmax, &cdfbt, &cpow);
+		} else if (*utail == 4) {
+			d__1 = (double) vr[*nt];
+			d__2 = (double) (*utpar);
+			lambda = pow(d__1, d__2) * (1.f - xgcum(vrg[*nt]));
+			d__1 = (double) (lambda / (1.f - xgcum(*vrgs)));
+			d__2 = (double) (1.f / *utpar);
+			ret_val = pow(d__1, d__2);
+		}
+	} else {
+
+		/* Value within the transformation table: */
+
+		locate(&vrg[1], nt, &one, nt, vrgs, &j);
+		/* Computing MAX */
+		/* Computing MIN */
+		i__2 = *nt - 1;
+		i__1 = MIN(i__2,j); /* min(i__2,j) */
+		j = MAX(i__1,1); /* max(i__1,1); */
+		ret_val = powint(&vrg[j], &vrg[j + 1], &vr[j], &vr[j + 1], vrgs, & c_b3);
+	}
+	return ret_val;
+} /* backtr_ */
+
+
+/* ----------------------------------------------------------------------- */
+/*                    Covariance Between Two Points */
+/*                    ***************************** */
+/* model specified by a nugget effect and nested varigoram structures. */
+/* The anisotropy definition can be different for each nested structure. */
+
+/* INPUT VARIABLES: */
+/*   x1,y1,z1         coordinates of first point */
+/*   x2,y2,z2         coordinates of second point */
+/*   nst(ivarg)       number of nested structures (maximum of 4) */
+/*   ivarg            variogram number (set to 1 unless doing cokriging */
+/*                       or indicator kriging) */
+/*   MAXNST           size of variogram parameter arrays */
+/*   c0(ivarg)        isotropic nugget constant */
+/*   it(i)            type of each nested structure: */
+/*                      1. spherical model of range a; */
+/*                      2. exponential model of parameter a; */
+/*                           i.e. practical range is 3a */
+/*                      3. gaussian model of parameter a; */
+/*                           i.e. practical range is 3a */
+/*                      4. power model of power a (a must be gt. 0  and */
+/*                           lt. 2).  if linear model, a=1,c=slope. */
+/*                      5. hole effect model */
+/*   cc(i)            multiplicative factor of each nested structure. */
+/*                      (sill-c0) for spherical, exponential,and gaussian */
+/*                      slope for linear model. */
+/*   aa(i)            parameter "a" of each nested structure. */
+/*   irot             index of the rotation matrix for the first nested */
+/*                    structure (the second nested structure will use */
+/*                    irot+1, the third irot+2, and so on) */
+/*   MAXROT           size of rotation matrix arrays */
+/*   rotmat           rotation matrices */
+
+/* OUTPUT VARIABLES: */
+/*   cmax             maximum covariance */
+/*   cova             covariance between (x1,y1,z1) and (x2,y2,z2) */
+
+/* EXTERNAL REFERENCES: sqdist    computes anisotropic squared distance */
+/*                      rotmat    computes rotation matrix for distance */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ * sqdist
+ */
+
+/** CUBOS utilizados
+ * -
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * tmp
+ * order
+ * clc
+ * lvm
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ * krigev_1.rotmat
+ * cova3d_1
+ */
+
+
+int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
+		int *ivarg, int *nst, int *maxnst, float *c0, int *it, float *cc,
+		float *aa, int *irot, int *maxrot, double *rotmat, float *cmax,
+		float *cova)
+/* Calculate the maximum covariance value (used for zero distances and */
+/* for power model covariance): */
+{
+	/* System generated locals */
+	int rotmat_dim1, rotmat_offset, i__1, i__2;
+	float r__1;
+	double d__1, d__2;
+
+
+	/* Local variables */
+	float h__, hr;
+	int ir, is, ist;
+	double hsqd;
+	int istart;
+
+#ifdef PROFILE
+	profile.cova3++;
+#endif
+
+	/* Parameter adjustments */
+	--nst;
+	--c0;
+	--it;
+	--cc;
+	--aa;
+	rotmat_dim1 = *maxrot;
+	rotmat_offset = 1 + (rotmat_dim1 << 2);
+	rotmat -= rotmat_offset;
+
+	/* Function Body */
+	istart = (*ivarg - 1) * *maxnst + 1;
+	*cmax = c0[*ivarg];
+	i__1 = nst[*ivarg];
+	for (is = 1; is <= i__1; ++is) {
+		ist = istart + is - 1;
+		if (it[ist] == 4) {
+			*cmax += 999.f;
+		} else {
+			*cmax += cc[ist];
+		}
+	}
+
+	/* Check for "zero" distance, return with cmax if so: */
+
+	hsqd = sqdist(x1, y1, z1, x2, y2, z2, irot, maxrot, &rotmat[
+			rotmat_offset]);
+	if ((float) hsqd < 1e-10f) {
+		*cova = *cmax;
+		return 0;
+	}
+
+	/* Loop over all the structures: */
+
+	*cova = 0.f;
+	i__1 = nst[*ivarg];
+	for (is = 1; is <= i__1; ++is) {
+		ist = istart + is - 1;
+
+		/* Compute the appropriate distance: */
+
+		if (ist != 1) {
+			/* Computing MIN */
+			i__2 = *irot + is - 1;
+			ir = MIN(i__2, *maxrot); /* min(i__2,*maxrot); */
+			hsqd = sqdist(x1, y1, z1, x2, y2, z2, &ir, maxrot, &rotmat[
+					rotmat_offset]);
+		}
+		h__ = (float) sqrt(hsqd);
+
+		/* Spherical Variogram Model? */
+
+		if (it[ist] == 1) {
+			hr = h__ / aa[ist];
+			if (hr < 1.f) {
+				*cova += cc[ist] * (1.f - hr * (1.5f - hr * .5f * hr));
+			}
+
+			/* Exponential Variogram Model? */
+
+		} else if (it[ist] == 2) {
+			*cova += cc[ist] * exp(h__ * -3.f / aa[ist]);
+
+			/* Gaussian Variogram Model? */
+
+		} else if (it[ist] == 3) {
+			/* Computing 2nd power */
+			r__1 = h__ / aa[ist];
+			*cova += cc[ist] * exp(r__1 * r__1 * -3.f);
+
+			/* Power Variogram Model? */
+
+		} else if (it[ist] == 4) {
+			d__1 = (double) h__;
+			d__2 = (double) aa[ist];
+			*cova = *cova + *cmax - cc[ist] * pow(d__1, d__2);
+
+			/* Hole Effect Model? */
+
+		} else if (it[ist] == 5) {
+			/*                 d = 10.0 * aa(ist) */
+			/*                 cova = cova + cc(ist)*exp(-3.0*h/d)*cos(h/aa(ist)*PI) */
+			*cova += cc[ist] * cos(h__ / aa[ist] * 3.14159265f);
+		}
+	}
+
+	/* Finished: */
+
+	return 0;
+} /* cova3_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*               Establish the Covariance Look up Table */
+/* The idea is to establish a 3-D network that contains the covariance */
+/* value for a range of grid node offsets that should be at as large */
+/* as twice the search radius in each direction.  The reason it has to */
+/* be twice as large as the search radius is because we want to use it */
+/* to compute the data covariance matrix as well as the data-point */
+/* covariance matrix. */
+
+/* Secondly, we want to establish a search for nearby nodes that */
+/* in order of closeness as defined by the variogram. */
+
+/* INPUT VARIABLES: */
+/*   xsiz,ysiz,zsiz  Definition of the grid being considered */
+/*   MAXCTX,Y,Z      Number of blocks in covariance table */
+/*   covariance table parameters */
+
+/* OUTPUT VARIABLES:  covtab()         Covariance table */
+
+/* EXTERNAL REFERENCES: */
+/*   sqdist          Computes 3-D anisotropic squared distance */
+/*   sortem          Sorts multiple arrays in ascending order */
+/*   cova3           Computes the covariance according to a 3-D model */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ * sortem 
+ * cova3
+ * sqdist
+ */
+
+/** CUBOS utilizados
+ * tmp - allocado e dealocado na funcao 
+ * order
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * lvm
+ * restantes
+ * -
+ */
+
+/** structs globais utilizadas:
+ * general 
+ * search
+ * covariance (passado ao cova3 e sqdist)
+ * covtable_lookup
+ * krige_vars (passado ao cova3: krige_vars->rotmat & krige_vars->ccb)
+ */
+
+
+
+
+int covtable(int *order, 
+		general_vars_t * general, 
+		search_vars_t * search, 
+		covariance_vars_t * covariance, 
+		covtable_lookup_vars_t * covtable_lookup, 
+		krige_vars_t * krige_vars)
+{
+        /* Table of constant values */
+        float c_b2 = 0.f;
+        int one = 1;
+        int four = 4;
+        int five = 5;
+
+	/* System generated locals */
+	int i__1, i__2, i__3;
+
+	/* Local variables */
+	float * tmp;
+	float c__, d__, e, f, g, h__;
+	int i__, j, k, ic, jc, kc, il, ix, iy, iz;
+	float xx, yy, zz;
+	int loc;
+	double hsqd;
+
+#ifdef PROFILE
+	profile.ctable++;
+	profBegin("ctable");
+#endif
+
+	/* Parameter adjustments */
+	--order;
+
+	/* Function Body */
+	i__1 = (general->nx-1)/2;
+	covtable_lookup->nctx = i__1; /*min(i__1,i__2);*/
+	i__1 = (general->ny-1)/2;
+	covtable_lookup->ncty = i__1; /* min(i__1,i__2); */
+	i__1 = (general->nz-1)/2;
+	covtable_lookup->nctz = i__1; /* min(i__1,i__2); */
+
+	/* NOTE: If dynamically allocating memory, and if there is no shortage */
+	/*       it would a good idea to go at least as far as the radius and */
+	/*       twice that far if you wanted to be sure that all covariances */
+	/*       in the left hand covariance matrix are within the table look-up. */
+
+	/* Initialize the covariance subroutine and cbb at the same time: */
+	/*    printf("Calling cova3\n"); */
+	cova3(&c_b2, &c_b2, &c_b2, &c_b2, &c_b2, &c_b2, &one, covariance->nst, &four,
+			covariance->c0, covariance->it, covariance->cc, covariance->aa, &one, 
+			&five, krige_vars->rotmat, &covariance->cmax, &krige_vars->cbb);
+	/* 		Now, set up the table and keep track of the node offsets that are */
+	/* 		within the search radius: */
+	/*    printf("loop 1/3\n"); */
+ 
+	/* covtable needs a tmp array the size of aicube */
+	tmp = (float *) malloc(general->nxyz * sizeof(float));
+
+	covtable_lookup->nlooku = 0;
+	i__1 = covtable_lookup->nctx;
+	for (i__ = -covtable_lookup->nctx; i__ <= i__1; ++i__) {
+		xx = i__ * general->xsiz;
+		ic = covtable_lookup->nctx + 1 + i__;
+		i__2 = covtable_lookup->ncty;
+		for (j = -covtable_lookup->ncty; j <= i__2; ++j) {
+			yy = j * general->ysiz;
+			jc = covtable_lookup->ncty + 1 + j;
+			i__3 = covtable_lookup->nctz;
+			for (k = -covtable_lookup->nctz; k <= i__3; ++k) {
+				zz = k * general->zsiz;
+				kc = covtable_lookup->nctz + 1 + k;
+
+				cova3(&c_b2, &c_b2, &c_b2, &xx, &yy, &zz, &one, 
+						covariance->nst, &four, covariance->c0, covariance->it, 
+						covariance->cc, covariance->aa, &one, &five, 
+						krige_vars->rotmat, &covariance->cmax, 
+						&covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)]);
+
+				hsqd = sqdist(&c_b2, &c_b2, &c_b2, &xx, &yy, &zz, &
+						covariance->isrot, &five, krige_vars->rotmat);
+
+				if ((float) hsqd <= search->radsqd) {
+					++covtable_lookup->nlooku;
+					/*		    printf("nlooku: %i\n", covtable_lookup->nlooku); */
+					/* 						We want to search by closest variogram distance (and use the */
+					/* 						anisotropic Euclidean distance to break ties: */
+					tmp[covtable_lookup->nlooku] = -(covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] - (float) hsqd * 1e-10f);
+					/*order[covtable_lookup->nlooku] = (float) getPos(ic,jc,kc, general->nx, general->nxy);*/
+					order[covtable_lookup->nlooku] = getPos(ic,jc,kc, general->nx, general->nxy); /* LPL */
+				}
+
+			}
+		}
+	}
+
+	/* 		Finished setting up the look-up table, now order the nodes such */
+	/* 		that the closest ones, according to variogram distance, are searched */
+	/* 		first. Note: the "loc" array is used because I didn't want to make */
+	/* 		special allowance for 2 byte integers in the sorting subroutine: */
+	/*    printf("calling sortem\n"); */
+
+	sortemi(&one, &covtable_lookup->nlooku,
+               &tmp[1],
+               &one, &order[1],
+               &c__, &d__, &e, &f, &g, &h__);
+	/*    printf("loop 2/3\n"); */
+ 	
+ 	/* tmp array is no longer needed. */
+ 	free(tmp);
+
+	i__1 = covtable_lookup->nlooku;  
+	for (il = 1; il <= i__1; ++il) {
+		loc = order[il];
+
+		iz = (loc - 1) / (general->nxy) + 1;
+		iy = (loc - (iz - 1) * (general->nxy) - 1) / general->nx + 1;
+		ix = loc - (iz - 1) * (general->nxy) - (iy - 1) * general->nx;
+
+		covtable_lookup->iznode[il - 1] = iz;
+		covtable_lookup->iynode[il - 1] = iy;
+		covtable_lookup->ixnode[il - 1] = ix;
+		/*      printf("loop 2/3: %i %i %i\n", il, (int)covtable_lookup->nlooku, general->nxyz); */
+
+	}
+
+	if (covtable_lookup->nodmax > 64) {
+		fprintf(stderr, "covtable_lookup->nodmax above limit of 64, setting to 64!");
+		/* apagar */
+		/*            write(ldbg,*) */
+		/*            write(ldbg,*) 'The maximum number of close nodes = ',nodmax */
+		/*            write(ldbg,*) 'this was reset from your specification due ' */
+		/*            write(ldbg,*) 'to storage limitations.' */
+		covtable_lookup->nodmax = 64;
+	}
+
+#ifdef PROFILE
+	profEnd("ctable");
+#endif
+	return 0;
+} /* ctable_ */
+
+/*                Sequential Gaussian Simulation */
+
+/* The program is executed with no command line arguments.  The user */
+/* will be prompted for the name of a parameter file.  The parameter */
+/* file is described in the documentation (see the example sgsim.par) */
+
+/* The output file will be a GEOEAS file containing the simulated values */
+/* The file is ordered by x,y,z, and then simulation (i.e., x cycles */
+/* fastest, then y, then z, then simulation number).  The values will be */
+/* backtransformed to the original data values if a normal scores */
+/* transform was performed. */
+/* ----------------------------------------------------------------------- */
+
+
+
+int dssdll(float *params, float *models, double * hard_data, int *hard_data_size,
+		float *bcm_data, float *bai_data, int * mask_data, float *output_data)
+{
+	/* Cubos:
+	 * bestCorrCube - BCM - copia do ponteiro de: bcm_data
+	 * sim - aiCube - copia do ponteiro de output_data
+	 * bestAICube - BAI
+ 	 * tmp - temporario, allocado e deallocado no covtable.
+	 * mask - mascara, nao esta a ser usado
+	 * order - ordem da simulacao
+	 */
+	float * bestCorrCube, * sim, * bestAICube;
+	/* static float * mask; */
+	int * order;
+	
+	general_vars_t general;
+	search_vars_t search;
+	simulation_vars_t simulation;
+	covariance_vars_t covariance;
+	covtable_lookup_vars_t covtable_lookup;
+	krige_vars_t	krige_vars;
+
+	/* Parameter adjustments */
+	--output_data;
+	--mask_data;
+	--bai_data;
+	--bcm_data;
+	--hard_data;
+	--models;
+	--params;
+
+
+	/* Function Body */
+	general.lout = 2;
+
+
+
+#ifdef PROFILE
+	newProfile();
+	profile.dssdll++;
+	profBegin("dssdll");
+#endif
+
+	/* copy pointers of aiCube, BCM and BAI */
+	sim = &output_data[1];
+	bestCorrCube = &bcm_data[1];
+	bestAICube = &bai_data[1];
+
+	/*      !ldbg = 3 */
+	/*      !lbestAICube = 4 */
+
+	/* Read the parameters */
+	readparam(&params[1], &models[1], &general, &search, &simulation, &covariance, &covtable_lookup);
+
+	readdata(bestAICube, &hard_data[1], hard_data_size, &general, &search, &simulation);
+
+	covtable_lookup.covtab = (float *) malloc(general.nxyz * sizeof(float));
+	covtable_lookup.ixnode = (int *) malloc(general.nxyz * sizeof(int));
+	covtable_lookup.iynode = (int *) malloc(general.nxyz * sizeof(int));
+	covtable_lookup.iznode = (int *) malloc(general.nxyz * sizeof(int));
+	/* mask = (float *) malloc(general.nxyz * sizeof(float)); */
+	order = (int *) malloc(general.nxyz * sizeof(int));
+
+	/* Call sdsim for the simulation */
+	sdsim(sim, bestAICube, bestCorrCube, order, &mask_data[1],
+			&general, &search, &simulation, &covariance, 
+			&covtable_lookup, &krige_vars);
+
+	free(order);
+	/* free(mask); */
+	free(covtable_lookup.covtab);
+	free(covtable_lookup.ixnode);
+	free(covtable_lookup.iynode);
+	free(covtable_lookup.iznode);
+
+#ifdef PROFILE
+	showResults();
+	profEnd("dssdll");
+#endif
+
+	/* !Finished: */
+	return 0;
+} /* dssdll_ */
+
+
+int getPos(int x, int y, int z, int xlen, int xylen)
+{	
+	return ((x-1) + (xlen * (y -1)) + (xylen * (z-1)));
+}
+/* ----------------------------------------------------------------------- */
+/* Computes the inverse of the standard normal cumulative distribution */
+/* function with a numerical approximation from : Statistical Computing, */
+/* by W.J. Kennedy, Jr. and James E. Gentle, 1980, p. 95. */
+/* INPUT/OUTPUT: */
+/*   p    = double precision cumulative probability value: dble(psingle) */
+/*   xp   = G^-1 (p) in single precision */
+/*   ierr = 1 - then error situation (p out of range), 0 - OK */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ */
+
+/** CUBOS utilizados
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+
+int gauinv(double *p, float *xp, int *ierr)
+{
+	/* Initialized data */
+
+	static double lim = 1e-10;
+	static double q3 = .10353775285;
+	static double q4 = .0038560700634;
+	static double p0 = -.322232431088;
+	static double p1 = -1.;
+	static double p2 = -.342242088547;
+	static double p3 = -.0204231210245;
+	static double p4 = -4.53642210148e-5;
+	static double q0 = .099348462606;
+	static double q1 = .588581570495;
+	static double q2 = .531103462366;
+
+
+	/* Local variables */
+	double y, pp;
+
+#ifdef PROFILE
+	profile.gauinv++;
+#endif
+
+	/* Coefficients of approximation: */
+
+
+	/* Check for an error situation: */
+
+	*ierr = 1;
+	if (*p < lim) {
+		*xp = -1e10f;
+		return 0;
+	}
+	if (*p > 1.f - lim) {
+		*xp = 1e10f;
+		return 0;
+	}
+	*ierr = 0;
+
+	/* Get k for an error situation: */
+
+	pp = *p;
+	if (*p > .5f) {
+		pp = 1 - pp;
+	}
+	*xp = 0.f;
+	if (*p == .5f) {
+		return 0;
+	}
+
+	/* Approximate the function: */
+
+	y = sqrt(log(1.f / (pp * pp)));
+	*xp = (float) (y + ((((y * p4 + p3) * y + p2) * y + p1) * y + p0) / ((((y *
+							q4 + q3) * y + q2) * y + q1) * y + q0));
+	if ((float) (*p) == (float) pp) {
+		*xp = -(*xp);
+	}
+
+	/* Return with G^-1(p): */
+
+	return 0;
+} /* gauinv_ */
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*     Gets the coordinate index location of a point within a grid */
+/*     *********************************************************** */
+
+/* n       number of "nodes" or "cells" in this coordinate direction */
+/* min     origin at the center of the first cell */
+/* siz     size of the cells */
+/* loc     location of the point being considered */
+/* index   output index within [1,n] */
+/* inflag  true if the location is actually in the grid (false otherwise */
+/*         e.g., if the location is outside then index will be set to */
+/*         nearest boundary */
+/* ----------------------------------------------------------------------- */
+
+/** Funcoes utilizadas
+ */
+
+/** CUBOS utilizados
+ * 
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * -
+ */
+
+/** structs globais utilizadas:
+ */
+
+int getindx(int *n, float *min__, float *siz, float *loc, int *index, int *inflag)
+{
+#ifdef PROFILE
+	profile.getindx++;
+#endif
+
+	/* Compute the index of "loc": */
+
+	*index = (int) ((*loc - *min__) / *siz + 1.5f);
+
+	/* Check to see if in or out: */
+
+	if (*index < 1) {
+		*index = 1;
+		*inflag = FALSE;
+	} else if (*index > *n) {
+		*index = *n;
+		*inflag = FALSE;
+	} else {
+		*inflag = TRUE;
+	}
+
+	/* Return to calling program: */
+
+	return 0;
+} /* getindx_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*            Builds and Solves the SK or OK Kriging System */
+/* INPUT VARIABLES: */
+/*   ix,iy,iz        index of the point currently being simulated */
+/*   xx,yy,zz        location of the point currently being simulated */
+/* OUTPUT VARIABLES: */
+/*   cmean           kriged estimate */
+/*   cstdev          kriged standard deviation */
+/* EXTERNAL REFERENCES: ksol   Gaussian elimination system solution */
+/* ----------------------------------------------------------------------- */
+
+
+/** Funcoes utilizadas
+ * ksol
+ * cova3
+ */
+
+/** CUBOS utilizados
+ * bestAICube quando ktype == 5
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * tmp
+ * order
+ * clc
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ * generl_1
+ * clooku_1
+ * krigev_1
+ * search_1
+ * simula_1
+ */
+
+
+int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
+		int *lktype, float *gmean, float *cmean, float * cstdev, 
+		float *bestAICube, float *clcorr,
+		general_vars_t * general,
+		search_vars_t * search,
+		simulation_vars_t * simulation,
+		covariance_vars_t * covariance,
+		covtable_lookup_vars_t * covtable_lookup,
+		krige_vars_t * krige_vars)
+{
+        /* Table of constant values */
+
+        int one = 1;
+        int four = 4;
+        int five = 5;
+
+	/* System generated locals */
+	int i1, i2;
+
+	/* Local variables */
+	int i, j;
+	float x1, y1, z1, x2, y2, z2;
+	int na, ii, jj, kk, in,
+            ix1 = 0, iy1 = 0, iz1 = 0,      /* LPL Init values */
+            ix2 = 0, iy2 = 0, iz2 = 0, ind, neq;
+	float cov, vrea[129];
+	float edmin, edmax;
+	int index;
+	float sfmin, sfmax;
+	int ising;
+	int first;
+	float sumwts;
+
+	/* LPL optimization */
+	if (*lktype == 5)
+	    return krige5(ix, iy, iz, xx, yy, zz, gmean, cmean,
+                          cstdev, bestAICube, clcorr, general,
+		          search, simulation, covariance,
+		          covtable_lookup, krige_vars);
+	if (*lktype == 1)
+	    return krige1(ix, iy, iz, xx, yy, zz, gmean, cmean,
+                          cstdev, bestAICube, clcorr, general,
+		          search, simulation, covariance,
+		          covtable_lookup, krige_vars);
+        
+#ifdef PROFILE
+	profile.krige++;
+#endif
+
+	/* Parameter adjustments */
+	--bestAICube;
+
+	/* Function Body */
+	first = FALSE;
+	na = search->nclose + covtable_lookup->ncnode;
+	neq = na;
+	if (*lktype == 1) {
+		neq += 1;
+	}
+	else if (*lktype == 3) {
+		neq += 2;
+	}
+	else if (*lktype >= 4) {
+		neq += 1;
+		if (*lktype == 5) {
+			general->colocorr = *clcorr;
+		}
+	}
+	/* Set up kriging matrices: */
+	in = 0;
+	i1 = na;
+	for (j = 1; j <= i1; ++j) {
+		/* Sort out the actual location of point "j" */
+		if (j <= search->nclose) {
+			index = (int) general->close[j - 1];
+			x1 = general->x[index - 1];
+			y1 = general->y[index - 1];
+			z1 = general->z__[index - 1];
+			krige_vars->vra[j - 1] = general->vr[index - 1];
+			vrea[j - 1] = general->sec[index - 1];
+		} else {
+			/* It is a previously simulated node (keep index for table look-up): */
+			index = j - search->nclose;
+			x1 = covtable_lookup->cnodex[index - 1];
+			y1 = covtable_lookup->cnodey[index - 1];
+			z1 = covtable_lookup->cnodez[index - 1];
+			krige_vars->vra[j - 1] = covtable_lookup->cnodev[index - 1];
+			ind = covtable_lookup->icnode[index - 1];
+			ix1 = *ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
+			iy1 = *iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
+			iz1 = *iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			index = ix1 + (iy1 - 1) * general->nx + (iz1 - 1) * general->nxy;
+			if(general->ktype == 5)
+				vrea[j - 1] = bestAICube[index];
+		}
+		if (*lktype == 0) {
+			krige_vars->vra[j - 1] -= *gmean;
+		}
+		if (*lktype == 2) {
+			krige_vars->vra[j - 1] -= vrea[j - 1];
+		}
+		if (*lktype >= 4) {
+			krige_vars->vra[j - 1] -= simulation->vmedexp;
+		}
+		i2 = j;
+		for (i = 1; i <= i2; ++i) {
+			/* Sort out the actual location of point "i" */
+			if (i <= search->nclose) {
+				index = (int) general->close[i - 1];
+				x2 = general->x[index - 1];
+				y2 = general->y[index - 1];
+				z2 = general->z__[index - 1];
+			} else {
+				/* It is a previously simulated node (keep index for table
+				   look-up): */
+				index = i - search->nclose;
+				x2 = covtable_lookup->cnodex[index - 1];
+				y2 = covtable_lookup->cnodey[index - 1];
+				z2 = covtable_lookup->cnodez[index - 1];
+				ind = covtable_lookup->icnode[index - 1];
+				ix2 = *ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
+				iy2 = *iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
+				iz2 = *iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			}
+			/* Now, get the covariance value: */
+			++in;
+			/* Decide whether or not to use the covariance look-up table: */
+			if ((j <= search->nclose) || (i <= search->nclose)) 
+			{
+				cova3(&x1, &y1, &z1, &x2, &y2, &z2, &one, covariance->nst, &
+						four, covariance->c0, covariance->it, covariance->cc, 
+						covariance->aa, &one, &five, krige_vars->rotmat, &
+						covariance->cmax, &cov);
+				krige_vars->a[in - 1] = (double) cov;
+			} else {
+				/* Try to use the covariance look-up (if the distance is in range): */
+				ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
+				jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
+				kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
+				if ((ii < 1) || (ii > general->nx) ||
+                                    (jj < 1) || (jj > general->ny) ||
+                                    (kk < 1) || (kk > general->nz)) {
+					cova3(&x1, &y1, &z1, &x2, &y2, &z2, &one, covariance->nst, 
+							&four, covariance->c0, covariance->it, covariance->cc, 
+							covariance->aa, &one, &five, krige_vars->rotmat, &
+							covariance->cmax, &cov);
+				} else {
+					cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+				}
+				krige_vars->a[in - 1] = (double) cov;
+			}
+		}
+		/* Get the RHS value (possibly with covariance look-up table): */
+		if (j <= search->nclose) {
+			cova3(xx, yy, zz, &x1, &y1, &z1, &one, covariance->nst, &four, 
+					covariance->c0, covariance->it, covariance->cc, covariance->aa, &one,
+					&five, krige_vars->rotmat, &covariance->cmax, &cov);
+			krige_vars->r__[j - 1] = (double) cov;
+		} else {
+			/* Try to use the covariance look-up (if the distance is in range): */
+			ii = covtable_lookup->nctx + 1 + (*ix - ix1);
+			jj = covtable_lookup->ncty + 1 + (*iy - iy1);
+			kk = covtable_lookup->nctz + 1 + (*iz - iz1);
+			if (ii < 1 || ii > general->nx || jj < 1 || jj > general->ny || kk < 1 || kk > 
+					general->nz) {
+				cova3(xx, yy, zz, &x1, &y1, &z1, &one, covariance->nst, &four, 
+						covariance->c0, covariance->it, covariance->cc, covariance->aa, &
+						one, &five, krige_vars->rotmat, &covariance->cmax, &cov);
+			} else {
+				cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+			}
+			krige_vars->r__[j - 1] = (double) cov;
+		}
+		krige_vars->rr[j - 1] = krige_vars->r__[j - 1];
+	}
+	/* Addition of OK constraint: */
+	if (*lktype == 1 || *lktype == 3) {
+		i1 = na;
+		for (i = 1; i <= i1; ++i) {
+			++in;
+			krige_vars->a[in - 1] = 1.f;
+		}
+		++in;
+		krige_vars->a[in - 1] = 0.f;
+		krige_vars->r__[na] = 1.f;
+		krige_vars->rr[na] = 1.f;
+	}
+	/* Addition of the External Drift Constraint: */
+	if (*lktype == 3) {
+		edmin = 999999.f;
+		edmax = -999999.f;
+		i1 = na;
+		for (i = 1; i <= i1; ++i) {
+			++in;
+			krige_vars->a[in - 1] = vrea[i - 1];
+			if (krige_vars->a[in - 1] < edmin) {
+				edmin = krige_vars->a[in - 1];
+			}
+			else if (krige_vars->a[in - 1] > edmax) {
+				edmax = krige_vars->a[in - 1];
+			}
+		}
+		++in;
+		krige_vars->a[in - 1] = 0.f;
+		++in;
+		krige_vars->a[in - 1] = 0.f;
+		ind = *ix + (*iy - 1) * general->nx + (*iz - 1) * general->nxy;
+		krige_vars->r__[na + 1] = (double) bestAICube[ind];
+		krige_vars->rr[na + 1] = krige_vars->r__[na + 1];
+		if (edmax - edmin < 1e-20f) {
+			--neq;
+		}
+	}
+	/* Addition of Collocated Cosimulation Constraint: */
+	else if (*lktype >= 4) {
+		sfmin = 1e21f;
+		sfmax = -1e21f;
+		i1 = na;
+		for (i = 1; i <= i1; ++i) {
+			++in;
+			krige_vars->a[in - 1] = (double) general->colocorr * 
+				krige_vars->r__[i - 1];
+			if (krige_vars->a[in - 1] < sfmin) {
+				sfmin = krige_vars->a[in - 1];
+			}
+			else if (krige_vars->a[in - 1] > sfmax) {
+				sfmax = krige_vars->a[in - 1];
+			}
+		}
+		++in;
+		krige_vars->a[in - 1] = 1.f;
+		ii = na + 1;
+		krige_vars->r__[ii - 1] = (double) general->colocorr;
+		krige_vars->rr[ii - 1] = krige_vars->r__[ii - 1];
+		/* apagar */
+		/*           if((sfmax-sfmin).lt.EPSLON) neq = neq - 1 */
+	}
+	/* 		Write out the kriging Matrix if Seriously Debugging: */
+/*	if (general->idbg >= 3) {
+*/		/* apagar */
+		/*            write(ldbg,100) ix,iy,iz */
+/*		is = 1;
+		i1 = neq;
+		for (i = 1; i <= i1; ++i) {
+			ie = is + i - 1;
+*/			/* apagar */
+			/*                 write(ldbg,101) i,r(i),(a(j),j=is,ie) */
+/*			is += i;
+		}
+*/		/* apagar */
+		/* 100        format(/,'Kriging Matrices for Node: ',3i4,' RHS first') */
+		/* 101        format('    r(',i2,') =',f7.4,'  a= ',99f7.4) */
+/*	}
+*/	/* 		Solve the Kriging System: */
+	if (neq == 1 && *lktype != 3) {
+		krige_vars->s[0] = krige_vars->r__[0] / krige_vars->a[0];
+		ising = 0;
+	} else {
+		ksol(&one, &neq, &one, krige_vars->a, krige_vars->r__, krige_vars->s, & ising);
+	}
+	/* 		Write a warning if the matrix is singular: */
+	if (ising != 0) {
+		if (general->idbg >= 1) {
+			/* apagar */
+			/*                  write(ldbg,*) 'WARNING SGSIM: singular matrix' */
+			/*                  write(ldbg,*) '               for node',ix,iy,iz */
+		}
+		*cmean = *gmean;
+		*cstdev = 1.f;
+		return 0;
+	}
+	/* 		Compute the estimate and kriging variance.  Recall that kriging type */
+	/* 			0 = Simple Kriging: */
+	/* 			1 = Ordinary Kriging: */
+	/* 			2 = Locally Varying Mean: */
+	/* 			3 = External Drift: */
+	/* 			4 = Collocated Cosimulation: */
+
+	*cmean = 0.f;
+	*cstdev = krige_vars->cbb;
+	sumwts = 0.f;
+	i1 = na;
+	for (i = 1; i <= i1; ++i) {
+		*cmean += (float) krige_vars->s[i - 1] * krige_vars->vra[i - 1];
+		*cstdev -= (float) (krige_vars->s[i - 1] * krige_vars->rr[i - 1]);
+		sumwts += (float) krige_vars->s[i - 1];
+	}
+	if (*lktype == 0) {
+		*cmean += *gmean;
+	}
+	else if (*lktype == 1) {
+		*cstdev -= (float) krige_vars->s[na];
+	}
+	else if (*lktype == 2) {
+		*cmean += *gmean;
+	}
+	else if (*lktype >= 4) {
+		ind = *ix + (*iy - 1) * general->nx + (*iz - 1) * general->nxy;
+		*cmean += (float) krige_vars->s[na] * (bestAICube[ind] - simulation->vmedexp);
+		*cstdev -= (float) (krige_vars->s[na] * krige_vars->rr[na]);
+		*cmean += simulation->vmedexp;
+	}
+	/* Error message if negative variance: */
+	if (*cstdev < 0.f) {
+		/* apagar */
+		/*            write(ldbg,*) 'ERROR: Negative Variance: ',cstdev */
+		*cstdev = 0.f;
+	}
+	*cstdev = sqrt((double) MAX(*cstdev, 0.f)); /* sqrt((dmax(*cstdev,0.f))); */
+	/*      Write out the kriging Weights if Seriously Debugging: */
+
+	/*      if(idbg.ge.3) then */
+	/*            do i=1,na */
+	/*                  write(ldbg,140) i,vra(i),s(i) */
+	/*            end do */
+	/* 140        format(' Data ',i4,' value ',f8.4,' weight ',f8.4) */
+	/*            if(lktype.ge.4) write(ldbg,141) bestAICube(ind),s(na+1) */
+	/* 141        fomat(' Sec Data  value ',f8.4,' weight ',f8.4) */
+	/*            wrirte(ldbg,142) gmean,cmean,cstdev */
+	/* 142        format(' Global mean ',f8.4,' conditional ',f8.4, */
+	/*     +             ' std dev ',f8.4) */
+	/*      end if */
+	/* Finished Here: */
+	return 0;
+} /* krige_ */
+
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*            Builds and Solves the SK or OK Kriging System */
+/* INPUT VARIABLES: */
+/*   ix,iy,iz        index of the point currently being simulated */
+/*   xx,yy,zz        location of the point currently being simulated */
+/* OUTPUT VARIABLES: */
+/*   cmean           kriged estimate */
+/*   cstdev          kriged standard deviation */
+/* EXTERNAL REFERENCES: ksol   Gaussian elimination system solution */
+/* ----------------------------------------------------------------------- */
+
+
+/** Funcoes utilizadas
+ * ksol
+ * cova3
+ */
+
+/** CUBOS utilizados
+ * bestAICube quando ktype == 5
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * tmp
+ * order
+ * clc
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ * generl_1
+ * clooku_1
+ * krigev_1
+ * search_1
+ * simula_1
+ */
+
+
+int krige5(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
+		float *gmean, float *cmean, float * cstdev, 
+		float *bestAICube, float *clcorr,
+		general_vars_t * general,
+		search_vars_t * search,
+		simulation_vars_t * simulation,
+		covariance_vars_t * covariance,
+		covtable_lookup_vars_t * covtable_lookup,
+		krige_vars_t * krige_vars)
+{
+        /* Table of constant values */
+
+        int one = 1;
+        int four = 4;
+        int five = 5;
+
+	/* System generated locals */
+	int i1, i2;
+
+	/* Local variables */
+	int i, j;
+	float x1, y1, z1, x2, y2, z2;
+	int na, ii, jj, kk, in,
+            ix1 = 0, iy1 = 0, iz1 = 0,      /*LPL Init values */
+            ix2 = 0, iy2 = 0, iz2 = 0, ind, neq;
+	float cov, vrea[129];
+	/* float edmin, edmax; */
+	int index;
+	float sfmin, sfmax;
+	int ising;
+	int first;
+	float sumwts;
+
+#ifdef PROFILE
+	profile.krige++;
+#endif
+
+        
+	/* Parameter adjustments */
+	--bestAICube;
+
+	/* Function Body */
+	first = FALSE;
+	na = search->nclose + covtable_lookup->ncnode;
+	neq = na;
+	neq += 1;
+	general->colocorr = *clcorr;
+
+	/* Set up kriging matrices: */
+	in = 0;
+	i1 = na;
+	for (j = 1; j <= i1; ++j) {
+		/* Sort out the actual location of point "j" */
+		if (j <= search->nclose) {
+			index = (int) general->close[j - 1];
+			x1 = general->x[index - 1];
+			y1 = general->y[index - 1];
+			z1 = general->z__[index - 1];
+			krige_vars->vra[j - 1] = general->vr[index - 1];
+			vrea[j - 1] = general->sec[index - 1];
+		} else {
+			/* It is a previously simulated node (keep index for table look-up): */
+			index = j - search->nclose;
+			x1 = covtable_lookup->cnodex[index - 1];
+			y1 = covtable_lookup->cnodey[index - 1];
+			z1 = covtable_lookup->cnodez[index - 1];
+			krige_vars->vra[j - 1] = covtable_lookup->cnodev[index - 1];
+			ind = covtable_lookup->icnode[index - 1];
+			ix1 = *ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
+			iy1 = *iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
+			iz1 = *iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			index = ix1 + (iy1 - 1) * general->nx + (iz1 - 1) * general->nxy;
+			if(general->ktype == 5)
+				vrea[j - 1] = bestAICube[index];
+		}
+		krige_vars->vra[j - 1] -= simulation->vmedexp;
+		i2 = j;
+		for (i = 1; i <= i2; ++i) {
+			/* Sort out the actual location of point "i" */
+			if (i <= search->nclose) {
+				index = (int) general->close[i - 1];
+				x2 = general->x[index - 1];
+				y2 = general->y[index - 1];
+				z2 = general->z__[index - 1];
+			} else {
+				/* It is a previously simulated node (keep index for table
+				   look-up): */
+				index = i - search->nclose;
+				x2 = covtable_lookup->cnodex[index - 1];
+				y2 = covtable_lookup->cnodey[index - 1];
+				z2 = covtable_lookup->cnodez[index - 1];
+				ind = covtable_lookup->icnode[index - 1];
+				ix2 = *ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
+				iy2 = *iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
+				iz2 = *iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			}
+			/* Now, get the covariance value: */
+			++in;
+			/* Decide whether or not to use the covariance look-up table: */
+			if ((j <= search->nclose) || (i <= search->nclose)) 
+			{
+				cova3(&x1, &y1, &z1, &x2, &y2, &z2, &one, covariance->nst, &
+						four, covariance->c0, covariance->it, covariance->cc, 
+						covariance->aa, &one, &five, krige_vars->rotmat, &
+						covariance->cmax, &cov);
+				krige_vars->a[in - 1] = (double) cov;
+			} else {
+				/* Try to use the covariance look-up (if the distance is in range): */
+				ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
+				jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
+				kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
+				if ((ii < 1) || (ii > general->nx) ||
+                                    (jj < 1) || (jj > general->ny) ||
+                                    (kk < 1) || (kk > general->nz)) {
+					cova3(&x1, &y1, &z1, &x2, &y2, &z2, &one, covariance->nst, 
+							&four, covariance->c0, covariance->it, covariance->cc, 
+							covariance->aa, &one, &five, krige_vars->rotmat, &
+							covariance->cmax, &cov);
+				} else {
+					cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+				}
+				krige_vars->a[in - 1] = (double) cov;
+			}
+		}
+		/* Get the RHS value (possibly with covariance look-up table): */
+		if (j <= search->nclose) {
+			cova3(xx, yy, zz, &x1, &y1, &z1, &one, covariance->nst, &four, 
+					covariance->c0, covariance->it, covariance->cc, covariance->aa, &one,
+					&five, krige_vars->rotmat, &covariance->cmax, &cov);
+			krige_vars->r__[j - 1] = (double) cov;
+		} else {
+			/* Try to use the covariance look-up (if the distance is in range): */
+			ii = covtable_lookup->nctx + 1 + (*ix - ix1);
+			jj = covtable_lookup->ncty + 1 + (*iy - iy1);
+			kk = covtable_lookup->nctz + 1 + (*iz - iz1);
+			if (ii < 1 || ii > general->nx || jj < 1 || jj > general->ny || kk < 1 || kk > 
+					general->nz) {
+				cova3(xx, yy, zz, &x1, &y1, &z1, &one, covariance->nst, &four, 
+						covariance->c0, covariance->it, covariance->cc, covariance->aa, &
+						one, &five, krige_vars->rotmat, &covariance->cmax, &cov);
+			} else {
+				cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+			}
+			krige_vars->r__[j - 1] = (double) cov;
+		}
+		krige_vars->rr[j - 1] = krige_vars->r__[j - 1];
+	}
+	/* Addition of Collocated Cosimulation Constraint: */
+		sfmin = 1e21f;
+		sfmax = -1e21f;
+		i1 = na;
+		for (i = 1; i <= i1; ++i) {
+			++in;
+			krige_vars->a[in - 1] = (double) general->colocorr * 
+				krige_vars->r__[i - 1];
+			if (krige_vars->a[in - 1] < sfmin) {
+				sfmin = krige_vars->a[in - 1];
+			}
+			else if (krige_vars->a[in - 1] > sfmax) {
+				sfmax = krige_vars->a[in - 1];
+			}
+		}
+		++in;
+		krige_vars->a[in - 1] = 1.f;
+		ii = na + 1;
+		krige_vars->r__[ii - 1] = (double) general->colocorr;
+		krige_vars->rr[ii - 1] = krige_vars->r__[ii - 1];
+		/* apagar */
+		/*           if((sfmax-sfmin).lt.EPSLON) neq = neq - 1 */
+	/* 		Write out the kriging Matrix if Seriously Debugging: */
+/*	if (general->idbg >= 3) {
+*/		/* apagar */
+		/*            write(ldbg,100) ix,iy,iz */
+/*		is = 1;
+		i1 = neq;
+		for (i = 1; i <= i1; ++i) {
+			ie = is + i - 1;
+*/			/* apagar */
+			/*                 write(ldbg,101) i,r(i),(a(j),j=is,ie) */
+/*			is += i;
+		}
+*/		/* apagar */
+		/* 100        format(/,'Kriging Matrices for Node: ',3i4,' RHS first') */
+		/* 101        format('    r(',i2,') =',f7.4,'  a= ',99f7.4) */
+/*	}
+*/	/* 		Solve the Kriging System: */
+	if (neq == 1) {
+		krige_vars->s[0] = krige_vars->r__[0] / krige_vars->a[0];
+		ising = 0;
+	} else {
+		ksol(&one, &neq, &one, krige_vars->a, krige_vars->r__, krige_vars->s, & ising);
+	}
+	/* 		Write a warning if the matrix is singular: */
+	if (ising != 0) {
+		if (general->idbg >= 1) {
+			/* apagar */
+			/*                  write(ldbg,*) 'WARNING SGSIM: singular matrix' */
+			/*                  write(ldbg,*) '               for node',ix,iy,iz */
+		}
+		*cmean = *gmean;
+		*cstdev = 1.f;
+		return 0;
+	}
+	/* 		Compute the estimate and kriging variance.  Recall that kriging type */
+	/* 			0 = Simple Kriging: */
+	/* 			1 = Ordinary Kriging: */
+	/* 			2 = Locally Varying Mean: */
+	/* 			3 = External Drift: */
+	/* 			4 = Collocated Cosimulation: */
+
+	*cmean = 0.f;
+	*cstdev = krige_vars->cbb;
+	sumwts = 0.f;
+	i1 = na;
+	for (i = 1; i <= i1; ++i) {
+		*cmean += (float) krige_vars->s[i - 1] * krige_vars->vra[i - 1];
+		*cstdev -= (float) (krige_vars->s[i - 1] * krige_vars->rr[i - 1]);
+		sumwts += (float) krige_vars->s[i - 1];
+	}
+		ind = *ix + (*iy - 1) * general->nx + (*iz - 1) * general->nxy;
+		*cmean += (float) krige_vars->s[na] * (bestAICube[ind] - simulation->vmedexp);
+		*cstdev -= (float) (krige_vars->s[na] * krige_vars->rr[na]);
+		*cmean += simulation->vmedexp;
+	/* Error message if negative variance: */
+	if (*cstdev < 0.f) {
+		/* apagar */
+		/*            write(ldbg,*) 'ERROR: Negative Variance: ',cstdev */
+		*cstdev = 0.f;
+	}
+	*cstdev = sqrt((double) MAX(*cstdev, 0.f)); /*sqrt((dmax(*cstdev,0.f))); */
+	/*      Write out the kriging Weights if Seriously Debugging: */
+
+	/*      if(idbg.ge.3) then */
+	/*            do i=1,na */
+	/*                  write(ldbg,140) i,vra(i),s(i) */
+	/*            end do */
+	/* 140        format(' Data ',i4,' value ',f8.4,' weight ',f8.4) */
+	/*            if(lktype.ge.4) write(ldbg,141) bestAICube(ind),s(na+1) */
+	/* 141        fomat(' Sec Data  value ',f8.4,' weight ',f8.4) */
+	/*            wrirte(ldbg,142) gmean,cmean,cstdev */
+	/* 142        format(' Global mean ',f8.4,' conditional ',f8.4, */
+	/*     +             ' std dev ',f8.4) */
+	/*      end if */
+	/* Finished Here: */
+	return 0;
+} /* krige_ */
+
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*            Builds and Solves the SK or OK Kriging System */
+/* INPUT VARIABLES: */
+/*   ix,iy,iz        index of the point currently being simulated */
+/*   xx,yy,zz        location of the point currently being simulated */
+/* OUTPUT VARIABLES: */
+/*   cmean           kriged estimate */
+/*   cstdev          kriged standard deviation */
+/* EXTERNAL REFERENCES: ksol   Gaussian elimination system solution */
+/* ----------------------------------------------------------------------- */
+
+
+/** Funcoes utilizadas
+ * ksol
+ * cova3
+ */
+
+/** CUBOS utilizados
+ * bestAICube quando ktype == 5
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * tmp
+ * order
+ * clc
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ * generl_1
+ * clooku_1
+ * krigev_1
+ * search_1
+ * simula_1
+ */
+
+
+int krige1(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
+		float *gmean, float *cmean, float * cstdev, 
+		float *bestAICube, float *clcorr,
+		general_vars_t * general,
+		search_vars_t * search,
+		simulation_vars_t * simulation,
+		covariance_vars_t * covariance,
+		covtable_lookup_vars_t * covtable_lookup,
+		krige_vars_t * krige_vars)
+{
+        /* Table of constant values */
+
+        int one = 1;
+        int four = 4;
+        int five = 5;
+
+	/* System generated locals */
+	int i1, i2;
+
+	/* Local variables */
+	int i, j;
+	float x1, y1, z1, x2, y2, z2;
+	int na, ii, jj, kk, in,
+            ix1 = 0, iy1 = 0, iz1 = 0,      /* LPL Init values */
+            ix2 = 0, iy2 = 0, iz2 = 0, ind, neq;
+	float cov, vrea[129];
+	/*float edmin, edmax;*/
+	int index;
+	/*float sfmin, sfmax;*/
+	int ising;
+	int first;
+	float sumwts;
+
+#ifdef PROFILE
+	profile.krige++;
+#endif
+
+	/* Parameter adjustments */
+	--bestAICube;
+
+	/* Function Body */
+	first = FALSE;
+	na = search->nclose + covtable_lookup->ncnode;
+	neq = na;
+	neq += 1;
+	/* Set up kriging matrices: */
+	in = 0;
+	i1 = na;
+	for (j = 1; j <= i1; ++j) {
+		/* Sort out the actual location of point "j" */
+		if (j <= search->nclose) {
+			index = (int) general->close[j - 1];
+			x1 = general->x[index - 1];
+			y1 = general->y[index - 1];
+			z1 = general->z__[index - 1];
+			krige_vars->vra[j - 1] = general->vr[index - 1];
+			vrea[j - 1] = general->sec[index - 1];
+		} else {
+			/* It is a previously simulated node (keep index for table look-up): */
+			index = j - search->nclose;
+			x1 = covtable_lookup->cnodex[index - 1];
+			y1 = covtable_lookup->cnodey[index - 1];
+			z1 = covtable_lookup->cnodez[index - 1];
+			krige_vars->vra[j - 1] = covtable_lookup->cnodev[index - 1];
+			ind = covtable_lookup->icnode[index - 1];
+			ix1 = *ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
+			iy1 = *iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
+			iz1 = *iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			index = ix1 + (iy1 - 1) * general->nx + (iz1 - 1) * general->nxy;
+			if(general->ktype == 5)
+				vrea[j - 1] = bestAICube[index];
+		}
+		i2 = j;
+		for (i = 1; i <= i2; ++i) {
+			/* Sort out the actual location of point "i" */
+			if (i <= search->nclose) {
+				index = (int) general->close[i - 1];
+				x2 = general->x[index - 1];
+				y2 = general->y[index - 1];
+				z2 = general->z__[index - 1];
+			} else {
+				/* It is a previously simulated node (keep index for table
+				   look-up): */
+				index = i - search->nclose;
+				x2 = covtable_lookup->cnodex[index - 1];
+				y2 = covtable_lookup->cnodey[index - 1];
+				z2 = covtable_lookup->cnodez[index - 1];
+				ind = covtable_lookup->icnode[index - 1];
+				ix2 = *ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
+				iy2 = *iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
+				iz2 = *iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			}
+			/* Now, get the covariance value: */
+			++in;
+			/* Decide whether or not to use the covariance look-up table: */
+			if ((j <= search->nclose) || (i <= search->nclose)) 
+			{
+				cova3(&x1, &y1, &z1, &x2, &y2, &z2, &one, covariance->nst, &
+						four, covariance->c0, covariance->it, covariance->cc, 
+						covariance->aa, &one, &five, krige_vars->rotmat, &
+						covariance->cmax, &cov);
+				krige_vars->a[in - 1] = (double) cov;
+			} else {
+				/* Try to use the covariance look-up (if the distance is in range): */
+				ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
+				jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
+				kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
+				if ((ii < 1) || (ii > general->nx) ||
+                                    (jj < 1) || (jj > general->ny) ||
+                                    (kk < 1) || (kk > general->nz)) {
+					cova3(&x1, &y1, &z1, &x2, &y2, &z2, &one, covariance->nst, 
+							&four, covariance->c0, covariance->it, covariance->cc, 
+							covariance->aa, &one, &five, krige_vars->rotmat, &
+							covariance->cmax, &cov);
+				} else {
+					cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+				}
+				krige_vars->a[in - 1] = (double) cov;
+			}
+		}
+		/* Get the RHS value (possibly with covariance look-up table): */
+		if (j <= search->nclose) {
+			cova3(xx, yy, zz, &x1, &y1, &z1, &one, covariance->nst, &four, 
+					covariance->c0, covariance->it, covariance->cc, covariance->aa, &one,
+					&five, krige_vars->rotmat, &covariance->cmax, &cov);
+			krige_vars->r__[j - 1] = (double) cov;
+		} else {
+			/* Try to use the covariance look-up (if the distance is in range): */
+			ii = covtable_lookup->nctx + 1 + (*ix - ix1);
+			jj = covtable_lookup->ncty + 1 + (*iy - iy1);
+			kk = covtable_lookup->nctz + 1 + (*iz - iz1);
+			if (ii < 1 || ii > general->nx || jj < 1 || jj > general->ny || kk < 1 || kk > 
+					general->nz) {
+				cova3(xx, yy, zz, &x1, &y1, &z1, &one, covariance->nst, &four, 
+						covariance->c0, covariance->it, covariance->cc, covariance->aa, &
+						one, &five, krige_vars->rotmat, &covariance->cmax, &cov);
+			} else {
+				cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+			}
+			krige_vars->r__[j - 1] = (double) cov;
+		}
+		krige_vars->rr[j - 1] = krige_vars->r__[j - 1];
+	}
+	/* Addition of OK constraint: */
+		i1 = na;
+		for (i = 1; i <= i1; ++i) {
+			++in;
+			krige_vars->a[in - 1] = 1.f;
+		}
+		++in;
+		krige_vars->a[in - 1] = 0.f;
+		krige_vars->r__[na] = 1.f;
+		krige_vars->rr[na] = 1.f;
+
+	/* 		Write out the kriging Matrix if Seriously Debugging: */
+/*	if (general->idbg >= 3) {
+*/		/* apagar */
+		/*            write(ldbg,100) ix,iy,iz */
+/*		is = 1;
+		i1 = neq;
+		for (i = 1; i <= i1; ++i) {
+			ie = is + i - 1;
+*/			/* apagar */
+			/*                 write(ldbg,101) i,r(i),(a(j),j=is,ie) */
+/*			is += i;
+		}
+*/		/* apagar */
+		/* 100        format(/,'Kriging Matrices for Node: ',3i4,' RHS first') */
+		/* 101        format('    r(',i2,') =',f7.4,'  a= ',99f7.4) */
+/*	}
+*/	/* 		Solve the Kriging System: */
+	if (neq == 1) {
+		krige_vars->s[0] = krige_vars->r__[0] / krige_vars->a[0];
+		ising = 0;
+	} else {
+		ksol(&one, &neq, &one, krige_vars->a, krige_vars->r__, krige_vars->s, & ising);
+	}
+	/* 		Write a warning if the matrix is singular: */
+	if (ising != 0) {
+		if (general->idbg >= 1) {
+			/* apagar */
+			/*                  write(ldbg,*) 'WARNING SGSIM: singular matrix' */
+			/*                  write(ldbg,*) '               for node',ix,iy,iz */
+		}
+		*cmean = *gmean;
+		*cstdev = 1.f;
+		return 0;
+	}
+	/* 		Compute the estimate and kriging variance.  Recall that kriging type */
+	/* 			0 = Simple Kriging: */
+	/* 			1 = Ordinary Kriging: */
+	/* 			2 = Locally Varying Mean: */
+	/* 			3 = External Drift: */
+	/* 			4 = Collocated Cosimulation: */
+
+	*cmean = 0.f;
+	*cstdev = krige_vars->cbb;
+	sumwts = 0.f;
+	i1 = na;
+	for (i = 1; i <= i1; ++i) {
+		*cmean += (float) krige_vars->s[i - 1] * krige_vars->vra[i - 1];
+		*cstdev -= (float) (krige_vars->s[i - 1] * krige_vars->rr[i - 1]);
+		sumwts += (float) krige_vars->s[i - 1];
+	}
+	*cstdev -= (float) krige_vars->s[na];
+	/* Error message if negative variance: */
+	if (*cstdev < 0.f) {
+		/* apagar */
+		/*            write(ldbg,*) 'ERROR: Negative Variance: ',cstdev */
+		*cstdev = 0.f;
+	}
+	*cstdev = sqrt((double) MAX(*cstdev, 0.f)); /*sqrt((dmax(*cstdev,0.f))); */
+	/*      Write out the kriging Weights if Seriously Debugging: */
+
+	/*      if(idbg.ge.3) then */
+	/*            do i=1,na */
+	/*                  write(ldbg,140) i,vra(i),s(i) */
+	/*            end do */
+	/* 140        format(' Data ',i4,' value ',f8.4,' weight ',f8.4) */
+	/*            if(lktype.ge.4) write(ldbg,141) bestAICube(ind),s(na+1) */
+	/* 141        fomat(' Sec Data  value ',f8.4,' weight ',f8.4) */
+	/*            wrirte(ldbg,142) gmean,cmean,cstdev */
+	/* 142        format(' Global mean ',f8.4,' conditional ',f8.4, */
+	/*     +             ' std dev ',f8.4) */
+	/*      end if */
+	/* Finished Here: */
+	return 0;
+} /* krige_ */
+
+
+
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*                Solution of a System of Linear Equations */
+/*                **************************************** */
+
+/* INPUT VARIABLES: */
+
+/*   nright,nsb       number of columns in right hand side matrix. */
+/*                      for KB2D: nright=1, nsb=1 */
+/*   neq              number of equations */
+/*   a()              upper triangular left hand side matrix (stored */
+/*                      columnwise) */
+/*   r()              right hand side matrix (stored columnwise) */
+/*                      for kb2d, one column per variable */
+/* OUTPUT VARIABLES: */
+
+/*   s()              solution array, same dimension as  r  above. */
+/*   ising            singularity indicator */
+/*                      0,  no singularity problem */
+/*                     -1,  neq .le. 1 */
+/*                      k,  a null pivot appeared at the kth iteration */
+/* PROGRAM NOTES: */
+
+/*   1. Requires the upper triangular left hand side matrix. */
+/*   2. Pivots are on the diagonal. */
+/*   3. Does not search for max. element for pivot. */
+/*   4. Several right hand side matrices possible. */
+/*   5. USE for ok and sk only, NOT for UK. */
+/* ----------------------------------------------------------------------- */
+
+/**
+ * funcoes utilizadas
+ * -
+ */
+
+/** CUBOS utilizados
+ * -
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * tmp
+ * order
+ * clc
+ * lvm
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ * krigev_1 (krigev_1.{a,r__,s})
+ */
+
+
+
+
+int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
+		int *ising)
+{
+	/* System generated locals */
+	int i__1;
+	double d__1;
+
+	/* Local variables */
+	int i__, j, k, m1;
+	double ak, ap;
+	int ii, ij = 0, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, 
+			   ijm;
+	double tol, piv;
+
+#ifdef PROFILE
+	profile.ksol++;
+#endif
+
+	/* If there is only one equation then set ising and return: */
+
+	/* Parameter adjustments */
+	--s;
+	--r__;
+	--a;
+
+	/* Function Body */
+	if (*neq <= 1) {
+		*ising = -1;
+		return 0;
+	}
+
+	/* Initialize: */
+
+	tol = 1e-7f;
+	*ising = 0;
+	nn = *neq * (*neq + 1) / 2;
+	nm = *nsb * *neq;
+	m1 = *neq - 1;
+	kk = 0;
+
+	/* Start triangulation: */
+
+	for (k = 1; k <= m1; ++k) {
+		kk += k;
+		ak = a[kk];
+		if (fabs(ak) < tol) {
+			*ising = k;
+			return 0;
+		}
+		km1 = k - 1;
+		for (iv = 1; iv <= *nright; ++iv) {
+			nm1 = nm * (iv - 1);
+			ii = kk + nn * (iv - 1);
+			piv = 1.f / a[ii];
+			lp = 0;
+			for (i__ = k; i__ <= m1; ++i__) {
+				ll = ii;
+				ii += i__;
+				ap = a[ii] * piv;
+				++lp;
+				ij = ii - km1;
+				for (j = i__; j <= m1; ++j) {
+					ij += j;
+					ll += j;
+					a[ij] -= ap * a[ll];
+				}
+				/* optimizacoes. */
+				i__1 = lp + nm1;
+				/* fim das opts */
+				for (llb = k; llb <= nm; llb += *neq) {
+					in = llb + i__1;
+					ll1 = llb + nm1;
+					r__[in] -= ap * r__[ll1];
+				}
+			}
+		}
+	}
+
+	/* Error checking - singular matrix: */
+
+	ijm = ij - nn * (*nright - 1);
+	if ((d__1 = a[ijm], fabs(d__1)) < tol) {
+		*ising = *neq;
+		return 0;
+	}
+
+	/* Finished triangulation, start solving back: */
+
+	for (iv = 1; iv <= *nright; ++iv) {
+		nm1 = nm * (iv - 1);
+		ij = ijm + nn * (iv - 1);
+		piv = 1.f / a[ij];
+		for (llb = *neq; llb <= nm; llb += *neq) {
+			ll1 = llb + nm1;
+			s[ll1] = r__[ll1] * piv;
+		}
+		i__ = *neq;
+		kk = ij;
+		for (ii = 1; ii <= m1; ++ii) {
+			kk -= i__;
+			piv = 1.f / a[kk];
+			--i__;
+			for (llb = i__; llb <= nm; llb += *neq) {
+				ll1 = llb + nm1;
+				in = ll1;
+				ap = r__[in];
+				ij = kk;
+				for (j = i__; j <= m1; ++j) {
+					ij += j;
+					++in;
+					ap -= a[ij] * s[in];
+				}
+				s[ll1] = ap * piv;
+			}
+		}
+	}
+
+	/* Finished solving back, return: */
+
+	return 0;
+} /* ksol_ */
+
+/* ----------------------------------------------------------------------- */
+/*             Establish Which Super Blocks to Search */
+/*             ************************************** */
+/* This subroutine establishes which super blocks must be searched given */
+/* that a point being estimated/simulated falls within a super block */
+/* centered at 0,0,0. */
+
+/* INPUT VARIABLES: */
+/*   nxsup,xsizsup    Definition of the X super block grid */
+/*   nysup,ysizsup    Definition of the Y super block grid */
+/*   nzsup,zsizsup    Definition of the Z super block grid */
+/*   irot             index of the rotation matrix for searching */
+/*   MAXROT           size of rotation matrix arrays */
+/*   rotmat           rotation matrices */
+/*   radsqd           squared search radius */
+
+/* OUTPUT VARIABLES: */
+/*   nsbtosr          Number of super blocks to search */
+/*   ixsbtosr         X offsets for super blocks to search */
+/*   iysbtosr         Y offsets for super blocks to search */
+/*   izsbtosr         Z offsets for super blocks to search */
+
+/* EXTERNAL REFERENCES: */
+/*   sqdist           Computes anisotropic squared distance */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ * sqdist
+ */
+
+/** CUBOS utilizados
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+
+int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
+		int *nzsup, float *zsizsup, int *irot, int * maxrot,
+		double *rotmat, float *radsqd, int *nsbtosr, int * ixsbtosr,
+		int *iysbtosr, int *izsbtosr)
+{
+        /* Table of constant values */
+
+        float c_b2 = 0.f;
+
+	/* System generated locals */
+	int rotmat_dim1, rotmat_offset, i__1, i__2, i__3;
+
+	/* Local variables */
+	double shortest;
+	int i__, j, k, i1, j1, k1, i2, j2, k2;
+	float xo, yo, zo;
+	double hsqd;
+	float xdis, ydis, zdis;
+
+#ifdef PROFILE
+	profile.picksup++;
+#endif
+
+	/* MAIN Loop over all possible super blocks: */
+
+	/* Parameter adjustments */
+	rotmat_dim1 = *maxrot;
+	rotmat_offset = 1 + (rotmat_dim1 << 2);
+	rotmat -= rotmat_offset;
+	--ixsbtosr;
+	--iysbtosr;
+	--izsbtosr;
+
+	/* Function Body */
+	*nsbtosr = 0;
+	i__1 = *nxsup - 1;
+	for (i__ = -(*nxsup - 1); i__ <= i__1; ++i__) {
+		i__2 = *nysup - 1;
+		for (j = -(*nysup - 1); j <= i__2; ++j) {
+			i__3 = *nzsup - 1;
+			for (k = -(*nzsup - 1); k <= i__3; ++k) {
+				xo = (float) i__ * *xsizsup;
+				yo = (float) j * *ysizsup;
+				zo = (float) k * *zsizsup;
+
+				/* Find the closest distance between the corners of the super blocks: */
+
+				shortest = 1e21f;
+				for (i1 = -1; i1 <= 1; ++i1) {
+					for (j1 = -1; j1 <= 1; ++j1) {
+						for (k1 = -1; k1 <= 1; ++k1) {
+							for (i2 = -1; i2 <= 1; ++i2) {
+								for (j2 = -1; j2 <= 1; ++j2) {
+									for (k2 = -1; k2 <= 1; ++k2) {
+										if (i1 != 0 && j1 != 0 && k1 != 0 && 
+												i2 != 0 && j2 != 0 && k2 != 0)
+										{
+											xdis = (float) (i1 - i2) * .5f * *
+												xsizsup + xo;
+											ydis = (float) (j1 - j2) * .5f * *
+												ysizsup + yo;
+											zdis = (float) (k1 - k2) * .5f * *
+												zsizsup + zo;
+											hsqd = sqdist(&c_b2, &c_b2, &
+													c_b2, &xdis, &ydis, &zdis,
+													irot, maxrot, &rotmat[
+													rotmat_offset]);
+											if (hsqd < shortest) {
+												shortest = hsqd;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				/* Keep this super block if it is close enoutgh: */
+
+				if ((float) shortest <= *radsqd) {
+					++(*nsbtosr);
+					ixsbtosr[*nsbtosr] = i__;
+					iysbtosr[*nsbtosr] = j;
+					izsbtosr[*nsbtosr] = k;
+				}
+			}
+		}
+	}
+
+	/* Finished: */
+
+	return 0;
+} /* picksup_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*     Read primary data and secondary data */
+/* ----------------------------------------------------------------------- */
+
+/** Funcoes utilizadas
+ * sortem()
+ * gauinv()
+ * getindx()
+ */
+
+/** CUBOS utilizados
+ * lvm
+ * hard_data
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * clc
+ * tmp
+ * order
+ * mask
+ * bcm_data
+ * bai_data
+ */
+
+/** structs globais utilizadas:
+ * general
+ * simulation
+ * search
+ */
+
+
+int readdata(float *lvm,
+             double *hard_data,
+             int * hard_data_size,
+	     general_vars_t * general, 
+	     search_vars_t * search,
+	     simulation_vars_t * simulation)
+{
+        /* Table of constant values */
+        int one = 1;
+
+
+	/* System generated locals */
+	int i__1;
+	float r__1;
+
+
+	/* Local variables */
+	float c__, d__, e, f, g, h__;
+	int i__, j;
+	double w, cp, av;
+	int ix, nt, iy, iz;
+	double ss;
+	int ind;
+	float var[4], vrg, twt;
+	int iend, ierr, nelem;
+	double oldcp;
+	float vmedg;
+	int index, inull;
+	float vvarg;
+	int icolvr, icolwt, istart;
+	/* float testind; */
+	int testind;    /* LPL */
+
+#ifdef PROFILE
+    profile.readdata++;
+    profBegin("readdata");
+#endif
+
+
+	/* Parameter adjustments */
+	--hard_data;
+	--lvm;
+
+	/* Function Body */
+	if (*hard_data_size == 0) {
+		/* !it means that there is no Hard Data file! */
+		fprintf(stderr,"WARNING data file does not exist!");
+		fprintf(stderr,"\t- creating an *unconditional simulation*\n");
+		fprintf(stderr,"\t- Resetting ndmin, ndmax and itrans to 0\n");
+		fprintf(stderr,"\t- Resetting sstrar to 1\n");
+		search->ndmin = 0;
+		search->ndmax = 0;
+		general->itrans = 0;
+		search->sstrat = 1;
+	}
+	general->nd = 0;
+	av = 0;
+	ss = 0;
+	/* !Establish the reference histogram for the simulation (provided that */
+	/* !we have data, and we are transforming the data): */
+	if (general->itrans == 1) {
+		/* !write(*,*) 'Setting up transformation table' */
+		/* !Decide which file to use for establishing the transformation table: */
+		if (general->ismooth == 1) {
+			/* !MARTELADO! Alterar depois, passar do C para aqui */
+			/* !tmpfl='smoothFile.out' */
+			icolvr = general->isvr;
+			icolwt = general->iswt;
+		} else {
+			/* !tmpfl = DATA_FILENAME */
+			icolvr = general->ivrl;
+			icolwt = general->iwt;
+		}
+		/* !Now, read in the actual data: */
+		nt = 0;
+		general->ntr = 0;
+		twt = 0;
+		nelem = 0;
+L3:
+		if (nelem == *hard_data_size) {
+			goto L4;
+		}
+		i__1 = general->nvari;
+		for (j = 1; j <= i__1; ++j) {
+			var[j - 1] = hard_data[nelem + j];
+		}
+		nelem += general->nvari;
+		/* !Trim this data? */
+		if (var[icolvr - 1] < general->tmin || var[icolvr - 1] > general->tmax) {
+			++nt;
+			goto L3;
+		}
+		++general->ntr;
+		/* !Removed after dynamic memory allocation */
+		/* ! */
+		/* !Exceeded available storage? */
+		/* !if(ntr.gt.MAXDAT) then */
+		/* !	write(*,*) ' ERROR: not enough room for data ',MAXDAT */
+		/* !	stop */
+		/* !endif */
+		if (icolvr > general->nvari || icolwt > general->nvari) {
+			fprintf(stderr,"ERROR: too few columns in ref data\n");
+			fprintf(stderr,"\taborting.\n");
+			return -1; /* ERROR */
+		}
+		/* !Keep this data: Assign the data value and coordinate location: */
+		general->vrtr[general->ntr - 1] = var[icolvr - 1];
+		if (icolwt <= 0) {
+			general->vrgtr[general->ntr - 1] = 1;
+		} else {
+			general->vrgtr[general->ntr - 1] = var[icolwt - 1];
+		}
+		if (general->vrgtr[general->ntr - 1] <= 0) {
+			--general->ntr;
+			++nt;
+			goto L3;
+		}
+		twt += general->vrgtr[general->ntr - 1];
+		/* !Go back for another datum: */
+		goto L3;
+L4:
+		if (general->ntr <= 1) {
+			fprintf(stderr,"EROOR: too few data for transformation\n");
+			fprintf(stderr,"\taborting.\n");
+			return -1; /* ERROR */
+		}
+		/* !Sort data by value: */
+		istart = 1;
+		iend = general->ntr;
+		sortem(&istart, &iend,
+                       general->vrtr,
+                       &one, general->vrgtr,
+                       &c__, &d__, &e, &f, &g, &h__);
+		/* !Compute the cumulative probabilities and write transformation table */
+		twt = (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
+		oldcp = 0;
+		cp = 0;
+		vmedg = 0;
+		vvarg = 0;
+		i__1 = iend;
+		for (j = istart; j <= i__1; ++j) {
+			cp += (double) (general->vrgtr[j - 1] / twt);
+			w = (cp + oldcp) * .5f;
+			gauinv(&w, &vrg, &ierr);
+			if (ierr == 1) {
+				vrg = general->nosvalue;
+			}
+			oldcp = cp;
+			/* !Now, reset the weight to the normal scores value: */
+			general->vrgtr[j - 1] = vrg;
+		}
+		/* !Basic statistics calculation - mean and variance (DSSIM) */
+		i__1 = iend;
+		for (j = istart; j <= i__1; ++j) {
+			vmedg += general->vrgtr[j - 1];
+		}
+		vmedg /= iend - istart;
+		i__1 = iend;
+		for (j = istart; j <= i__1; ++j) {
+			/* Computing 2nd power */
+			r__1 = general->vrgtr[j - 1] - vmedg;
+			vvarg += r__1 * r__1;
+		}
+		vvarg /= iend - istart;
+		/* !do j=istart,iend */
+		/* !	write(lout,201) vrtr(j),(vrgtr(j)-vmedg)/sqrt(vvarg) */
+		/* !201				format(2F12.5) */
+		/* !end do */
+		/* !close(lout) */
+	}
+	if (*hard_data_size != 0) {
+		/* !it means that there is no Hard Data file! */
+		if ((general->ixl > general->nvari) ||
+                    (general->iyl > general->nvari) || 
+		    (general->izl > general->nvari) ||
+                    (general->ivrl > general->nvari) ||
+                    (general->isecvr > general->nvari) ||
+		    (general->iwt > general->nvari)) {
+			fprintf(stderr,"ERROR: you have asked for a column number\n");
+			fprintf(stderr,"\t\tgreater than available in file\n");
+			return -1; /* ERROR */
+		}
+		/* !Read all the data until the end of the file: */
+		twt = 0;
+		general->nd = 0;
+		nt = 0;
+		nelem = 0;
+L5:
+		if (nelem == *hard_data_size) {
+			goto L6;
+		}
+		i__1 = general->nvari;
+		for (j = 1; j <= i__1; ++j) {
+			var[j - 1] = hard_data[nelem + j];
+		}
+		nelem += general->nvari;
+		if (var[general->ivrl - 1] < general->tmin || var[general->ivrl - 1] 
+				> general->tmax) {
+			++nt;
+			goto L5;
+		}
+		++general->nd;
+		if (general->nd > 7000) {
+			fprintf(stderr,"ERROR execeeded MAXDAT - check config file\n");
+			return -1; /* ERROR */
+		}
+		/* !Acceptable data, assign the value, X, Y, Z coordinates, and weight: */
+		general->vr[general->nd - 1] = var[general->ivrl - 1];
+		if (general->ixl <= 0) {
+			general->x[general->nd - 1] = general->xmn;
+		} else {
+			general->x[general->nd - 1] = var[general->ixl - 1];
+		}
+		if (general->iyl <= 0) {
+			general->y[general->nd - 1] = general->ymn;
+		} else {
+			general->y[general->nd - 1] = var[general->iyl - 1];
+		}
+		if (general->izl <= 0) {
+			general->z__[general->nd - 1] = general->zmn;
+		} else {
+			general->z__[general->nd - 1] = var[general->izl - 1];
+		}
+		if (general->iwt <= 0) {
+			general->wt[general->nd - 1] = 1.f;
+		} else {
+			general->wt[general->nd - 1] = var[general->iwt - 1];
+		}
+		if (general->isecvr <= 0) {
+			general->sec[general->nd - 1] = general->nosvalue;
+		} else {
+			general->sec[general->nd - 1] = var[general->isecvr - 1];
+		}
+		twt += general->wt[general->nd - 1];
+		av += var[general->ivrl - 1] * general->wt[general->nd - 1];
+		ss += var[general->ivrl - 1] * var[general->ivrl - 1] * general->wt[
+			general->nd - 1];
+		goto L5;
+L6:
+		if (general->imask == 1) {
+			fprintf(stderr,"imaks = 1\n");
+		}
+			/* !do index=1, MASK_DATA_SIZE */
+			/* !if(MASK_DATA(index).eq.0) then */
+			/* !	write(*,*) 'MASK_DATA=', MASK_DATA(index) */
+			/* !end if */
+			/* !	mask(index) = MASK_DATA(index) */
+			/* !end do */
+			/* !index=0 */
+			/* !do index=1, MASK_SIZE_DATA */
+			/* !	write(*,*) 'mask=', mask(index) */
+			/* !	write(*,*) ' MASK_DATA=', MASK_DATA(index) */
+			/* !end do */
+		simulation->vmedexp = 0;
+		simulation->vvarexp = 0;
+		i__1 = general->nd;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			simulation->vmedexp += general->vr[i__ - 1];
+		}
+		simulation->vmedexp /= general->nd;
+		i__1 = general->nd;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			/* Computing 2nd power */
+			r__1 = general->vr[i__ - 1] - simulation->vmedexp;
+			simulation->vvarexp += r__1 * r__1;
+		}
+		simulation->vvarexp /= general->nd;
+		/* !Compute the averages and variances as an error check for the user: */
+		av /= (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
+		ss = ss / ((double) MAX(twt,1e-20f)) - av * av;
+		/* !write (*,*) ' Data for SGSIM: ' */
+		/* !write (*,*) ' Number of acceptable data  = ',nd */
+		/* !write (*,*) ' Number trimmed             = ',nt */
+		/* !write (*,*) ' Weighted Average           = ',av */
+		/* !write (*,*) ' Weighted Variance          = ',ss */
+	}
+	/* !Read secondary attribute model if necessary: */
+	if (general->ktype >= 2) {
+		/* !write(*,*) 'Reading secondary attribute file' */
+		/*
+		if (*bai_data_size == 0) {
+			fprintf(stderr,"WARNING secondary attribute file does not exist!\n");
+			return -1;
+		}
+		*/
+		index = 0;
+		av = 0;
+		ss = 0;
+		nelem = 0;
+		/* lvm is allready set to a pointer of BAI on dssdll */
+		/* !BAI_DATA_SIZE = nx*ny*nz */
+		/*
+		i__1 = *bai_data_size__;
+		for (index = 1; index <= i__1; ++index) {
+			i__2 = general->nvaril;
+			for (j = 1; j <= i__2; ++j) {
+				var[j - 1] = bai_data[nelem + j];
+			}
+			nelem += general->nvaril;
+			sim[index] = (float) index;
+			lvm[index] = var[general->icollvm - 1];
+			av += var[general->icollvm - 1];
+			ss += var[general->icollvm - 1] * var[general->icollvm - 1];
+		}
+		*/
+		r__1 = (float) general->nxyz;
+		av /= ((double) MAX(r__1,1)); /*dmax(r__1,1.f); */
+		r__1 = (float) general->nxyz;
+		ss = ss / ((double) MAX(r__1,1)) - av * av;
+		if (general->ktype == 5) {
+			/* do nothing, dssdll allready sets clc acordingly to BCM.
+			 *  older method was to make a linear iteration
+			 *  over the BCM array and copy each position to
+			 *  the clc array.
+			 */
+		}
+		/* !Do we need to work with data residuals? (Locally Varying Mean) */
+		else if (general->ktype == 2) {
+			i__1 = general->nd;
+			for (i__ = 1; i__ <= i__1; ++i__) {
+				getindx(&general->nx,
+                                        &general->xmn,
+                                        &general->xsiz,
+                                        &general->x[i__ - 1],
+				        &ix,
+                                        &testind);
+				getindx(&general->ny,
+                                        &general->ymn,
+                                        &general->ysiz,
+                                        &general->y[i__ - 1],
+                                        &iy,
+                                        &testind);
+				getindx(&general->nz,
+                                        &general->zmn,
+                                        &general->zsiz,
+                                        &general->z__[i__ - 1],
+                                        &iz,
+                                        &testind);
+				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+				general->sec[i__ - 1] = lvm[index];
+				/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
+			}
+		}
+		/* !Do we need to get an external drift attribute for the data? */
+		else if (general->ktype == 3) {
+			i__1 = general->nd;
+			for (i__ = 1; i__ <= i__1; ++i__) {
+				if (general->sec[i__ - 1] == general->nosvalue) {
+					getindx(&general->nx,
+                                                &general->xmn,
+                                                &general->xsiz,
+                                                &general->x[i__ - 1],
+                                                &ix,
+                                                &testind);
+					getindx(&general->ny,
+                                                &general->ymn,
+                                                &general->ysiz,
+                                                &general->y[i__ - 1],
+                                                &iy,
+                                                &testind);
+					getindx(&general->nz,
+                                                &general->zmn,
+                                                &general->zsiz,
+                                                &general->z__[i__ - 1],
+                                                &iz,
+                                                &testind);
+					index = ix + (iy - 1) * general->nx + (iz - 1) * 
+						general->nxy;
+					general->sec[i__ - 1] = lvm[index];
+				}
+			}
+		}
+		/* Removed for DSSIM implementation */
+
+		/* Transform the secondary attribute to normal scores? */
+
+		/*      if(ktype.eq.4) then */
+		/*         write(ldbg,113) varred */
+		/* 113     format(/,' Transforming Secondary Data with', */
+		/*     +               ' variance reduction of ',f12.4,/) */
+		/*         write(*,*) 'Transforming secondary variable' */
+		/*         write(*,*) */
+		/*         call sortem(1,nxyz,lvm,1,sim,c,d,e,f,g,h) */
+		/*         oldcp = 0.0 */
+		/*         cp    = 0.0 */
+		/*         do i=1,nxyz */
+		/*               cp =  cp + dble(1.0/real(nxyz)) */
+		/*               w  = (cp + oldcp)/2.0 */
+		/*               call gauinv(w,lvm(i),ierr) */
+		/* 	         lvm(i) = lvm(i) * varred */
+		/*               oldcp  =  cp */
+		/*            end do */
+		/*            call sortem(1,nxyz,sim,1,lvm,c,d,e,f,g,h) */
+		/*         end if */
+	}
+	/* !Re-scale secondary variable to mean and variance */
+	/* !of the primary variable */
+	if (general->ktype >= 4) {
+		simulation->vmedsec = 0;
+		simulation->vvarsec = 0;
+		inull = 0;
+		i__1 = general->nxyz;
+		for (ind = 1; ind <= i__1; ++ind) {
+			if (lvm[ind] != -999.25f) {
+				simulation->vmedsec += lvm[ind];
+			} else {
+				++inull;
+			}
+		}
+		simulation->vmedsec /= general->nxyz - inull;
+		i__1 = general->nxyz;
+		for (ind = 1; ind <= i__1; ++ind) {
+			if (lvm[ind] != -999.25f) {
+				/* Computing 2nd power */
+				r__1 = lvm[ind] - simulation->vmedsec;
+				simulation->vvarsec += r__1 * r__1;
+			}
+		}
+		simulation->vvarsec /= general->nxyz - inull;
+		i__1 = general->nxyz;
+		for (ind = 1; ind <= i__1; ++ind) {
+			if (lvm[ind] != -999.25f) {
+				lvm[ind] = (lvm[ind] - simulation->vmedsec) / sqrt(
+						simulation->vvarsec) * sqrt(simulation->vvarexp) + 
+					simulation->vmedexp;
+			}
+		}
+	}
+
+#ifdef PROFILE
+    profEnd("readdata");
+#endif
+
+	return 0;
+	/* Error in an Input File Somewhere: */
+	/* L97: */
+	fprintf(stderr,"ERROR in secondary data file!\n");
+	return -1; /* ERROR */
+	/* L98: */
+	fprintf(stderr,"ERROR in correlation coef. data file!\n");
+	return -1; /* ERROR */
+	/* L99: */
+	fprintf(stderr,"ERROR in data file!\n");
+	return -1; /* ERROR */
+} /* readdata_ */
+
+
+
+
+/* !----------------------------------------------------------------------- */
+/* ! Initialization and Read Parameters */
+/* ! */
+/* ! The input parameters and data are read in from their files. Some quick */
+/* ! error checking is performed and the statistics of all the variables */
+/* ! being considered are written to standard output. */
+/* !----------------------------------------------------------------------- */
+
+/** Funcoes utilizadas
+ */
+
+/** CUBOS utilizados
+ * ??
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ * generl_1
+ * simula_1
+ * clooku_1
+ * search_1
+ * cova3d_1
+ */
+
+
+int readparam(float *params, float *models, 
+		general_vars_t *general,
+		search_vars_t *search,
+		simulation_vars_t *simulation,
+		covariance_vars_t *covariance,
+		covtable_lookup_vars_t *covt_lookup)
+{
+	/* System generated locals */
+	int i__1;
+	float r__1;
+
+
+	/* Local variables */
+	int nst1_pos__, seed_pos__, noct_pos__, tmin_pos__, tmax_pos__,
+			   ivrl_pos__, zmin_pos__, zmax_pos__, isvr_pos__, iswt_pos__, 
+			   ntry_pos__, xsiz_pos__, ysiz_pos__, zsiz_pos__, sang1_pos__, 
+			   sang2_pos__, sang3_pos__, i__;
+	double p;
+	int icvar_pos__, ltail_pos__, imask_pos__, ndmin_pos__, 
+			   ndmax_pos__, utail_pos__, nvari_pos__, ltpar_pos__, utpar_pos__, 
+			   ktype_pos__, nmult_pos__, mults_pos__;
+	float aa1, aa2;
+	int icmean_pos__, varred_pos__, nodmax_pos__, radius_pos__, 
+			   isecvr_pos__, nvaril_pos__, itrans_pos__, sstrat_pos__, 
+			   radius1_pos__, radius2_pos__, icollvm_pos__, ismooth_pos__;
+	float sill;
+	int colocorr_pos__, nosvalue_pos__, c01_pos__;
+	int testfl;
+	int nx_pos__, ny_pos__, nz_pos__;
+	float radius1, radius2;
+	int ixl_pos__, iyl_pos__, izl_pos__, xmn_pos__, iwt_pos__, 
+			   ymn_pos__, zmn_pos__;
+
+
+#ifdef PROFILE
+	profile.readparm++;
+	profBegin("readparm");
+#endif
+
+	/* Parameter adjustments */
+	--models;
+	--params;
+
+	/* Function Body */
+	nvari_pos__ = 1;
+	ixl_pos__ = 2;
+	iyl_pos__ = 3;
+	izl_pos__ = 4;
+	ivrl_pos__ = 5;
+	iwt_pos__ = 7;
+	isecvr_pos__ = 7;
+	tmin_pos__ = 8;
+	tmax_pos__ = 9;
+	itrans_pos__ = 10;
+	ismooth_pos__ = 11;
+	isvr_pos__ = 12;
+	iswt_pos__ = 13;
+	zmin_pos__ = 14;
+	zmax_pos__ = 15;
+	ltail_pos__ = 16;
+	ltpar_pos__ = 17;
+	utail_pos__ = 18;
+	utpar_pos__ = 19;
+	ntry_pos__ = 20;
+	icmean_pos__ = 21;
+	icvar_pos__ = 22;
+	nx_pos__ = 23;
+	xmn_pos__ = 24;
+	xsiz_pos__ = 25;
+	ny_pos__ = 26;
+	ymn_pos__ = 27;
+	ysiz_pos__ = 28;
+	nz_pos__ = 29;
+	zmn_pos__ = 30;
+	zsiz_pos__ = 31;
+	nosvalue_pos__ = 32;
+	imask_pos__ = 33;
+	seed_pos__ = 34;
+	ndmin_pos__ = 35;
+	ndmax_pos__ = 36;
+	nodmax_pos__ = 37;
+	sstrat_pos__ = 38;
+	mults_pos__ = 39;
+	nmult_pos__ = 40;
+	noct_pos__ = 41;
+	radius_pos__ = 42;
+	radius1_pos__ = 43;
+	radius2_pos__ = 44;
+	sang1_pos__ = 45;
+	sang2_pos__ = 46;
+	sang3_pos__ = 47;
+	ktype_pos__ = 48;
+	colocorr_pos__ = 49;
+	varred_pos__ = 50;
+	nvaril_pos__ = 51;
+	icollvm_pos__ = 52;
+	nst1_pos__ = 53;
+	c01_pos__ = 54;
+	general->nvari = params[nvari_pos__];
+	general->ixl = params[ixl_pos__];
+	general->iyl = params[iyl_pos__];
+	general->izl = params[izl_pos__];
+	general->ivrl = params[ivrl_pos__];
+	general->iwt = params[iwt_pos__];
+	general->isecvr = params[isecvr_pos__];
+	general->tmin = params[tmin_pos__];
+	general->tmax = params[tmax_pos__];
+	general->itrans = params[itrans_pos__];
+	/* !	read(lin,'(a256)',err=98) transfl */
+	general->ismooth = params[ismooth_pos__];
+	/* !      read(lin,'(a256)',err=98) smthfl */
+	general->isvr = params[isvr_pos__];
+	general->iswt = params[iswt_pos__];
+	general->zmin = params[zmin_pos__];
+	general->zmax = params[zmax_pos__];
+	general->ltail = params[ltail_pos__];
+	general->ltpar = params[ltpar_pos__];
+	general->utail = params[utail_pos__];
+	general->utpar = params[utpar_pos__];
+	/* !MARTELADO para só fazer 1 simulação */
+	simulation->nsim = 1;
+	covt_lookup->ntry = params[ntry_pos__];
+	covt_lookup->icmean = params[icmean_pos__];
+	covt_lookup->icvar = params[icvar_pos__];
+	general->nx = params[nx_pos__];
+	general->xmn = params[xmn_pos__];
+	general->xsiz = params[xsiz_pos__];
+	general->ny = params[ny_pos__];
+	general->ymn = params[ymn_pos__];
+	general->ysiz = params[ysiz_pos__];
+	general->nz = params[nz_pos__];
+	general->zmn = params[zmn_pos__];
+	general->zsiz = params[zsiz_pos__];
+	general->nxy = general->nx * general->ny;
+	general->nxyz = general->nx * general->ny * general->nz;
+	general->nosvalue = params[nosvalue_pos__];
+	general->imask = params[imask_pos__];
+	/*	iaco_1.ixv[0] = params[seed_pos__];*/
+
+	int rand = random();
+	newAcorni(rand);
+	for (i__ = 1; i__ <= 1000; ++i__) {
+		p = acorni();
+	}
+	search->ndmin = (int) params[ndmin_pos__];   /* LPL */
+	search->ndmax = (int) params[ndmax_pos__];
+	/*search->ndmin = params[ndmin_pos__];
+	search->ndmax = params[ndmax_pos__]; */
+	covt_lookup->nodmax = params[nodmax_pos__];
+	search->sstrat = params[sstrat_pos__];
+	if (search->sstrat == 1) {
+		search->ndmax = 0;
+	}
+	search->mults = params[mults_pos__];
+	search->nmult = params[nmult_pos__];
+	/*search->noct =  params[noct_pos__]; */          /* LPL */
+	search->noct = (int) params[noct_pos__];
+	search->radius = params[radius_pos__];
+	radius1 = params[radius1_pos__];
+	radius2 = params[radius2_pos__];
+	if (search->radius < 1e-20f) {
+		fprintf(stderr,"radius (%f), must be greater than EPSLON (%f)\n",search->radius, 1e-20f);
+		return -1; /* ERROR */
+	}
+	search->radsqd = search->radius * search->radius;
+	search->sanis1 = radius1 / search->radius;
+	search->sanis2 = radius2 / search->radius;
+	search->sang1 = params[sang1_pos__];
+	search->sang2 = params[sang2_pos__];
+	search->sang3 = params[sang3_pos__];
+	general->ktype = params[ktype_pos__];
+	general->colocorr = params[colocorr_pos__];
+	general->varred = params[varred_pos__];
+	/* !      read(lin,'(a256)',err=98) corrfl */
+	/* !      read(lin,'(a256)',err=98) lvmfl */
+	general->nvaril = params[nvaril_pos__];
+	general->icollvm = params[icollvm_pos__];
+	covariance->nst[0] = params[nst1_pos__];
+	covariance->c0[0] = params[c01_pos__];
+	sill = covariance->c0[0];
+	i__1 = covariance->nst[0];
+	for (i__ = 1; i__ <= i__1; ++i__) {
+		covariance->it[i__ - 1] = models[(i__ << 3) - 7];
+		covariance->cc[i__ - 1] = models[(i__ << 3) - 6];
+		covariance->ang1[i__ - 1] = models[(i__ << 3) - 5];
+		covariance->ang2[i__ - 1] = models[(i__ << 3) - 4];
+		covariance->ang3[i__ - 1] = models[(i__ << 3) - 3];
+		covariance->aa[i__ - 1] = models[(i__ << 3) - 2];
+		aa1 = models[(i__ << 3) - 1];
+		aa2 = models[i__ * 8];
+		r__1 = covariance->aa[i__ - 1];
+		covariance->anis1[i__ - 1] = aa1 / ((double) MAX(r__1,1e-20f));  /*dmax(r__1,1e-20f)*/;
+		r__1 = covariance->aa[i__ - 1];
+		covariance->anis2[i__ - 1] = aa2 / ((double) MAX(r__1,1e-20f)); /*dmax(r__1,1e-20f) */;
+		sill += covariance->cc[i__ - 1];
+		if (covariance->it[i__ - 1] == 4) {
+			fprintf(stderr,"A power model is NOT allowedi\n");
+			fprintf(stderr,"Choose a diferente model and re-start\n");
+			return -1; /* ERROR */
+		}
+	}
+	/* Warn the user if the sill is different than 1.0: */
+	if (sill > 1.f || sill < 1.f) {
+		fprintf(stderr,"WARNING the sill of your variogram is not 1.0\n");
+		fprintf(stderr,"\t\tsill = %f\n",sill);
+	}
+	if (general->ltail != 1 && general->ltail != 2) {
+		fprintf(stderr,"ERROR invalid lower tail option: %d\n",(int)general->ltail);
+		fprintf(stderr,"\t\tonly allowed 1 or 2 - see manual.\n");
+		testfl = TRUE;
+	}
+	if (general->utail != 1 && general->utail != 2 && general->utail != 4) {
+		fprintf(stderr,"ERROR invalid upper tail option: %d\n",(int) general->utail);
+		fprintf(stderr,"\t\tonly allowed 1, 2 or 4 - see manual.\n");
+		testfl = TRUE;
+	}
+	if (general->utail == 4 && general->utpar < 1.f) {
+		fprintf(stderr,"ERROR invalid power for hyperbolic tail: %f\n",general->utpar);
+		fprintf(stderr,"\t\tmust be greater than 1.0.\n");
+		testfl = TRUE;
+	}
+	if (general->ltail == 2 && general->ltpar < 0.f) {
+		fprintf(stderr,"ERROR invalid power for power model: %f\n",general->ltpar);
+		fprintf(stderr,"\t\tmust be greater than 0.0.\n");
+		testfl = TRUE;
+	}
+	if (general->utail == 2 && general->utpar < 0.f) {
+		fprintf(stderr,"ERROR invalid power for power model: %f\n",general->utpar);
+		fprintf(stderr,"\t\tmust be greater than 0.0.\n");
+		testfl = TRUE;
+	}
+
+#ifdef PROFILE
+	profEnd("readparm");
+#endif
+
+	return 0;
+} /* readparm_ */
+
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*           Conditional Simulation of a 3-D Rectangular Grid */
+
+/* This subroutine generates 3-D realizations of a Gaussian process with */
+/* a given autocovariance model, and conditional to input Gaussian data. */
+/* The conditional simulation is achieved by sequential simulation of all */
+/* the nodes visited by a random path. */
+
+/* PROGRAM NOTES: */
+
+/*  1. The three dimensional anisotropy parameters, i.e., of the search */
+/*     ellipse and variogram ranges are described in section 2.3 of the */
+/*     manual.   The variogram parameters are described in the same place */
+
+/*  2. The original data and previously simulated grid nodes can be */
+/*     searched separately.  There can be a different maximum number of */
+/*     each and a minimum number of original data can be specified */
+/*     to restrict simulation beyond the limits of the data.  The */
+/*     closeness of previously simulated grid nodes is measured according */
+/*     to the variogram structural distance. */
+
+/* INPUT VARIABLES: */
+/*   nd               Number of data (no missing values) */
+/*   x,y,z(nd)        coordinates of the data */
+/*   vr(nd)           gaussian data (normal scores) */
+/*   nx,ny,nz         Number of blocks in X,Y, and Z */
+/*   xmn,ymn,zmn      Coordinate at the center of the first Block */
+/*   xsiz,ysiz,zsiz   spacing of the grid nodes (block size) */
+/*   nsim             number of simulations */
+/*   ktype            =1, ordinary kriging; =0, simple kriging */
+/*   sim              the current realization */
+/*   idbg             integer debugging level (0=none,2=normal,4=serious) */
+/*   ldbg             unit number for the debugging output */
+/*   lout             unit number for the output */
+/*   radius           Maximum search radius */
+/*   sang1            Azimuth angle of the principal search direction */
+/*   sang2            Dip angle of the principal search direction */
+/*   sang3            Third rotation angle of the search ellipse */
+/*   sanis1           Anisotropy for the dip angle */
+/*   sanis2           Anisotropy for the plunge angle */
+/*   ndmin            Minimum number of data required before sim */
+/*   ndmax            Maximum number of samples for simulation */
+/*   noct             Maximum number per octant if an octant search is */
+/*                      desired (if <= 0, then no octant search) */
+/*   nodmax           Maximum number of previously simulated grid nodes */
+/*                      to consider in the simulation.  The structural */
+/*                      variogram distance is used to identify close ones */
+/*   c0               Nugget constant (isotropic). */
+/*   cc(nst)          Multiplicative factor of each nested structure. */
+/*   aa(nst)          Parameter "a" of each nested structure. */
+/*   it(nst)          Type of nested structures (1=sph,2=exp,3=gau,4=pow) */
+/*   ang1(nst)        Azimuth angle for the principal direction */
+/*   ang2(nst)        Dip angle for the principal direction */
+/*   ang3(nst)        Third rotation angle to rotate the two minor */
+/*                      directions around the principal direction */
+/*   anis1(nst)       Anisotropy (radius in minor direction at 90 */
+/*                      degrees from "ang1" divided by the principal */
+/*                      radius in direction "ang1") */
+/*   anis2(nst)       Anisotropy (radius in minor direction at 90 degrees */
+/*                      vertical from "ang1" divided by the principal */
+/*                      radius in direction "ang1") */
+
+/* OUTPUT VARIABLES:  Simulated Values are written to "lout" 
+ *   sim 			The current simulation is the output of sdsim */
+
+/* EXTERNAL REFERENCES: */
+/*   super            Sets up the super block search of original data */
+/*   search           Search for nearby data values */
+/*   covtable           Builds a covariance table and "spiral" search */
+/*   srchnd           Search for nearby simulated grid nodes */
+/*   sqdist           computes anisotropic squared distance */
+/*   sortem           sorts multiple arrays in ascending order (separate) */
+/*   cova3            Calculates the covariance given a variogram model */
+/*   krige            Sets up and solves either the SK or OK system */
+/*   ksol             Linear system solver using Gaussian elimination */
+/* Concepts taken from F. Alabert and E. Isaaks */
+/* ----------------------------------------------------------------------- */
+
+/** Funcoes utilizadas
+ * covtable (covtable)
+ * gauinv() /
+ * getindx
+ * krige
+ * picksup (apenas se search->sstrat == 0)
+ * setsupr (apenas se search->sstrat == 0)
+ * setrot
+ * sortem
+ * srchsupr
+ * srchnod
+ */
+
+/** CUBOS utilizados
+ * sim
+ * bestCorrCube
+ * bestAICube
+ * order
+ * ??
+ * 
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * tmp - e' apenas passado para covtable(). 
+ * -
+ */
+
+/** structs globais utilizadas:
+ * generl_1
+ * search_1
+ * simula_1
+ * cova3d_1
+ * clooku_1
+ * krige_varsv_1
+ */
+
+
+int sdsim(float *sim,
+          float *bestAICube,
+          float *bestCorrCube,
+          int *order,
+          int *mask_data,
+	  general_vars_t * general,
+	  search_vars_t	* search,
+	  simulation_vars_t * simulation,
+	  covariance_vars_t * covariance,
+	  covtable_lookup_vars_t * covtable_lookup,
+	  krige_vars_t * krige_vars)
+{
+        /* Table of constant values */
+        int five = 5;
+        int one = 1;
+
+	/* System generated locals */
+	int i__1, i__2, i__3, i__4, i__5;
+	float r__1, r__2, r__3;
+	double d__1;
+
+	/* Local variables */
+	float xsizsup, ysizsup, zsizsup;
+	int kinicial;
+	int ixsbtosr[1000], iysbtosr[1000], izsbtosr[1000];
+	float c__, d__, e, f, g, h__;
+	int j;
+	double p, zvariance;
+	int testecomp;
+	int id, in;
+	int is, ix, jx, jy, jz, iz, iy;
+	float xp, xx, yy, zz;
+	int id2, ind, kkk, nnz, nny, nnx;
+	float vmy = 0, vms, sec2, sec3;   /* LPL Init value */
+	int nsec, nisb[125], isim, ierr;
+	float test, tiny, test2, cmean, gmean;
+
+	float cpdev;
+	double zmean;
+	int index, irepo, imult, nvsim, nxsup, nysup, nzsup;
+	int infoct;
+	float cstdev;
+	int lktype;
+	float xmnsup, ymnsup, zmnsup, clcorr;
+	float simval = 0;  /* LPL Init value */
+	int testind;
+	int nsbtosr;
+
+#ifdef PROFILE
+	profile.sdsim++;
+	profBegin("sdsim");
+#endif
+
+	/* Parameter adjustments */
+	--mask_data;
+	--order;
+	--bestCorrCube;
+	--bestAICube;
+	--sim;
+
+	/*   printf("Step1\n"); */
+	/* Function Body */
+	i__1 = covariance->nst[0];
+	for (is = 1; is <= i__1; ++is) {
+		setrot(&covariance->ang1[is - 1],
+                       &covariance->ang2[is - 1],
+		       &covariance->ang3[is - 1],
+                       &covariance->anis1[is - 1],
+		       &covariance->anis2[is - 1],
+                       &is,
+                       &five,
+                       krige_vars->rotmat);
+	}
+	covariance->isrot = 5;
+	setrot(&search->sang1, &search->sang2, &search->sang3,
+			&search->sanis1, &search->sanis2, &covariance->isrot, &five, 
+			krige_vars->rotmat);
+	/* !Set up the super block search: */
+	/*   printf("Step2\n"); */
+	if (search->sstrat == 0) {
+		nsec = 1;
+		setsupr(&general->nx, &general->xmn, &general->xsiz, &general->ny,
+				&general->ymn, &general->ysiz, &general->nz, &general->zmn,
+				&general->zsiz, &general->nd, general->x, general->y, 
+				general->z__, general->vr, general->wt, &nsec, general->sec,
+				&sec2, &sec3, &five, &five, &five, nisb, &nxsup, &xmnsup,
+				&xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, &zmnsup, &zsizsup)
+			;
+		picksup(&nxsup, &xsizsup, &nysup, &ysizsup, &nzsup, &zsizsup,
+				&covariance->isrot, &five, krige_vars->rotmat, &search->radsqd,
+				&nsbtosr, ixsbtosr, iysbtosr, izsbtosr);
+	}
+	/* !Set up the covariance table and the spiral search: */
+	/*   printf("Step3 - calling covtable\n"); */
+	covtable(&order[1], general, search, covariance, covtable_lookup, krige_vars);
+	/* !nxyz2 = nxyz / 2 */
+	/* !MAIN LOOP OVER ALL THE SIMULATIONS: */
+	/*   printf("Step4 - out of covtable\n"); */
+	i__1 = simulation->nsim;
+	for (isim = 1; isim <= i__1; ++isim) {
+		/* !Work out a random path for this realization: */
+		i__2 = general->nxyz;
+		for (ind = 1; ind <= i__2; ++ind) {
+			sim[ind] = (float) acorni();
+			order[ind] = ind;
+		}
+		/* ! 33 + 1 = SEED_POS */
+		/* !ixv(1) = PARAMS(34) */
+		/* !The multiple grid search works with multiples of 4 (yes, that is */
+		/* !somewhat arbitrary): */
+
+		/* TODO: 
+		 * documentar: o que e' que isto esta' a fazer ???
+		 */
+		if (search->mults == 1) {
+			i__2 = search->nmult;
+			for (imult = 1; imult <= i__2; ++imult) {
+				i__3 = 1;
+			   	i__4 = general->nz / (imult << 2);
+				nnz = MAX(i__3,i__4); /* max(i__3,i__4); */
+			   	i__4 = general->ny / (imult << 2);
+				nny = MAX(i__3,i__4); /* max(i__3,i__4); */
+			   	i__4 = general->nx / (imult << 2);
+				nnx = MAX(i__3,i__4); /* max(i__3,i__4); */
+				jz = 1;
+				jy = 1;
+				jx = 1;
+				i__3 = nnz;
+				for (iz = 1; iz <= i__3; ++iz) {
+					if (nnz > 1) {
+						jz = iz * imult << 2;
+					}
+					i__4 = nny;
+					for (iy = 1; iy <= i__4; ++iy) {
+						if (nny > 1) {
+							jy = iy * imult << 2;
+						}
+						i__5 = nnx;
+						for (ix = 1; ix <= i__5; ++ix) {
+							if (nnx > 1) {
+								jx = ix * imult << 2;
+							}
+							index = jx + (jy - 1) * general->nx + (jz - 1) * 
+								general->nxy;
+							sim[index] += imult;
+						}
+					}
+				}
+			}
+		}
+
+		/*   printf("Step6 - calling sortem\n"); */
+		sortemi(&one,
+                       &general->nxyz,
+                       &sim[1],
+                       &one,
+                       &order[1],
+                       &c__, &d__, &e, &f, &g, &h__);
+		/* !Initialize the simulation: */
+		/*   printf("Step6 - out of sortem\n"); */
+		nvsim = 0;
+		i__2 = general->nxyz;
+		for (ind = 1; ind <= i__2; ++ind) {
+			sim[ind] = general->nosvalue;
+		}
+		/* !Assign the data to the closest grid node: */
+		tiny = 1e-4f;
+		testecomp = FALSE;
+		i__2 = general->nd;
+		/*   printf("Step7\n"); */
+		for (id = 1; id <= i__2; ++id) {
+			getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[
+					id - 1], &ix, &testind);
+			getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[
+					id - 1], &iy, &testind);
+			getindx(&general->nz, &general->zmn, &general->zsiz, &
+					general->z__[id - 1], &iz, &testind);
+			ind = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+			xx = general->xmn + (float) (ix - 1) * general->xsiz;
+			yy = general->ymn + (float) (iy - 1) * general->ysiz;
+			zz = general->zmn + (float) (iz - 1) * general->zsiz;
+			test = (r__1 = xx - general->x[id - 1], (double) fabs(r__1)) + (r__2 = yy 
+					- general->y[id - 1], (double) fabs(r__2)) + (r__3 = zz - 
+					general->z__[id - 1], (double) fabs(r__3));
+			/* !Assign this data to the node (unless there is a closer data): */
+			if (search->sstrat == 1) {
+				if (sim[ind] >= 0.f) {
+					id2 = (int) (sim[ind] + .5f);
+					test2 = (r__1 = xx - general->x[id2 - 1], (double) fabs(r__1)) + (
+							r__2 = yy - general->y[id2 - 1], (double) fabs(r__2)) + (
+							r__3 = zz - general->z__[id2 - 1], (double) fabs(r__3));
+					if (test <= test2) {
+						sim[ind] = (float) id;
+					}
+					/* !write(ldbg,102) id,id2 */
+				} else {
+					sim[ind] = (float) id;
+				}
+			}
+			/* !Assign a flag so that this node does not get simulated: */
+			if (search->sstrat == 0 && test <= tiny) {
+				sim[ind] = general->nosvalue * 10.f;
+			}
+			/* L1234: */
+		}
+		/* !Now, enter data values into the simulated grid: */
+		/*   printf("Step8\n"); */
+		i__2 = general->nxyz;
+		for (ind = 1; ind <= i__2; ++ind) {
+			id = (int) (sim[ind] + .5f);
+			if (id > 0) {
+				sim[ind] = general->vr[id - 1];
+			}
+		}
+		i__4 = general->nxyz / 10;
+		i__2 = 1;
+		i__3 = MIN(i__4,1000); /*min(i__4,1000); */
+		irepo = MAX(i__2,i__3); /* max(i__2,i__3);*/
+		/* !Assign a flag so that the node out of the mask boundaries does not get simulated: */
+		if (general->imask == 1) {
+			i__2 = general->nxyz;
+			for (ind = 1; ind <= i__2; ++ind) {
+				if (mask_data[ind] == 0) {
+					sim[ind] = general->nosvalue;
+				}
+			}
+		}
+		/* !MAIN LOOP OVER ALL THE NODES: */
+		simulation->nsim = 0;
+		zmean = 0.f;
+		zvariance = 0.f;
+		i__2 = general->nxyz;
+		for (in = 1; in <= i__2; ++in) {
+			/* !Figure out the location of this point and make sure it has */
+			/* !not been assigned a value already: */
+			index = (int) (order[in] + .5f);
+			if (sim[index] > general->nosvalue + 1e-20f || sim[index] < 
+					general->nosvalue * 2.f) {
+				goto L5;
+			}
+			iz = (index - 1) / general->nxy + 1;
+			iy = (index - (iz - 1) * general->nxy - 1) / general->nx + 1;
+			ix = index - (iz - 1) * general->nxy - (iy - 1) * general->nx;
+			xx = general->xmn + (float) (ix - 1) * general->xsiz;
+			yy = general->ymn + (float) (iy - 1) * general->ysiz;
+			zz = general->zmn + (float) (iz - 1) * general->zsiz;
+			/* !Now, we'll simulate the point ix,iy,iz.  First, get the close data */
+			/* !and make sure that there are enough to actually simulate a value, */
+			/* !we'll only keep the closest "ndmax" data, and look for previously */
+			/* !simulated grid nodes: */
+			if (search->sstrat == 0) {
+				srchsupr(&xx,
+                                         &yy,
+                                         &zz,
+                                         &search->radsqd,
+                                         &covariance->isrot,
+					 &five,
+                                         krige_vars->rotmat,
+                                         &nsbtosr,
+                                         ixsbtosr,
+                                         iysbtosr,
+ 
+					 izsbtosr,
+                                         &search->noct,
+                                         &general->nd,
+                                         general->x, 
+					 general->y,
+                                         general->z__,
+                                         general->wt,
+                                         nisb,
+                                         &nxsup, 
+					 &xmnsup,
+                                         
+                                         &xsizsup,
+                                         &nysup,
+                                         &ymnsup,
+                                         &ysizsup,
+                                         &nzsup, 
+					 &zmnsup,
+                                         &zsizsup,
+                                         &search->nclose,
+                                         general->close, 
+					 &infoct);
+				if (search->nclose < search->ndmin) {    /* LPLeval */
+					goto L5;
+				}
+				if (search->nclose > search->ndmax) {    /* LPLeval */
+					search->nclose = search->ndmax;
+				}
+			}
+			srchnod(&ix, &iy, &iz, &sim[1],
+					general,
+					search,
+					covtable_lookup);
+			/* !WARNING:Para ter em atencaoi; valores -999.25 a krigagem passa a simples */
+			kinicial = general->ktype;
+			if (general->ktype == 5 && bestAICube[index] == -999.25f) {
+				general->ktype = 0;
+			}
+			/* !Calculate the conditional mean and standard deviation.  This will be */
+			/* !done with kriging if there are data, otherwise, the global mean and */
+			/* !standard deviation will be used: */
+			if (general->ktype == 2 || general->ktype >= 4) {
+				gmean = bestAICube[index];
+			} else {
+				gmean = simulation->vmedexp;
+			}
+			if (search->nclose + covtable_lookup->ncnode < 1) {
+				cmean = simulation->vmedexp;
+				cstdev = sqrt(simulation->vvarexp);
+			} else {
+				/* !Perform the kriging.  Note that if there are fewer than four data */
+				/* !then simple kriging is prefered so that the variance of the */
+				/* !realization does not become artificially inflated: */
+				lktype = general->ktype;
+				if ((general->ktype == 1) &&
+                                    (search->nclose + covtable_lookup->ncnode < 4)) {
+					lktype = 0;
+				}
+				/* !Estimacao em xo (SDSIM) */
+				/*miguel, aceder ao bestCorrCube, apenas se ktype >= 4 */
+				if(general->ktype == 5)
+					clcorr = bestCorrCube[ix + (iy - 1) * general->nx + (iz - 1) * general->nxy];
+				/*		   printf("krige\n"); */
+
+				krige(&ix, &iy, &iz, &xx, &yy, &zz, &lktype, &gmean, &cmean, 
+						&cstdev, &bestAICube[1], &clcorr,
+						general, search, simulation,
+						covariance, covtable_lookup, krige_vars);
+				/*		   printf("out of krige\n"); */
+
+				if (simulation->nsim > 0) {
+					if (covtable_lookup->icmean == 1) {
+						cmean -= zmean / simulation->nsim - simulation->vmedexp;
+					}
+					/* Computing 2nd power */
+					d__1 = zmean / simulation->nsim;
+					cpdev = zvariance / simulation->nsim - d__1 * d__1;
+					if (cpdev > 0.f) {
+						cpdev = sqrt(cpdev);
+						if (covtable_lookup->icvar == 1) {
+							cstdev = cstdev * sqrt(simulation->vvarexp) / cpdev;
+						}
+					}
+				}
+			}
+			general->ktype = kinicial;
+			/* !Calculo do equivalente valor gaussiano        (SDSIM) */
+			if (cmean <= general->vrtr[0]) {
+				vmy = general->vrgtr[0];
+				goto L9999;
+			}
+			if (cmean >= general->vrtr[general->nd - 1]) {
+				vmy = general->vrgtr[general->nd - 1];
+				goto L9999;
+			}
+			i__3 = general->nd - 1;
+			for (j = 1; j <= i__3; ++j) {
+				if (cmean >= general->vrtr[j - 1] && cmean < general->vrtr[j])
+				{
+					vmy = general->vrgtr[j - 1] + (cmean - general->vrtr[j - 
+							1]) * (general->vrgtr[j] - general->vrgtr[j - 1]) 
+						/ (general->vrtr[j] - general->vrtr[j - 1]);
+					goto L9999;
+				}
+			}
+L9999:
+			/* !Gera um valor aleatorio com distribuicao Gaussiana */
+			vms = 0.f;
+			i__3 = covtable_lookup->ntry;
+			for (kkk = 1; kkk <= i__3; ++kkk) {
+				p = acorni();
+				gauinv(&p, &xp, &ierr);
+				xp = xp * cstdev + vmy;
+				/* !Transformada inversa final (iv)               (SDSIM) */
+				simval = backtr(&xp, &general->ntr, general->vrtr, 
+						general->vrgtr, &general->zmin, &general->zmax, 
+						&general->ltail, &general->ltpar, &general->utail, 
+						&general->utpar);
+				vms += simval;
+			}
+			vms /= covtable_lookup->ntry;
+			/* !Reter o valor simulado  (SDSIM) */
+			if (covtable_lookup->ntry > 1) {
+				sim[index] = simval + (cmean - vms);
+			} else {
+				sim[index] = simval;
+			}
+			if (sim[index] <= general->tmin) {
+				sim[index] = general->tmin;
+			}
+			if (sim[index] >= general->tmax) {
+				sim[index] = general->tmax;
+			}
+			/* !Condicionamento as medias locais */
+			++simulation->nsim;
+			zmean += sim[index];
+			/* Computing 2nd power */
+			r__1 = sim[index];
+			zvariance += r__1 * r__1;
+			/* apagar */
+			/*            if(idbg.ge.3) write(ldbg,141) p,sim(index) */
+			/* 141        format(' random number ',f6.4,' realization ',f7.4) */
+			/* !END MAIN LOOP OVER NODES: */
+L5:
+			;
+		}
+		/* !Back transform each value and write results: */
+/*		ne = 0;
+		av = 0.f;
+		ss = 0.f;
+		r__1 = (float) ne;
+		av /= (double) MAX(r__1,1.f); // dmax(r__1,1.f);
+		ss = ss / ((double) MAX(r__1,1.f)) - av * av;
+*/		/* apagar */
+		/*        write(ldbg,111) isim,ne,av,ss */
+		/*            write(*,   111) isim,ne,av,ss */
+		/* 111        format(/,' Realization ',i3,': number   = ',i8,/, */
+		/*     +               '                  mean     = ',f12.4, */
+		/*     +               ' (close to 0.0?)',/, */
+		/*     +               '                  variance = ',f12.4, */
+		/*     +               ' (close to gammabar(V,V)? approx. 1.0)',/) */
+		/* !END MAIN LOOP OVER SIMULATIONS: */
+	}
+
+#ifdef PROFILE
+	profEnd("sdsim");
+#endif
+
+	/* !Return to the main program: */
+	return 0;
+} /* sdsim_ */
+
+/* ----------------------------------------------------------------------- */
+/*              Sets up an Anisotropic Rotation Matrix */
+/*              ************************************** */
+/* Sets up the matrix to transform cartesian coordinates to coordinates */
+/* accounting for angles and anisotropy (see manual for a detailed */
+/* definition): */
+
+/* INPUT PARAMETERS: */
+
+/*   ang1             Azimuth angle for principal direction */
+/*   ang2             Dip angle for principal direction */
+/*   ang3             Third rotation angle */
+/*   anis1            First anisotropy ratio */
+/*   anis2            Second anisotropy ratio */
+/*   ind              matrix indicator to initialize */
+/*   MAXROT           maximum number of rotation matrices dimensioned */
+/*   rotmat           rotation matrices */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ */
+
+/** CUBOS utilizados
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+
+int setrot(float *ang1, float *ang2, float *ang3, float *anis1, float *anis2,
+		int *ind, int *maxrot, double *rotmat)
+{
+	/* System generated locals */
+	int rotmat_dim1, rotmat_offset;
+
+	/* Local variables */
+	float beta;
+	double cosa, cosb, sina, sinb, cost, afac1, afac2, sint;
+	float alpha, theta;
+
+#ifdef PROFILE
+	profile.setrot++;
+	profBegin("setrot");
+#endif
+
+	/* Converts the input angles to three angles which make more */
+	/*  mathematical sense: */
+
+	/*         alpha   angle between the major axis of anisotropy and the */
+	/*                 E-W axis. Note: Counter clockwise is positive. */
+	/*         beta    angle between major axis and the horizontal plane. */
+	/*                 (The dip of the ellipsoid measured positive down) */
+	/*         theta   Angle of rotation of minor axis about the major axis */
+	/*                 of the ellipsoid. */
+
+	/*      if(ang1.ge.0.0.and.ang1.lt.270.0) then */
+	/*            alpha = (90.0   - ang1) * DEG2RAD */
+	/*      else */
+	/*            alpha = (450.0  - ang1) * DEG2RAD */
+	/*      endif */
+	/*      beta  = -1.0 * ang2 * DEG2RAD */
+
+	/* Parameter adjustments */
+	rotmat_dim1 = *maxrot;
+	rotmat_offset = 1 + (rotmat_dim1 << 2);
+	rotmat -= rotmat_offset;
+
+	/* Function Body */
+	alpha = *ang1 * .017453292522222223f;
+	beta = *ang2 * .017453292522222223f;
+	theta = *ang3 * .017453292522222223f;
+
+	/* Get the required sines and cosines: */
+
+	sina = (double) sin(alpha);
+	sinb = (double) sin(beta);
+	sint = (double) sin(theta);
+	cosa = (double) cos(alpha);
+	cosb = (double) cos(beta);
+	cost = (double) cos(theta);
+
+	/* Construct the rotation matrix in the required memory: */
+
+	afac1 = 1.f / (double) MAX(*anis1, 1e-20f); /* dmax(*anis1,1e-20f); */
+	afac2 = 1.f / (double) MAX(*anis2, 1e-20f); /* dmax(*anis2,1e-20f); */
+	rotmat[*ind + (rotmat_dim1 << 2)] = cosb * cosa;
+	rotmat[*ind + rotmat_dim1 * 7] = cosb * sina;
+	rotmat[*ind + rotmat_dim1 * 10] = -sinb;
+	rotmat[*ind + rotmat_dim1 * 5] = afac1 * (-cost * sina + sint * sinb * 
+			cosa);
+	rotmat[*ind + (rotmat_dim1 << 3)] = afac1 * (cost * cosa + sint * sinb * 
+			sina);
+	rotmat[*ind + rotmat_dim1 * 11] = afac1 * (sint * cosb);
+	rotmat[*ind + rotmat_dim1 * 6] = afac2 * (sint * sina + cost * sinb * 
+			cosa);
+	rotmat[*ind + rotmat_dim1 * 9] = afac2 * (-sint * cosa + cost * sinb * 
+			sina);
+	rotmat[*ind + rotmat_dim1 * 12] = afac2 * (cost * cosb);
+
+#ifdef PROFILE
+	profEnd("setrot");
+#endif
+
+	/* Return to calling program: */
+	return 0;
+} /* setrot_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*           Establish Super Block Search Limits and Sort Data */
+/*           ************************************************* */
+
+/* This subroutine sets up a 3-D "super block" model and orders the data */
+/* by super block number.  The limits of the super block is set to the */
+/* minimum and maximum limits of the grid; data outside are assigned to */
+/* the nearest edge block. */
+
+/* The idea is to establish a 3-D block network that contains all the */
+/* relevant data.  The data are then sorted by their index location in */
+/* the search network, i.e., the index location is given after knowing */
+/* the block index in each coordinate direction (ix,iy,iz): */
+/*          ii = (iz-1)*nxsup*nysup + (iy-1)*nxsup + ix */
+/* An array, the same size as the number of super blocks, is constructed */
+/* that contains the cumulative number of data in the model.  With this */
+/* array it is easy to quickly check what data are located near any given */
+/* location. */
+
+/* INPUT VARIABLES: */
+/*   nx,xmn,xsiz      Definition of the X grid being considered */
+/*   ny,ymn,ysiz      Definition of the Y grid being considered */
+/*   nz,zmn,zsiz      Definition of the Z grid being considered */
+/*   nd               Number of data */
+/*   x(nd)            X coordinates of the data */
+/*   y(nd)            Y coordinates of the data */
+/*   z(nd)            Z coordinates of the data */
+/*   vr(nd)           Variable at each location. */
+/*   tmp(nd)          Temporary storage to keep track of the super block */
+/*                      index associated to each data (uses the same */
+/*                      storage already allocated for the simulation) */
+/*   nsec             Number of secondary variables to carry with vr */
+/*   sec1(nd)         First secondary variable (if nsec >= 1) */
+/*   sec2(nd)         Second secondary variable (if nsec >= 2) */
+/*   sec3(nd)         Third secondary variable (if nsec = 3) */
+/*   MAXSB[X,Y,Z]     Maximum size of super block network */
+
+/* OUTPUT VARIABLES: */
+/*   nisb()                Array with cumulative number of data in each */
+/*                           super block. */
+/*   nxsup,xmnsup,xsizsup  Definition of the X super block grid */
+/*   nysup,ymnsup,ysizsup  Definition of the Y super block grid */
+/*   nzsup,zmnsup,zsizsup  Definition of the Z super block grid */
+
+/* EXTERNAL REFERENCES: */
+/*   sortem           Sorting routine to sort the data */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ * sortem
+ * getindx
+ */
+
+/** CUBOS utilizados
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
+		float *ysiz, int *nz, float *zmn, float *zsiz, int * nd,
+		float *x, float *y, float *z__, float *vr, float *tmp, int *nsec,
+		float *sec1, float *sec2, float *sec3, int *maxsbx, int *maxsby,
+		int *maxsbz, int *nisb, int *nxsup, float *xmnsup,
+		float * xsizsup, int *nysup, float *ymnsup, float *ysizsup,
+		int *nzsup, float *zmnsup, float *zsizsup)
+{
+        /* Table of constant values */
+        int one = 1;
+
+	/* System generated locals */
+	int i__1;
+
+	/* Local variables */
+	int i__, ii, ix, iy, iz, nsort;
+	int inflag;
+
+#ifdef PROFILE
+	profile.setsupr++;
+#endif
+
+	/* Establish the number and size of the super blocks: */
+
+	/* Parameter adjustments */
+	--nisb;
+	--sec3;
+	--sec2;
+	--sec1;
+	--tmp;
+	--vr;
+	--z__;
+	--y;
+	--x;
+
+	/* Function Body */
+	*nxsup = MIN(*nx, *maxsbx); /* min(*nx,*maxsbx); */
+	*nysup = MIN(*ny, *maxsby); /* min(*ny,*maxsby); */
+	*nzsup = MIN(*nz, *maxsbz); /* min(*nz,*maxsbz); */
+	*xsizsup = (float) (*nx) * *xsiz / (float) (*nxsup);
+	*ysizsup = (float) (*ny) * *ysiz / (float) (*nysup);
+	*zsizsup = (float) (*nz) * *zsiz / (float) (*nzsup);
+	*xmnsup = *xmn - *xsiz * .5f + *xsizsup * .5f;
+	*ymnsup = *ymn - *ysiz * .5f + *ysizsup * .5f;
+	*zmnsup = *zmn - *zsiz * .5f + *zsizsup * .5f;
+
+	/* Initialize the extra super block array to zeros: */
+
+	i__1 = *nxsup * *nysup * *nzsup;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+		nisb[i__] = 0;
+	}
+
+	/* Loop over all the data assigning the data to a super block and */
+	/* accumulating how many data are in each super block: */
+
+	i__1 = *nd;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+		getindx(nxsup, xmnsup, xsizsup, &x[i__], &ix, &inflag);
+		getindx(nysup, ymnsup, ysizsup, &y[i__], &iy, &inflag);
+		getindx(nzsup, zmnsup, zsizsup, &z__[i__], &iz, &inflag);
+		ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
+		tmp[i__] = (float) ii;
+		++nisb[ii];
+	}
+
+	/* Sort the data by ascending super block number: */
+
+	nsort = *nsec + 4;
+	sortem(&one, nd,
+               &tmp[1],
+               &nsort, &x[1],
+               &y[1], &z__[1], &vr[1], &sec1[1], &sec2[1], &sec3[1]);
+
+	/* Set up array nisb with the starting address of the block data: */
+
+	i__1 = *nxsup * *nysup * *nzsup - 1;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+		nisb[i__ + 1] = nisb[i__] + nisb[i__ + 1];
+	}
+
+	/* Finished: */
+
+	return 0;
+} /* setsupr_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*                      Quickersort Subroutine */
+/*                      ********************** */
+
+/* This is a subroutine for sorting a real array in ascending order. This */
+/* is a Fortran translation of algorithm 271, quickersort, by R.S. Scowen */
+/* in collected algorithms of the ACM. */
+
+/* The method used is that of continually splitting the array into parts */
+/* such that all elements of one part are less than all elements of the */
+/* other, with a third part in the middle consisting of one element.  An */
+/* element with value t is chosen arbitrarily (here we choose the middle */
+/* element). i and j give the lower and upper limits of the segment being */
+/* split.  After the split a value q will have been found such that */
+/* a(q)=t and a(l)<=t<=a(m) for all i<=l<q<m<=j.  The program then */
+/* performs operations on the two segments (i,q-1) and (q+1,j) as follows */
+/* The smaller segment is split and the position of the larger segment is */
+/* stored in the lt and ut arrays.  If the segment to be split contains */
+/* two or fewer elements, it is sorted and another segment is obtained */
+/* from the lt and ut arrays.  When no more segments remain, the array */
+/* is completely sorted. */
+
+/* INPUT PARAMETERS: */
+/*   ib,ie        start and end index of the array to be sorted */
+/*   a            array, a portion of which has to be sorted. */
+/*   iperm        0 no other array is permuted. */
+/*                1 array b is permuted according to array a */
+/*                2 arrays b,c are permuted. */
+/*                3 arrays b,c,d are permuted. */
+/*                4 arrays b,c,d,e are permuted. */
+/*                5 arrays b,c,d,e,f are permuted. */
+/*                6 arrays b,c,d,e,f,g are permuted. */
+/*                7 arrays b,c,d,e,f,g,h are permuted. */
+/*               >7 no other array is permuted. */
+/*   b,c,d,e,f,g,h  arrays to be permuted according to array a. */
+
+/* OUTPUT PARAMETERS: */
+/*    a      = the array, a portion of which has been sorted. */
+/*    b,c,d,e,f,g,h  =arrays permuted according to array a (see iperm) */
+
+/* NO EXTERNAL ROUTINES REQUIRED: */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ */
+
+/** CUBOS utilizados
+ *  nota: sao passados cubos por parametro para o sortem em outras funcoes
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+
+int sortem(int *ib,  int *ie,
+           float *a,
+           int * iperm, float *b,
+           float *c__, float *d__, float *e, float *f, float *g, float *h__)
+{
+	/* System generated locals */
+	int i__1;
+
+	/* Local variables */
+	int i__, j, k, m, p, q;
+	float  ta = 0, tb = 0, tc = 0, td = 0,   /* LPL Init values */
+               te = 0, tf = 0, tg = 0, th = 0, xa, xf, xg;
+	int lt[64];
+	float xh, xe, xd, xc, xb;
+	int ut[64], iring;
+
+#ifdef PROFILE
+	profile.sortem++;
+	profBegin("sortem");
+#endif
+
+	/* The dimensions for lt and ut have to be at least log (base 2) n */
+
+
+	/* Initialize: */
+
+	/* Parameter adjustments */
+	--h__;
+	--g;
+	--f;
+	--e;
+	--d__;
+	--c__;
+	--b;
+	--a;
+
+	/* Function Body */
+	j = *ie;
+	m = 1;
+	i__ = *ib;
+	iring = *iperm + 1;
+	if (*iperm > 7) {
+		iring = 1;
+	}
+
+	/* If this segment has more than two elements  we split it */
+
+L10:
+	if ((i__1 = j - i__ - 1) < 0) {
+		goto L100;
+	} else if (i__1 == 0) {
+		goto L90;
+	} else {
+		goto L15;
+	}
+
+	/* p is the position of an arbitrary element in the segment we choose the */
+	/* middle element. Under certain circumstances it may be advantageous */
+	/* to choose p at random. */
+
+L15:
+	p = (j + i__) / 2;
+	ta = a[p];
+	a[p] = a[i__];
+	switch (iring) {
+		case 1:  goto L21;
+		case 2:  goto L19;
+		case 3:  goto L18;
+		case 4:  goto L17;
+		case 5:  goto L16;
+		case 6:  goto L161;
+		case 7:  goto L162;
+		case 8:  goto L163;
+	}
+L163:
+	th = h__[p];
+	h__[p] = h__[i__];
+L162:
+	tg = g[p];
+	g[p] = g[i__];
+L161:
+	tf = f[p];
+	f[p] = f[i__];
+L16:
+	te = e[p];
+	e[p] = e[i__];
+L17:
+	td = d__[p];
+	d__[p] = d__[i__];
+L18:
+	tc = c__[p];
+	c__[p] = c__[i__];
+L19:
+	tb = b[p];
+	b[p] = b[i__];
+L21:
+
+	/* Start at the beginning of the segment, search for k such that a(k)>t */
+
+	q = j;
+	k = i__;
+L20:
+	++k;
+	if (k > q) {
+		goto L60;
+	}
+	if (a[k] <= ta) {
+		goto L20;
+	}
+
+	/* Such an element has now been found now search for a q such that a(q)<t */
+	/* starting at the end of the segment. */
+
+L30:
+	if (a[q] < ta) {
+		goto L40;
+	}
+	--q;
+	if (q > k) {
+		goto L30;
+	}
+	goto L50;
+
+	/* a(q) has now been found. we interchange a(q) and a(k) */
+
+L40:
+	xa = a[k];
+	a[k] = a[q];
+	a[q] = xa;
+	switch (iring) {
+		case 1:  goto L45;
+		case 2:  goto L44;
+		case 3:  goto L43;
+		case 4:  goto L42;
+		case 5:  goto L41;
+		case 6:  goto L411;
+		case 7:  goto L412;
+		case 8:  goto L413;
+	}
+L413:
+	xh = h__[k];
+	h__[k] = h__[q];
+	h__[q] = xh;
+L412:
+	xg = g[k];
+	g[k] = g[q];
+	g[q] = xg;
+L411:
+	xf = f[k];
+	f[k] = f[q];
+	f[q] = xf;
+L41:
+	xe = e[k];
+	e[k] = e[q];
+	e[q] = xe;
+L42:
+	xd = d__[k];
+	d__[k] = d__[q];
+	d__[q] = xd;
+L43:
+	xc = c__[k];
+	c__[k] = c__[q];
+	c__[q] = xc;
+L44:
+	xb = b[k];
+	b[k] = b[q];
+	b[q] = xb;
+L45:
+
+	/* Update q and search for another pair to interchange: */
+
+	--q;
+	goto L20;
+L50:
+	q = k - 1;
+L60:
+
+	/* The upwards search has now met the downwards search: */
+
+	a[i__] = a[q];
+	a[q] = ta;
+	switch (iring) {
+		case 1:  goto L65;
+		case 2:  goto L64;
+		case 3:  goto L63;
+		case 4:  goto L62;
+		case 5:  goto L61;
+		case 6:  goto L611;
+		case 7:  goto L612;
+		case 8:  goto L613;
+	}
+L613:
+	h__[i__] = h__[q];
+	h__[q] = th;
+L612:
+	g[i__] = g[q];
+	g[q] = tg;
+L611:
+	f[i__] = f[q];
+	f[q] = tf;
+L61:
+	e[i__] = e[q];
+	e[q] = te;
+L62:
+	d__[i__] = d__[q];
+	d__[q] = td;
+L63:
+	c__[i__] = c__[q];
+	c__[q] = tc;
+L64:
+	b[i__] = b[q];
+	b[q] = tb;
+L65:
+
+	/* The segment is now divided in three parts: (i,q-1),(q),(q+1,j) */
+	/* store the position of the largest segment in lt and ut */
+
+	if (q << 1 <= i__ + j) {
+		goto L70;
+	}
+	lt[m - 1] = i__;
+	ut[m - 1] = q - 1;
+	i__ = q + 1;
+	goto L80;
+L70:
+	lt[m - 1] = q + 1;
+	ut[m - 1] = j;
+	j = q - 1;
+
+	/* Update m and split the new smaller segment */
+
+L80:
+	++m;
+	goto L10;
+
+	/* We arrive here if the segment has  two elements we test to see if */
+	/* the segment is properly ordered if not, we perform an interchange */
+
+L90:
+	if (a[i__] <= a[j]) {
+		goto L100;
+	}
+	xa = a[i__];
+	a[i__] = a[j];
+	a[j] = xa;
+	switch (iring) {
+		case 1:  goto L95;
+		case 2:  goto L94;
+		case 3:  goto L93;
+		case 4:  goto L92;
+		case 5:  goto L91;
+		case 6:  goto L911;
+		case 7:  goto L912;
+		case 8:  goto L913;
+	}
+L913:
+	xh = h__[i__];
+	h__[i__] = h__[j];
+	h__[j] = xh;
+L912:
+	xg = g[i__];
+	g[i__] = g[j];
+	g[j] = xg;
+L911:
+	xf = f[i__];
+	f[i__] = f[j];
+	f[j] = xf;
+L91:
+	xe = e[i__];
+	e[i__] = e[j];
+	e[j] = xe;
+L92:
+	xd = d__[i__];
+	d__[i__] = d__[j];
+	d__[j] = xd;
+L93:
+	xc = c__[i__];
+	c__[i__] = c__[j];
+	c__[j] = xc;
+L94:
+	xb = b[i__];
+	b[i__] = b[j];
+	b[j] = xb;
+L95:
+
+	/* If lt and ut contain more segments to be sorted repeat process: */
+
+L100:
+	--m;
+	if (m <= 0) {
+		goto L110;
+	}
+	i__ = lt[m - 1];
+	j = ut[m - 1];
+	goto L10;
+L110:
+
+#ifdef PROFILE
+	profEnd("sortem");
+#endif
+
+	return 0;
+} /* sortem_ */
+
+
+
+/* ----------------------------------------------------------------------- */
+/*                      Quickersort Subroutine */
+/*                      ********************** */
+
+/* This is a subroutine for sorting a real array in ascending order. This */
+/* is a Fortran translation of algorithm 271, quickersort, by R.S. Scowen */
+/* in collected algorithms of the ACM. */
+
+/* The method used is that of continually splitting the array into parts */
+/* such that all elements of one part are less than all elements of the */
+/* other, with a third part in the middle consisting of one element.  An */
+/* element with value t is chosen arbitrarily (here we choose the middle */
+/* element). i and j give the lower and upper limits of the segment being */
+/* split.  After the split a value q will have been found such that */
+/* a(q)=t and a(l)<=t<=a(m) for all i<=l<q<m<=j.  The program then */
+/* performs operations on the two segments (i,q-1) and (q+1,j) as follows */
+/* The smaller segment is split and the position of the larger segment is */
+/* stored in the lt and ut arrays.  If the segment to be split contains */
+/* two or fewer elements, it is sorted and another segment is obtained */
+/* from the lt and ut arrays.  When no more segments remain, the array */
+/* is completely sorted. */
+
+/* INPUT PARAMETERS: */
+/*   ib,ie        start and end index of the array to be sorted */
+/*   a            array, a portion of which has to be sorted. */
+/*   iperm        0 no other array is permuted. */
+/*                1 array b is permuted according to array a */
+/*                2 arrays b,c are permuted. */
+/*                3 arrays b,c,d are permuted. */
+/*                4 arrays b,c,d,e are permuted. */
+/*                5 arrays b,c,d,e,f are permuted. */
+/*                6 arrays b,c,d,e,f,g are permuted. */
+/*                7 arrays b,c,d,e,f,g,h are permuted. */
+/*               >7 no other array is permuted. */
+/*   b,c,d,e,f,g,h  arrays to be permuted according to array a. */
+
+/* OUTPUT PARAMETERS: */
+/*    a      = the array, a portion of which has been sorted. */
+/*    b,c,d,e,f,g,h  =arrays permuted according to array a (see iperm) */
+
+/* NO EXTERNAL ROUTINES REQUIRED: */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ */
+
+/** CUBOS utilizados
+ *  nota: sao passados cubos por parametro para o sortem em outras funcoes
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+
+int sortemi(int *ib,  int *ie,
+           float *a,
+           int * iperm,
+           int *b,
+           float *c__, float *d__, float *e, float *f, float *g, float *h__)
+{
+	/* System generated locals */
+	int i__1;
+
+	/* Local variables */
+	int i__, j, k, m, p, q;
+	float  ta = 0, tb = 0, tc = 0, td = 0,   /* LPL Init values */
+               te = 0, tf = 0, tg = 0, th = 0, xa, xf, xg;
+	int lt[64];
+	/* float xh, xe, xd, xc, xb; */
+	int xh, xe, xd, xc, xb;
+	int ut[64], iring;
+
+#ifdef PROFILE
+	profile.sortem++;
+	profBegin("sortem");
+#endif
+
+	/* The dimensions for lt and ut have to be at least log (base 2) n */
+
+
+	/* Initialize: */
+
+	/* Parameter adjustments */
+	--h__;
+	--g;
+	--f;
+	--e;
+	--d__;
+	--c__;
+	--b;
+	--a;
+
+	/* Function Body */
+	j = *ie;
+	m = 1;
+	i__ = *ib;
+	iring = *iperm + 1;
+	if (*iperm > 7) {
+		iring = 1;
+	}
+
+	/* If this segment has more than two elements  we split it */
+
+L10:
+	if ((i__1 = j - i__ - 1) < 0) {
+		goto L100;
+	} else if (i__1 == 0) {
+		goto L90;
+	} else {
+		goto L15;
+	}
+
+	/* p is the position of an arbitrary element in the segment we choose the */
+	/* middle element. Under certain circumstances it may be advantageous */
+	/* to choose p at random. */
+
+L15:
+	p = (j + i__) / 2;
+	ta = a[p];
+	a[p] = a[i__];
+	switch (iring) {
+		case 1:  goto L21;
+		case 2:  goto L19;
+		case 3:  goto L18;
+		case 4:  goto L17;
+		case 5:  goto L16;
+		case 6:  goto L161;
+		case 7:  goto L162;
+		case 8:  goto L163;
+	}
+L163:
+	th = h__[p];
+	h__[p] = h__[i__];
+L162:
+	tg = g[p];
+	g[p] = g[i__];
+L161:
+	tf = f[p];
+	f[p] = f[i__];
+L16:
+	te = e[p];
+	e[p] = e[i__];
+L17:
+	td = d__[p];
+	d__[p] = d__[i__];
+L18:
+	tc = c__[p];
+	c__[p] = c__[i__];
+L19:
+	tb = b[p];
+	b[p] = b[i__];
+L21:
+
+	/* Start at the beginning of the segment, search for k such that a(k)>t */
+
+	q = j;
+	k = i__;
+L20:
+	++k;
+	if (k > q) {
+		goto L60;
+	}
+	if (a[k] <= ta) {
+		goto L20;
+	}
+
+	/* Such an element has now been found now search for a q such that a(q)<t */
+	/* starting at the end of the segment. */
+
+L30:
+	if (a[q] < ta) {
+		goto L40;
+	}
+	--q;
+	if (q > k) {
+		goto L30;
+	}
+	goto L50;
+
+	/* a(q) has now been found. we interchange a(q) and a(k) */
+
+L40:
+	xa = a[k];
+	a[k] = a[q];
+	a[q] = xa;
+	switch (iring) {
+		case 1:  goto L45;
+		case 2:  goto L44;
+		case 3:  goto L43;
+		case 4:  goto L42;
+		case 5:  goto L41;
+		case 6:  goto L411;
+		case 7:  goto L412;
+		case 8:  goto L413;
+	}
+L413:
+	xh = h__[k];
+	h__[k] = h__[q];
+	h__[q] = xh;
+L412:
+	xg = g[k];
+	g[k] = g[q];
+	g[q] = xg;
+L411:
+	xf = f[k];
+	f[k] = f[q];
+	f[q] = xf;
+L41:
+	xe = e[k];
+	e[k] = e[q];
+	e[q] = xe;
+L42:
+	xd = d__[k];
+	d__[k] = d__[q];
+	d__[q] = xd;
+L43:
+	xc = c__[k];
+	c__[k] = c__[q];
+	c__[q] = xc;
+L44:
+	xb = b[k];
+	b[k] = b[q];
+	b[q] = xb;
+L45:
+
+	/* Update q and search for another pair to interchange: */
+
+	--q;
+	goto L20;
+L50:
+	q = k - 1;
+L60:
+
+	/* The upwards search has now met the downwards search: */
+
+	a[i__] = a[q];
+	a[q] = ta;
+	switch (iring) {
+		case 1:  goto L65;
+		case 2:  goto L64;
+		case 3:  goto L63;
+		case 4:  goto L62;
+		case 5:  goto L61;
+		case 6:  goto L611;
+		case 7:  goto L612;
+		case 8:  goto L613;
+	}
+L613:
+	h__[i__] = h__[q];
+	h__[q] = th;
+L612:
+	g[i__] = g[q];
+	g[q] = tg;
+L611:
+	f[i__] = f[q];
+	f[q] = tf;
+L61:
+	e[i__] = e[q];
+	e[q] = te;
+L62:
+	d__[i__] = d__[q];
+	d__[q] = td;
+L63:
+	c__[i__] = c__[q];
+	c__[q] = tc;
+L64:
+	b[i__] = b[q];
+	b[q] = tb;
+L65:
+
+	/* The segment is now divided in three parts: (i,q-1),(q),(q+1,j) */
+	/* store the position of the largest segment in lt and ut */
+
+	if (q << 1 <= i__ + j) {
+		goto L70;
+	}
+	lt[m - 1] = i__;
+	ut[m - 1] = q - 1;
+	i__ = q + 1;
+	goto L80;
+L70:
+	lt[m - 1] = q + 1;
+	ut[m - 1] = j;
+	j = q - 1;
+
+	/* Update m and split the new smaller segment */
+
+L80:
+	++m;
+	goto L10;
+
+	/* We arrive here if the segment has  two elements we test to see if */
+	/* the segment is properly ordered if not, we perform an interchange */
+
+L90:
+	if (a[i__] <= a[j]) {
+		goto L100;
+	}
+	xa = a[i__];
+	a[i__] = a[j];
+	a[j] = xa;
+	switch (iring) {
+		case 1:  goto L95;
+		case 2:  goto L94;
+		case 3:  goto L93;
+		case 4:  goto L92;
+		case 5:  goto L91;
+		case 6:  goto L911;
+		case 7:  goto L912;
+		case 8:  goto L913;
+	}
+L913:
+	xh = h__[i__];
+	h__[i__] = h__[j];
+	h__[j] = xh;
+L912:
+	xg = g[i__];
+	g[i__] = g[j];
+	g[j] = xg;
+L911:
+	xf = f[i__];
+	f[i__] = f[j];
+	f[j] = xf;
+L91:
+	xe = e[i__];
+	e[i__] = e[j];
+	e[j] = xe;
+L92:
+	xd = d__[i__];
+	d__[i__] = d__[j];
+	d__[j] = xd;
+L93:
+	xc = c__[i__];
+	c__[i__] = c__[j];
+	c__[j] = xc;
+L94:
+	xb = b[i__];
+	b[i__] = b[j];
+	b[j] = xb;
+L95:
+
+	/* If lt and ut contain more segments to be sorted repeat process: */
+
+L100:
+	--m;
+	if (m <= 0) {
+		goto L110;
+	}
+	i__ = lt[m - 1];
+	j = ut[m - 1];
+	goto L10;
+L110:
+
+#ifdef PROFILE
+	profEnd("sortem");
+#endif
+
+	return 0;
+} /* sortem_ */
+
+
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+
+/*    Squared Anisotropic Distance Calculation Given Matrix Indicator */
+/*    *************************************************************** */
+
+/* This routine calculates the anisotropic distance between two points */
+/*  given the coordinates of each point and a definition of the */
+/*  anisotropy. */
+
+
+/* INPUT VARIABLES: */
+
+/*   x1,y1,z1         Coordinates of first point */
+/*   x2,y2,z2         Coordinates of second point */
+/*   ind              The rotation matrix to use */
+/*   MAXROT           The maximum number of rotation matrices dimensioned */
+/*   rotmat           The rotation matrices */
+
+
+
+/* OUTPUT VARIABLES: */
+
+/*   sqdist           The squared distance accounting for the anisotropy */
+/*                      and the rotation of coordinates (if any). */
+
+
+/* NO EXTERNAL REFERENCES */
+
+
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ * -
+ */
+
+/** CUBOS utilizados
+ * -
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * sim
+ * tmp
+ * order
+ * clc
+ * lvm
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ */
+
+
+double sqdist(float *x1, float *y1, float *z1, float *x2, float *y2,
+		float *z2, int *ind, int *maxrot, double *rotmat)
+{
+	/* System generated locals */
+	int rotmat_dim1, rotmat_offset;
+	double ret_val;
+
+	/* Local variables */
+	int i__;
+	double dx, dy, dz, cont;
+
+#ifdef PROFILE
+	profile.sqdist++;
+#endif
+
+	/* Compute component distance vectors and the squared distance: */
+
+	/* Parameter adjustments */
+	rotmat_dim1 = *maxrot;
+	rotmat_offset = 1 + (rotmat_dim1 << 2);
+	rotmat -= rotmat_offset;
+
+	/* Function Body */
+	dx = (double) (*x1 - *x2);
+	dy = (double) (*y1 - *y2);
+	dz = (double) (*z1 - *z2);
+	ret_val = 0.f;
+	for (i__ = 1; i__ <= 3; ++i__) {
+		cont = rotmat[*ind + (i__ + 3) * rotmat_dim1] * dx + rotmat[*ind + (
+				i__ + 6) * rotmat_dim1] * dy + rotmat[*ind + (i__ + 9) * 
+			rotmat_dim1] * dz;
+		ret_val += cont * cont;
+	}
+	return ret_val;
+} /* sqdist_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*               Search for nearby Simulated Grid nodes */
+
+/* The idea is to spiral away from the node being simulated and note all */
+/* the nearby nodes that have been simulated. */
+
+/* INPUT VARIABLES: */
+/*   ix,iy,iz        index of the point currently being simulated */
+/*   sim             the realization so far */
+/*   nodmax          the maximum number of nodes that we want */
+/*   nlooku          the number of nodes in the look up table */
+/*   i[x,y,z]node    the relative indices of those nodes. */
+/*   [x,y,z]mn       the origin of the global grid netwrok */
+/*   [x,y,z]siz      the spacing of the grid nodes. */
+
+/* OUTPUT VARIABLES: */
+/*   ncnode          the number of close nodes */
+/*   icnode()        the number in the look up table */
+/*   cnode[x,y,z]()  the location of the nodes */
+/*   cnodev()        the values at the nodes */
+/* ----------------------------------------------------------------------- */
+
+
+/**
+ * funcoes utilizadas
+ * -
+ */
+
+/** CUBOS utilizados
+ * sim
+ * -
+ */ 
+
+/** CUBOS _nao_ utilizados
+ * tmp
+ * order
+ * clc
+ * lvm
+ * e os cov*
+ */
+
+/** structs globais utilizadas:
+ * general
+ * search
+ * covtable_lookup
+ */
+
+
+
+int srchnod(int *ix, int *iy, int *iz, float *sim,
+		general_vars_t * general,
+		search_vars_t * search,
+		covtable_lookup_vars_t * covtable_lookup)
+{
+	/* System generated locals */
+	int i__1;
+
+	/* Local variables */
+	int i__, j, k, il, iq, ind, idx, idy, idz, ninoct[8];
+
+#ifdef PROFILE
+	profile.srchnd++;
+#endif
+
+	/* Consider all the nearby nodes until enough have been found: */
+	/* Parameter adjustments */
+	--sim;
+
+	/* Function Body */
+	covtable_lookup->ncnode = 0;
+	if (search->noct > 0) {
+		for (i__ = 1; i__ <= 8; ++i__) {
+			ninoct[i__ - 1] = 0;
+		}
+	}
+	i__1 = covtable_lookup->nlooku;
+	for (il = 2; il <= i__1; ++il) {
+		if (covtable_lookup->ncnode == covtable_lookup->nodmax) {
+			return 0;
+		}
+		i__ = *ix + (covtable_lookup->ixnode[il - 1] - covtable_lookup->nctx - 1);
+		j = *iy + (covtable_lookup->iynode[il - 1] - covtable_lookup->ncty - 1);
+		k = *iz + (covtable_lookup->iznode[il - 1] - covtable_lookup->nctz - 1);
+		if (i__ < 1 || j < 1 || k < 1) {
+			continue;
+		}
+		if (i__ > general->nx || j > general->ny || k > general->nz) {
+			continue;
+		}
+		ind = i__ + (j - 1) * general->nx + (k - 1) * general->nxy;
+		if (sim[ind] > general->nosvalue) {
+			/* Check the number of data already taken from this octant: */
+			if (search->noct > 0) {
+				idx = *ix - i__;
+				idy = *iy - j;
+				idz = *iz - k;
+				if (idz > 0) {
+					iq = 4;
+					if (idx <= 0 && idy > 0) {
+						iq = 1;
+					}
+					if (idx > 0 && idy >= 0) {
+						iq = 2;
+					}
+					if (idx < 0 && idy <= 0) {
+						iq = 3;
+					}
+				} else {
+					iq = 8;
+					if (idx <= 0 && idy > 0) {
+						iq = 5;
+					}
+					if (idx > 0 && idy >= 0) {
+						iq = 6;
+					}
+					if (idx < 0 && idy <= 0) {
+						iq = 7;
+					}
+				}
+				++ninoct[iq - 1];
+				if (ninoct[iq - 1] > search->noct) {
+					continue;
+				}
+			}
+			++covtable_lookup->ncnode;
+			covtable_lookup->icnode[covtable_lookup->ncnode - 1] = il;
+			covtable_lookup->cnodex[covtable_lookup->ncnode - 1] = general->xmn + (float) (i__ 
+					- 1) * general->xsiz;
+			covtable_lookup->cnodey[covtable_lookup->ncnode - 1] = general->ymn + (float) (j - 
+					1) * general->ysiz;
+			covtable_lookup->cnodez[covtable_lookup->ncnode - 1] = general->zmn + (float) (k - 
+					1) * general->zsiz;
+			covtable_lookup->cnodev[covtable_lookup->ncnode - 1] = sim[ind];
+		}
+	}
+	/* 	Return to calling program: */
+	return 0;
+} /* srchnd_ */
+
+
+
+
+
+/* ----------------------------------------------------------------------- */
+/*              Search Within Super Block Search Limits */
+/*              *************************************** */
+
+/* This subroutine searches through all the data that have been tagged in */
+/* the super block subroutine.  The close data are passed back in the */
+/* index array "close".  An octant search is allowed. */
+
+/* INPUT VARIABLES: */
+/*   xloc,yloc,zloc   location of point being estimated/simulated */
+/*   radsqd           squared search radius */
+/*   irot             index of the rotation matrix for searching */
+/*   MAXROT           size of rotation matrix arrays */
+/*   rotmat           rotation matrices */
+/*   nsbtosr          Number of super blocks to search */
+/*   ixsbtosr         X offsets for super blocks to search */
+/*   iysbtosr         Y offsets for super blocks to search */
+/*   izsbtosr         Z offsets for super blocks to search */
+/*   noct             If >0 then data will be partitioned into octants */
+/*   nd               Number of data */
+/*   x(nd)            X coordinates of the data */
+/*   y(nd)            Y coordinates of the data */
+/*   z(nd)            Z coordinates of the data */
+/*   tmp(nd)          Temporary storage to keep track of the squared */
+/*                      distance associated with each data */
+/*   nisb()           Array with cumulative number of data in each */
+/*                      super block. */
+/*   nxsup,xmnsup,xsizsup  Definition of the X super block grid */
+/*   nysup,ymnsup,ysizsup  Definition of the X super block grid */
+/*   nzsup,zmnsup,zsizsup  Definition of the X super block grid */
+
+/* OUTPUT VARIABLES: */
+/*   nclose           Number of close data */
+/*   close()          Index of close data */
+/*   infoct           Number of informed octants (only computes if */
+/*                      performing an octant search) */
+
+/* EXTERNAL REFERENCES: */
+/*   sqdist           Computes anisotropic squared distance */
+/*   sortem           Sorts multiple arrays in ascending order */
+/* ----------------------------------------------------------------------- */
+
+/** funcoes utilizadas
+ * sortem
+ * sqdist
+ */
+
+/** CUBOS utilizados
+ */ 
+
+/** CUBOS _nao_ utilizados
+ */
+
+/** structs globais utilizadas:
+ */
+
+int srchsupr(float *xloc,
+             float *yloc,
+             float *zloc,
+             float *radsqd,
+	     int *irot,
+	     
+             int *maxrot,
+             double *rotmat,
+             int *nsbtosr,
+             int *ixsbtosr,
+             int *iysbtosr,
+             
+             int *izsbtosr,
+             int *noct,
+             int *nd,
+             float *x,
+             float *y,
+             
+             float *z__,
+             float *tmp,
+             int *nisb,
+             int *nxsup,
+             float *xmnsup,
+             
+             float *xsizsup,
+             int *nysup,
+	     float *ymnsup,
+             float *ysizsup,
+             int *nzsup,
+             
+             float *zmnsup,
+             float *zsizsup,
+             int *nclose,
+             float *close,
+             int *infoct)
+{
+        /* Table of constant values */
+        int one = 1;
+
+	/* System generated locals */
+	int rotmat_dim1, rotmat_offset, i__1, i__2;
+
+	/* Local variables */
+	float c__, d__, e, f, g, h__;
+	int i__, j, na, ii, iq;
+	float dx, dy, dz;
+	int ix, iy, iz, nt;
+	double hsqd;
+	int isup, nums, inoct[8], ixsup, iysup, izsup;
+	int inflag;
+
+#ifdef PROFILE
+	profile.srchsupr++;
+#endif
+
+	/* Determine the super block location of point being estimated: */
+
+	/* Parameter adjustments */
+	rotmat_dim1 = *maxrot;
+	rotmat_offset = 1 + (rotmat_dim1 << 2);
+	rotmat -= rotmat_offset;
+	--ixsbtosr;
+	--iysbtosr;
+	--izsbtosr;
+	--x;
+	--y;
+	--z__;
+	--tmp;
+	--nisb;
+	--close;
+
+	/* Function Body */
+	getindx(nxsup, xmnsup, xsizsup, xloc, &ix, &inflag);
+	getindx(nysup, ymnsup, ysizsup, yloc, &iy, &inflag);
+	getindx(nzsup, zmnsup, zsizsup, zloc, &iz, &inflag);
+
+	/* Loop over all the possible Super Blocks: */
+
+	*nclose = 0;
+	i__1 = *nsbtosr;
+	for (isup = 1; isup <= i__1; ++isup) {
+
+		/* Is this super block within the grid system: */
+
+		ixsup = ix + ixsbtosr[isup];
+		iysup = iy + iysbtosr[isup];
+		izsup = iz + izsbtosr[isup];
+		if (ixsup <= 0 || ixsup > *nxsup || iysup <= 0 || iysup > *nysup || 
+				izsup <= 0 || izsup > *nzsup) {
+			continue;
+		}
+
+		/* Figure out how many samples in this super block: */
+
+		ii = ixsup + (iysup - 1) * *nxsup + (izsup - 1) * *nxsup * *nysup;
+		if (ii == 1) {
+			nums = nisb[ii];
+			i__ = 0;
+		} else {
+			nums = nisb[ii] - nisb[ii - 1];
+			i__ = nisb[ii - 1];
+		}
+
+		/* Loop over all the data in this super block: */
+
+		i__2 = nums;
+		for (ii = 1; ii <= i__2; ++ii) {
+			++i__;
+
+			/* Check squared distance: */
+
+			hsqd = sqdist(xloc, yloc, zloc, &x[i__], &y[i__], &z__[i__], 
+					irot, maxrot, &rotmat[rotmat_offset]);
+			if ((float) hsqd > *radsqd) {
+				continue;
+			}
+
+			/* Accept this sample: */
+
+			++(*nclose);
+			close[*nclose] = (float) i__;
+			tmp[*nclose] = (float) hsqd;
+		}
+	}
+
+	/* Sort the nearby samples by distance to point being estimated: */
+
+	sortem(&one, nclose, &tmp[1], &one, &close[1], &c__, &d__, &e, &f, &g, 
+			&h__);
+
+	/* If we aren't doing an octant search then just return: */
+
+	if (*noct <= 0) {
+		return 0;
+	}
+
+	/* PARTITION THE DATA INTO OCTANTS: */
+
+	for (i__ = 1; i__ <= 8; ++i__) {
+		inoct[i__ - 1] = 0;
+	}
+
+	/* Now pick up the closest samples in each octant: */
+
+	/* nt = *noct << 3;  //LPL */
+	nt = *noct * 8;  /* LPL */
+	na = 0;
+	i__1 = *nclose;
+	for (j = 1; j <= i__1; ++j) {
+		i__ = (int) close[j];
+		h__ = tmp[j];
+		dx = x[i__] - *xloc;
+		dy = y[i__] - *yloc;
+		dz = z__[i__] - *zloc;
+		if (dz < 0.f) {
+			iq = 8;
+			if (dx <= 0.f && dy > 0.f) {
+				iq = 5;
+			}
+			if (dx > 0.f && dy >= 0.f) {
+				iq = 6;
+			}
+			if (dx < 0.f && dy <= 0.f) {
+				iq = 7;
+			}
+		}
+		iq = 4;
+		if (dx <= 0.f && dy > 0.f) {
+			iq = 1;
+		}
+		if (dx > 0.f && dy >= 0.f) {
+			iq = 2;
+		}
+		if (dx < 0.f && dy <= 0.f) {
+			iq = 3;
+		}
+		++inoct[iq - 1];
+
+		/* Keep this sample if the maximum has not been exceeded: */
+
+		if (inoct[iq - 1] <= *noct) {
+			++na;
+			close[na] = (float) i__;
+			tmp[na] = h__;
+			if (na == nt) {
+				break;
+			}
+		}
+	}
+
+	/* End of data selection. Compute number of informed octants and return: */
+
+	*nclose = na;
+	*infoct = 0;
+	for (i__ = 1; i__ <= 8; ++i__) {
+		if (inoct[i__ - 1] > 0) {
+			++(*infoct);
+		}
+	}
+
+	/* Finished: */
+
+	return 0;
+} /* srchsupr_ */
+

@@ -1,0 +1,49 @@
+# TODO.txt
+
+ These are plans that do not affect architectural caracteristics.
+ Also more detailed explanations of how to "accomplish" the proposed ROADMAP.
+ 
+- rework the "random path" of DSS to reduce memory consuption by aproximately 1 grid 
+		(without using the "order" cube).
+		
+- Fix agressive optimizations issue (short term)
+	(related to 64bit problems)
+	
+- seperate log for each thread.
+
+- discuss other memory reductions such has "mmapping()" siBCM, siBAI, SEISMIC.
+	(its a execution time vs memory usage tradeoff)
+
+- discuss dumping bestCube each time its found a new one. instead of keeping it in memory.
+	(its a execution time vs memory usage tradeoff)
+
+- compute avg cpuTime for each iteration and divide it by number of running threads/cpus.
+	(until we find a better way of cpu usage acounting)
+	
+--- somewhere here ---
+	big code refactor, for "better modularity" and design of the whole application,
+	 use some Object Oriented concepts to integrate better data and functions that manipulate it.
+	 will become more NUMA/cache friendly (educated guess)
+	 will definitly clean up and improve quality of code.
+---------------------
+	 
+
+- rework memory allocation to become more "hardened" and less error prone.
+	make pavement to better/safer "array manipulation" and protect ourselves until then.
+	
+- Code cleanup
+	- rework entry and startup of DSS (kind of spaguetty code right now)
+	- rework includes files of DSS.
+	- remove dead code
+
+- rework configuration file, with something "prettier", reduce number of paramenters
+(there are too many, and many are practically useless)
+
+
+	
+After big code refactor to a more modular and "NUMA" friendly design:
+
+	- Oprofile to check cache thrashing
+    - valgrind/ling/flawfinder to catch more semantic errors.
+
+

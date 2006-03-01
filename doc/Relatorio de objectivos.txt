@@ -1,0 +1,39 @@
+TFC - Inversão estocástica de Sismica.
+
+Relembrando o que foi mêncionado no relatório de apresentação do TFC:
+
+"O trabalho tem por objectivo principal a criação do sistema integrado do conjunto de módulos com o objectivo de minimização de tempo de cálculo e de memória.
+Depois de identificados serão re-desenhados os algorítmos cruciais para a minimização de tempo de cálculo.
+Os algorítmos de ligação dos módulos serão desenhados com o objectivo de optimização de alocação de memória. 
+A estrutura da sequência de módulos será desenhada na óptica de computação paralela a ser integrada numa rede já existente."
+
+O TFC envolve o redesenho e adaptação de uma aplicação existente para windows, não paralelizada e com um tempo de execução e consumo de memória muito àquem das necessidades.
+
+Esta aplicação tem o nome de TSI, de *Total Seismic Inversion*.
+
+Os objectivos para a TSI dividem-se em:
+- objectivos finais, ou de longo prazo:
+	A paralelização da execução para um cluster/super-computador da CGG.
+	B redução considerável do consumo de memória.
+
+
+A) Para a paralelização foram criados os seguintes objectivos:
+a.1 port da aplicação para ambiente UNIX(Linux), pois é esse o ambiente do cluster.
+a.2 passar toda a TSI para uma unica linguagem de programação, tendo sido elegida o C e C++ pelos seguintes motivos:
+	- linguagem "mainstream", facilitando a manutenção da aplicação.
+	- linguagem de baixo nivel, permitindo baixo overhead e boa performance.
+	- similaridade com o Fortran, permitindo uma tradução quase mecânica.
+	- facilidade de itegração entre código C e código C++.
+	- subsequente redução de memória, devido à melhor integração da DSS na TSI, removendo cubos 
+	excedentes utilizados para a cópia de parametros entre a TSI e a DSS.
+a.3 avaliar modelos de paralelização para a TSI
+a.4 implementar modelos simples de paralelização como multi-threading da aplicação, ao nivel das simulações
+	(lançamento de threads que calculam uma simulação independente completa).
+a.5 avaliar a possibilidade de paralelizar a própria DSS.
+
+
+B) Para a Redução considerável do consumo de memória:
+b.1- Unificar a TSI numa unica aplicação para remover todos os cubos excedentes utilizados para cópias de dados.
+b.2- avaliar o consumo de memória da aplicação M(x) relativamente a x, onde x corresponde ao nº de pontos a simular.
+b.3- Modelar as dependências do algoritmo ao nivel do uso de cubos (identificar o consumo de memória minimo para a execução algoritmo), para demonstrar
+que o uso é optimo (quando a aplicação seguir o consumo de memória indicado pelo modelo).

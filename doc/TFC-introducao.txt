@@ -1,0 +1,77 @@
+Descrição da TSI
+
+A TSI é composta por 4 módulos principais:
+- Dispatcher:
+	Codificado em C++
+	Gestor de simulações e da execução da aplicação também leitura de parametros e ficheiros de dados.
+- DSS (Direct Sequencial Simulator):
+	Este módulo encontra-se codificado em Fortran, tratando-se de um código com pouca manutênção e uma
+	costumização de uma aplicação em Fortran 77 que conta com mais de 10 anos de existência.	
+
+	Motor de computação, responsável pela criação de uma imagem sintética de Impedâncias Acústicas coerentes.
+	Este motor estava disponibilizado como uma DLL, com um ficheiro de parâmetros próprios e passagem de parametros por ponteiros para zonas de memória com os dados.
+	O resultado era copiado para uma zona de memória da aplicação.
+- SI (Seismic Inversion)
+	Codificado em C++
+	Motor de computação, responsável pela inversão sismica da imagem de Impedâncias Acústicas.
+	Este código encontrava-se em desenvolvimento.
+- Compare
+	Codificado em C++
+	Módulo que availa a melhor imagem gerada até à data, e os valores de qualidade da mesma.
+
+A aplicação tem o seguinte comportamento:
+O *Dispatcher* lê os parametros, ficheiro de configuração e dados de entrada, e prepara a execução dos módulos DSS, SI, e Compare de forma sequencial, em iterações e simulações.
+
+Simulação:
+	Uma simulação é uma execução sequencial de:
+	- DSS
+	- SI
+	- Compare
+	Cujo resultado é: 
+	- imagem de Impedânticas Acusticas;
+	- imagem sismica correspondênte, 
+	- correlação global da imagem sismica com a imagem real, e os valores de correlação por X,Y,Camada.
+	- Actualiza os melhores valores encontrados para cada ponto da imagem no BCM e no BAI.
+	O Compare, irá availar estes dados, e conforme a qualidade da imagem, esta poderá ser eleita a "Best" até agora.
+	
+Iteração:
+	Denomina-se iteração a um grupo de simulações feitas com base nos mesmo dados de entradas.
+	Todas estas simulações actualizam os cubos "BCM" e "BAI" que correspondem ao conjunto dos melhores valores
+	para cada ponto até à simulação presente.
+	
+	Estes cubos serão dados de entrada da DSS na próxima Iteração.
+
+
+O resultado final é uma imagem de Impedâncias Acústicas de maior qualidade, criada apartir da evolução de imagens com uma qualidade crescente que convergem cada vez melhor para a imagem de sismica real, resultado do conjunto de simulações e iterações.
+
+
+A DSS é um motor capaz de realizar dois tipos de simulações:
+	- Simulações simples.
+	- co-Simulações.
+Uma simulação simples, trata-se da criação de uma imagem de impedâncias acústicas de uma àrea cúbica, partindo unicamente de dados muito pontuais e precisos de poços que se encontram nessa àrea cúbica.
+A imagem resultante é uma imagem coerente de acordo com modelos e fórmulas geóestatíscitas, e dados relativos às caracteristicas da àrea passados como parâmetros.
+
+Uma co-simulação diferência-se da simulação simples pois recebe dois cubos que correspondem a impedâncias acústicas e as respectivas correlações. Estes valores são utilizados para que a imagem gerada aproveite conhecimento anterior como zonas onde já se têm correlações muito elevadas, o que evita que a imagem gerada divirja muito dos valores anteriores. 
+Como a DSS é um algoritmo onde existe uma coesão muito forte entre os valores periféricos de outro valor, este método produz imagens melhoradas que se aproximam mais à realidade por utilizar valores que são próximos da realidade.
+
+
+Notas:
+	A TSI é uma aplicação cuja execução completa demorava 2 dias. (cerca de 20 minutos cada simulação)
+O tempo de execução de cada simulação divide-se apróximadamente em:
+ -DSS 		- 95%
+ -SI  		- 4%
+ -Compare 	- 1%.
+
+	Existia uma enorme dificuldade em reduzir os tempos de execução pois o *bottleneck* encontrava-se na DSS, que se
+encontrava codificada em Fortran, e onde nenhum elemento da equipa de desenvolvimento até então tinha conhecimentos sólidos.
+	A DSS era utilizada como caixa preta, e o seu tempo de execução e a seu uso de memória eram dados como inalteráveis.
+
+	A TSI estava limitada à simulação de cubos inferiores a 300x300x300, pois com cubos desse tamanho esgotava a memória virtual de um processo em windows. (2GB).
+	O algoritmo da TSI era conhecido por requerer muita memória, mas não existia qualquer métrica ou estudo de quanta memória deveria precisar para simular um cubo com um dado tamanho.
+	O consumo de memória era verdadeiramente *gigantesco*, cubos com um tamanho de 100mb(contando com 32bits para representar informação de cada ponto), não podiam ser simulados, sendo o consumo de memória apróximadamente 20x o tamanho do cubo a simular.
+	Isto inviabilizava a resolução de alguns problemas dadas as condições existentes, pois .... Sendo assim uma das motivações para o trabalho é analisar o consumo de memória e optimizá-lo de forma a que seja óptimo para o algoritmo.
+	
+
+
+
+

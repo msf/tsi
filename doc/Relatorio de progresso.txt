@@ -1,0 +1,106 @@
+	
+
+
+Relatório de Progressos:
+
+Recta do consumo de memória para a versão inicial era:
+F(x) = Cte + 18x, onde x é o nº de pontos do cubo, e Cte um valor constante ~ 400MB.
+
+Inicio (Maio)
+
+O tempo de execução de cada simulação divide-se apróximadamente em:
+ -DSS - 95%
+ -SI  - 4%
+ -Compare - 1%.
+	Existia uma enorme dificuldade em reduzir os tempos de execução pois o *bottleneck* encontrava-se na DSS, que se
+encontrava codificada em Fortran, e onde nenhum elemento da equipa de desenvolvimento até então tinha conhecimentos sólidos.
+	A DSS era utilizada como caixa preta, e o seu tempo de execução e a seu uso de memória eram dados como inalteráveis.
+
+	A TSI estava limitada à simulação de cubos inferiores a 300x300x300, pois com cubos desse tamanho esgotava a memória virtual de um processo em windows. (2GB).
+	O consumo de memória era verdadeiramente *gigantesco*, cubos com um tamanho de 100mb(contando com 32bits para representar informação de cada ponto), não podiam ser simulados, sendo o consumo de memória apróximadamente 20x o tamanho do cubo a simular.
+
+	O algoritmo da TSI era conhecido por requerer muita memória, mas não existia qualquer métrica ou estudo de quanta memória deveria precisar para simular um cubo com um dado tamanho.
+
+
+Etapas:
+1) Familiarização e fusão dos dois ficheiros de configuração.
+	O trabalho começou com a familiarização com a aplicação básica até agora desenvolvida por Eng.s de Minas.
+	Aproveitando-se para fundir os dois ficheiros de configuração num só, visto terem dados e paramentros replicados.
+
+2) "Port" para Linux.
+	Seguidamente portou-se a aplicação para linux, de forma a todo o desenvolvimento ser feito no mesmo OS que a plataforma destino.
+	Houve ganhos de performance não significativos.
+
+3) "Port" da DSS de fortran para C
+	A DSS era composta por ~5000 linhas de código Fortran, com apróximadamente 200linhas de código Fortran90 e o restante Fortran77.
+	Optou-se por uma conversão sistemática do Fortran77 para C utilizando a ferramenta f2c (http://www.netlib.org/f2c/).
+	Para o código Fortran90, fez-se uma tradução manual para Fortran77, seguidamente traduziu-se o resultado com o f2c para C.
+	
+	Após o código estar todo em C, existiam os seguintes problemas:
+		- dimensões de cubos estáticos
+		- dependência da biblioteca f2c, com tipos de dados privados e funções privadas deste.
+	Foram removidas as depências do f2c, e tornados todos os tamanhos dos cubos dinamicos.
+
+4) Optimização do consumo de memória
+	Foi reduzido o consumo de memória removendo os cubos utilizados para cópias entre a TSI e a anterior DSS que era uma DLL.
+	Esta reduçao tornou o consumo de memória igual a:
+F(x) = Cte2 + 15x, onde x é o nº de pontos do cubo, e Cte2 um valor constante < Cte.
+
+
+5) Optimização do tempo de execução (finais de julho)
+	Após a aplicação se encontrar toda em C, foi adoptado um compilador com optimizações mais avançadas, que produziu uma redução do tempo de execução
+	na ordem dos 7%.
+	Foi também feito profiling ao código, e identificou-se "os principais culpados" do tempo longo de execução: 
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  Ks/call  Ks/call  name
+ 25.25   5215.25  5215.25 115197548     0.00     0.00  krige_
+ 19.16   9172.28  3957.03 115197548     0.00     0.00  srchnd_
+ 17.38  12761.19  3588.91 115197547     0.00     0.00  ksol_
+ 10.84  15000.48  2239.29        4     0.56     4.43  sdsim_
+  5.78  16193.47  1192.99        4     0.30     0.44  Cube::MakeSyntheticCube(Wavelet*)
+  5.51  17330.84  1137.37       12     0.09     0.09  sortem_
+  2.12  17768.88   438.04 6899502458     0.00     0.00  Cube::Coords(int, int, int)
+	Foram feitas micro-optimizações no código do ksol e krige, que deram ganhos de performance na ordem dos 8%.
+	No total, reduziu-se 15% o tempo de execução.
+
+6) Começo da documentação e levantamento de informação	
+	Seguidamente passou-se ao levantamento de estructuras globais utilizadas, bem como cubos e funções utilizados em cada função.
+	Para possibilitar uma refactorização do código de forma a este ser "thread-safe".
+	E também para substituir variaveis locais e parametros por tipos de dados estructurados, onde temos para cada função uma estructura com todos dados e funções necessárias à manipulação do objecto (programação orientada por objectos).
+
+	thread-safe porque:
+		a primeira fase da paralelização da aplicação é uma paralelização simples para uma aplicação multi-threaded.
+		Daí ser indispênsavel tornar a aplicação thread-safe.
+	programação orientada por objectos:
+		A ideia é modelar a aplicação para estar com tipos de dados estructurados e orientada por objectos, permitindo uma maior legibilidade,
+		localidade de código e dados, e maior facilidade de desenvolvimento.
+
+7) Implementação de uma versão experimental, multi-threaded e com menor consumo de memória. (finais de agosto)
+consumo de memória:
+	F(x) = Cte3 + 7x + T*7*x, onde T é o nº de Threads, e x é o nº de pontos
+	Isto significa que, em 2GB de ram, conseguimos simular um problema com 35milhões de pontos.
+ 
+8) Redação de Documentação relativa ao TFC, e introdução para o relatório.
+
+9) Implementação de Random-Layers
+
+	
+10) Redução de memória devido a alterações em (9):
+	F(x) = Cte4 + 5x + T*6*x, onde T é o nº de Threads, e x é o nº de pontos
+	Isto significa que, em 2GB de ram, conseguimos simular um problema com 43milhões de pontos.
+
+
+
+
+
+Notas:
+
+
+
+Observações:
+
+
+
+
+
+

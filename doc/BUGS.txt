@@ -1,0 +1,49 @@
+# BUGS.txt
+
+for each version, all known bugs are listed.
+bugs of earlier versions not accounted on more recent version means "bug fixed"
+
+- tsi-4.2-pre
+	- running simulations with aplied MASK doesn't work.
+	- garbled log file due to simulation threads sharing the same log file.
+	- incorrect cpuTime on THREADS > 1, since timer a "process" and not "thread" timer.
+	- incorrect cpuTime for long simulations. (possibly counter overflow) 
+	(its better to use: $ time ./tsi config.par)
+	- compiler optimizations bigger than:
+			-O3 -march=pentium2 -ffast-math -fomit-frame-pointer
+		are unsafe and unreliable.
+	- Code is not 64bits clean, only x86 is suported. (amd64 not supported..)
+	- GCC4 is know to produce incorrect results, please use gcc3
+	- very small memory leak detected...
+
+- tsi-4.0
+	- artifacts on final image due to static layering (on layer borders)
+	- running simulations with aplied MASK doesn't work.
+	- garbled log file due to simulation threads sharing the same log file.
+	- incorrect cpuTime on THREADS > 1, since is a "process" and not "thread timer".
+	- incorrect cpuTime for long simulations. 
+	- compiler optimizations bigger than:
+			-O3 -march=pentium2 -ffast-math -fomit-frame-pointer
+		are unsafe and unreliable.
+	- Code is not 64bits clean, only x86 is suported. (amd64 not supported..)
+	- GCC4 is know to produce incorrect results, please use gcc3
+
+
+- tsi-v3.2
+	- artifacts on final image due to static layering (on layer borders)
+	- running simulations with aplied MASK doesn't work.
+	- compiler optimizations bigger than:
+			-O3 -march=pentium2 -ffast-math -fomit-frame-pointer
+		are unsafe and unreliable.
+	- Code is not 64bits clean, only x86 is suported. (amd64 not supported..)
+	- GCC4 is know to produce incorrect results, please use gcc3
+
+- tsi-v3.0
+	- running simulations with aplied MASK doesn't work.
+	- lack DSS of predictability in result cube, even when invoqued with same SEED.
+	- Incorrect time acounting, it counts file dumps on some type of grids, but not others....
+	- compiler optimizations bigger than:
+			-O3 -march=pentium2 -ffast-math -fomit-frame-pointer
+		are unsafe and unreliable.
+	- Code is not 64bits clean, only x86 is suported. (amd64 not supported..)
+	- GCC4 is know to produce incorrect results, please use gcc3
