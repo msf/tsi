@@ -1,3 +1,6 @@
+#ifndef SI_WRAPPER_H
+#define SI_WRAPPER_H
+
 #include "debug.h"
 #include "registry.h"
 #include "grid_heap.h"
@@ -16,4 +19,4 @@ int si_simulation(si *s, float *AI, float *seismic, float *CM);
 
 void delete_si(si *s);
 
-
+#endif /* SI_WRAPPER_H */

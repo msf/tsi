@@ -1,18 +1,28 @@
-#ifndef _TSI_H
-#define _TSI_H
+#ifndef TSI_H
+#define TSI_H
 
 #include "registry.h"
 #include "grid_heap.h"
+#include "dss_wrapper.h"
+#include "si_wrapper.h"
+
+#ifdef TSI_MPI
+#include "tsi_parallel.h"
+#else
 
 typedef struct tsi_type {
     /* auxiliar objects */
     registry *reg;
     grid_heap *heap;
 
+    /* geo-stats engines */
+    dss *dss_eng;
+    si  *si_eng;
+
     /* execution parameters*/
     int iterations,
         simulations,
-        maxgrids;
+        usefs;
 
     /* grid size */
     int xsize,
@@ -30,6 +40,7 @@ typedef struct tsi_type {
         currBCM_idx,
         nextBAI_idx,
         nextBCM_idx,
+        ai_idx,
         cm_idx;
         
     /* data pointers */
@@ -39,6 +50,7 @@ typedef struct tsi_type {
           *currBCM,
           *nextBAI,
           *nextBCM,
+          *ai,
           *cm;
 } tsi;
 
@@ -46,6 +58,7 @@ tsi *new_tsi(registry *reg);
 
 void delete_tsi(tsi *t);
 
-int start_tsi(tsi *t);
+int run_tsi(tsi *t);
 
-#endif /* _TSI_H */
+#endif /* TSI_MPI */
+#endif /* TSI_H */

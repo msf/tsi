@@ -4,35 +4,35 @@
 #include <stdio.h>
 
 typedef struct grid_type {
-    FILE *fp;        /* file where the grid is stored */
+    FILE *fp;       /* file where the grid is stored */
 
     float *grid,    /* alligned grid */
           *pointer; /* original grid pointer */
 
     int swappable,  /* swappable flag. set to null when grid is in use */
         dirty,      /* dirty grid flag. set to null if grid contents are disposable */
-
-        next_grid,  /* next free grid on stack */
-        next_clear; /* next allocated grid */
+        next_grid;  /* next free grid on stack */
 } grid;
 
 
 typedef struct grid_heap_type {
     grid *g;                 /* grid records array */
     unsigned int grid_size;  /* absolute grid size */
+    
+    int nodes,               /* number of threads */
+        rank;                /* thread rank */
 
-    int heap_size;           /* number of grids */
-    int max_grids;           /* max number of grids in memory */
+    int heap_size;           /* number of grids in heap */
     int alloc_grids;         /* number of allocated grids in the heap */
     int curr_grids;          /* number of grids in memory */
 
-    /* grid stacks */
-    int next_grid;           /* next free grid */
-    int next_clear;          /* next available grid */
+    int next_grid;           /* next free grid in stack */
+    int use_fs;              /* swap to file flag */
 } grid_heap;
 
 /* starts a new grid heap */
-grid_heap *new_heap(int ngrids, int maxgrids, unsigned int xsize, unsigned int ysize, unsigned int zsize);
+grid_heap *new_heap(int ngrids, int nodes, int rank, int use_fs,
+                    unsigned int xsize, unsigned int ysize, unsigned int zsize);
 
 /* allocates a new grid */
 int new_grid(grid_heap *h);

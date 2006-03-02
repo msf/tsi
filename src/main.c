@@ -1,10 +1,7 @@
 #include <stdio.h>
+#include "debug.h"
 #include "registry.h"
 #include "tsi.h"
-#include "debug.h"
-#ifdef TSI_MPI
-#include "tsi_parallel.h"
-#endif /* TSI_MPI */
 
 int main (int argc, char *argv[])
 {
@@ -16,11 +13,6 @@ int main (int argc, char *argv[])
     char default_registry_file[] = "tsi.conf";
     char *reg_file;
 
-
-#ifdef TSI_MPI
-    // init MPI
-#endif /* TSI_MPI */
-   
     if (argc > 1)  /* evaluate if a registry file (or more) was passed as parameter */
         reg_file = argv[1];
     else     /* switch to default file */
@@ -50,15 +42,18 @@ int main (int argc, char *argv[])
     /* starting new program from registry */
     if (!(t = new_tsi(r))) {
         printf_dbg("Failed to load TSI!\n");
+        delete_tsi(t);
         return 2;
     }
 
     /* start execution */
-    if (!start_tsi(t)) {
+    if (!run_tsi(t)) {
         printf_dbg("TSI Failed to execute!\n");
+        delete_tsi(t);
         return 3;
     }
 
+    delete_tsi(t);
     return 0;
 } /* main */
 

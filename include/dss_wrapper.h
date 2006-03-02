@@ -1,3 +1,6 @@
+#ifndef DSS_WRAPPER_H
+#define DSS_WRAPPER_H
+
 #include "debug.h"
 #include "grid_heap.h"
 #include "registry.h"
@@ -28,3 +31,4 @@ int codss_simulation(dss *d, float *currBAI, float *currBCM, float *AI);
 
 void delete_dss(dss *d);
 
+#endif /* DSS_WRAPPER_H */
