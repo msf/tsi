@@ -7,7 +7,7 @@
 #define WHAT ???               /* what define is missing here?!?!?! */
 
 
-grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, unsigned int xsize, unsigned int ysize, unsigned int zsize) {
+grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, int xsize, int ysize, int zsize) {
 
     grid_heap *h;
     int i, j;
@@ -26,7 +26,7 @@ grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, unsigned int
 
     /* heap constants */
     h->heap_size = heap_size;   /* number of grids in heap */
-    h->grid_size = xsize * ysize * zsize; // + ALLIGNMENT/sizeof(float);
+    h->grid_size = (unsigned int)xsize * (unsigned int)ysize * (unsigned int)zsize; // + ALLIGNMENT/sizeof(float);
 
     /* free grids stack */
     h->next_grid = 0;      /* free grids stack */
@@ -86,6 +86,7 @@ int new_grid(grid_heap *h) {
         printf_dbg2("new_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
     } else {
         printf_dbg2("new_grid(): no more grids available!\n");
+        return -1;
     }
 
     return idx;
@@ -98,13 +99,14 @@ float *load_grid(grid_heap *h, int idx) {
     int i, j;
     
     if (idx < h->heap_size) {
+        printf_dbg2("load_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
+
         if (h->g[idx].grid) {    /* check if this grid still has its space allocated */
            h->g[idx].swappable = 0;   /* mark grid in use flag */
            return h->g[idx].grid;     /* return pointer to grid space */
         }
 
         if (h->curr_grids < h->alloc_grids) {
-            h->curr_grids++;
             /* find a cleared grid */
             j = h->heap_size;
             for (i = 0; i < h->heap_size; i++) {
@@ -115,8 +117,8 @@ float *load_grid(grid_heap *h, int idx) {
             }
             if (i != j) { /* found dirty grid */
                 /* dump j grid */
-                if (!fseek(h->g[j].fp, 0, SEEK_SET)) {
-                    printf_dbg2("load_grid(): failed to reset file position for grid %d\n", j);
+                if (fseek(h->g[j].fp, 0, SEEK_SET)) {
+                    printf_dbg2("load_grid(): failed to reset file position for dirty grid %d\n", j);
                     return NULL;
                 }
                 printf_dbg2("load_grid(): swapping grid %d to disk\n", j);
@@ -129,12 +131,13 @@ float *load_grid(grid_heap *h, int idx) {
 
             if (i == h->heap_size) {
                 /* no grid available, allocate more ram */
+                h->curr_grids++;
                 h->g[idx].grid = (float *) malloc(sizeof(float));
                 h->g[idx].pointer = h->g[idx].grid;
                 h->g[idx].swappable = 0;
                 if (!h->g[idx].dirty) {
                     /* load grid */
-                    if (!fseek(h->g[idx].fp, 0, SEEK_SET)) {
+                    if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
                         printf_dbg2("load_grid(): failed to reset file position for grid %d\n", idx);
                         return NULL;
                     }
@@ -150,7 +153,7 @@ float *load_grid(grid_heap *h, int idx) {
                 h->g[idx].swappable = 0;
                 h->g[j].grid = h->g[j].pointer = NULL;
                 /* load grid */
-                if (!fseek(h->g[idx].fp, 0, SEEK_SET)) {
+                if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
                     printf_dbg2("load_grid(): failed to reset file position for grid %d\n", idx);
                     return NULL;
                 }
@@ -173,7 +176,6 @@ float *load_grid(grid_heap *h, int idx) {
 int clear_grid(grid_heap *h, int idx) {
     if ((idx < h->heap_size) && (h->g[idx].grid != NULL)) {
         h->g[idx].swappable = 1;   /* mark grid as not needed */
-        h->curr_grids--;           /* decrease the number of grids in use */
         printf_dbg2("clear_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
         return 1;
     } else {
@@ -188,7 +190,6 @@ int dirty_grid(grid_heap *h, int idx) {
     if ((idx < h->heap_size) && (h->g[idx].grid != NULL)) {
         h->g[idx].swappable = 1;   /* mark grid as not needed */
         h->g[idx].dirty = 1;       /* mark grid to be saved before being reused */
-        h->curr_grids--;           /* decrease the number of grids in use */
         printf_dbg2("dirty_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
     } else {
         printf_dbg2("dirty_grid(): requested grid %d is off range or empty\n", idx);

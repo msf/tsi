@@ -1,6 +1,7 @@
 #ifndef TSI_MPI
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "debug.h"
 #include "registry.h"
 #include "grid_heap.h"
@@ -72,6 +73,7 @@ tsi *new_tsi(registry *reg) {
        delete_tsi(t);
        return NULL;
     }
+    t->grid_size = (unsigned int)t->zsize * (unsigned int)t->ysize * (unsigned int)t->xsize;
 
     /* get heap data */
     k = get_key(reg, "GLOBAL", "USEFS");
@@ -91,14 +93,15 @@ tsi *new_tsi(registry *reg) {
     }
 
     /* init grids */
-    t->seismic_idx = new_grid(t->heap);
-    t->bestAI_idx = new_grid(t->heap);
-    t->currBAI_idx = new_grid(t->heap);
-    t->currBCM_idx = new_grid(t->heap);
-    t->nextBAI_idx = new_grid(t->heap);
-    t->nextBCM_idx = new_grid(t->heap);
-    t->ai_idx = new_grid(t->heap);
-    t->cm_idx = new_grid(t->heap);
+    if ((t->seismic_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->bestAI_idx  = new_grid(t->heap)) < 0) return 0;
+    if ((t->currBAI_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->currBCM_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->nextBAI_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->nextBCM_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->ai_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->cm_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->sy_idx = new_grid(t->heap)) < 0) return 0;
 
     t->dss_eng = new_dss(t->reg, t->heap);
     if (!t->dss_eng) {
@@ -154,10 +157,16 @@ float grid_correlation (float *a, float *b) {
 
 
 
-void tsi_compare (tsi *t) {
+int tsi_compare (tsi *t) {
     ////////////////////////////////////////////////// TODO
+    return 1;
 } /* tsi_compare */
 
+
+void grid_copy(float *a, float *b, unsigned int size)
+{
+    memcpy(a, b, size*sizeof(float));
+}
 
 
 int run_tsi(tsi *t) {
@@ -168,105 +177,147 @@ int run_tsi(tsi *t) {
     best_corr, ai_corr = 0;
 
     /* FIRST ITERATION */
-    t->ai = load_grid(t->heap, t->ai_idx);
-    if (t->ai) {
-       for (i = 0; i < t->simulations; i++) {
+    printf_dbg("run_tsi(): first iteration\n");
+    for (i = 0; i < t->simulations; i++) {
 
-           /* DSS */
-           result = dss_simulation(t->dss_eng, t->ai);
+        /* DSS */
+        printf_dbg("run_tsi(): loading AI grid\n");
+        t->ai = load_grid(t->heap, t->ai_idx);
+        if (t->ai) {
+            printf_dbg("run_tsi(): running DSS\n");
+            result = dss_simulation(t->dss_eng, t->ai);
+        } else {
+            printf_dbg("run_tsi(): failed to load AI for DSS\n");
+            return 0;
+        }
 
-           /* SI */
-           if (result) {
-              t->cm = load_grid(t->heap, t->cm_idx);
-              t->seismic = load_grid(t->heap, t->seismic_idx);
-              if (t->cm && t->seismic) {
-                  result = si_simulation(t->si_eng, t->ai, t->seismic, t->cm);
-                  clear_grid(t->heap, t->seismic_idx);
-              } else {
-                  printf_dbg("run_tsi(): failed to load CM and Seismic for SI!\n");
-                  return 0;
-              }
-           } else {
-              printf_dbg("run_tsi(): dss simulation failed!\n");
-              return 0;
-           }
-           if (result) {
+        /* SI */
+        if (result) {
+            printf_dbg("run_tsi(): loading CM\n");
+            t->cm = load_grid(t->heap, t->cm_idx);
+            printf_dbg("run_tsi(): loading seismic\n");
+            t->seismic = load_grid(t->heap, t->seismic_idx);
+            printf_dbg("run_tsi(): loading SY\n");
+            t->sy = load_grid(t->heap, t->sy_idx);
+            if (t->cm && t->seismic && t->sy) {
+                printf_dbg("run_tsi(): running SI \n");
+                result = si_simulation(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
+            } else {
+                printf_dbg("run_tsi(): failed to load CM, Seismic or SY for SI!\n");
+                return 0;
+            }
+        } else {
+            printf_dbg("run_tsi(): DSS failed!\n");
+            return 0;
+        }
 
-              /* Is best? */
-              ai_corr = grid_correlation(t->seismic, t->ai);
-              if (ai_corr > best_corr) {
-                  delete_grid(t->heap, t->bestAI_idx);
-                  t->bestAI_idx = t->ai_idx;
-              }
-              /* Compare */
-              tsi_compare(t);   /* builds nextBAI and nextBCM */
-              
-              if (t->ai_idx == t->bestAI_idx) {
-                 dirty_grid(t->heap, t->bestAI_idx);
-                 t->ai_idx = new_grid(t->heap);
-                 t->ai = load_grid(t->heap, t->ai_idx);
-              }
-           } else {
-              printf_dbg("run_tsi(): si simulation failed!\n");
-              return 0;
-           }
-       } /* for */
-    } else {
-       printf_dbg("run_tsi(): failed to load AI for DSS\n");
-       return 0;
-    }
+
+        /* Is best? */
+        if (result) {
+            printf_dbg("run_tsi(): checking best global correlation\n");
+            ai_corr = grid_correlation(t->seismic, t->sy);
+            if (ai_corr > best_corr) {
+                best_corr = ai_corr;
+                delete_grid(t->heap, t->bestAI_idx);   /* new bestAI, delete old */
+                t->bestAI_idx = t->ai_idx;
+            }
+            clear_grid(t->heap, t->seismic_idx);
+            clear_grid(t->heap, t->sy_idx);
+        } else {
+            printf_dbg("run_tsi(): SI failed!\n");
+            return 0;
+        }
+        
+        /* Compare */
+        printf_dbg("run_tsi(): running Compare\n");
+        result = tsi_compare(t);   /* builds nextBAI and nextBCM */
+        if (result) {
+            printf_dbg("run_tsi(): final clean-up\n");
+            if (t->ai_idx == t->bestAI_idx) {
+                dirty_grid(t->heap, t->bestAI_idx);
+                t->ai_idx = new_grid(t->heap);
+            }
+            clear_grid(t->heap, t->cm_idx);
+        } else {
+            printf_dbg("run_tsi(): Compare failed!\n");
+            return 0;
+        }
+    } /* for */
+    clear_grid(t->heap, t->ai_idx);
 
     /* NEXT ITERATIONS */
     for (j = 1; j < t->iterations; j++) {
 
+        printf_dbg("run_tsi(): interation %d\n", j+1);
         t->currBAI_idx = t->nextBAI_idx;
         t->currBCM_idx = t->nextBCM_idx;
         t->nextBAI_idx = new_grid(t->heap);
         t->nextBCM_idx = new_grid(t->heap);
         t->currBAI = load_grid(t->heap, t->currBAI_idx);
         t->currBCM = load_grid(t->heap, t->currBCM_idx);
- 
+        t->nextBAI = load_grid(t->heap, t->currBAI_idx);
+        t->nextBCM = load_grid(t->heap, t->currBCM_idx);
+        grid_copy(t->currBAI, t->nextBAI, t->grid_size);
+        grid_copy(t->currBCM, t->nextBCM, t->grid_size);
+        clear_grid(t->heap, t->nextBAI_idx);
+        clear_grid(t->heap, t->nextBCM_idx);
+
         for (i = 0; i < t->simulations; i++) {
 
-            /* DSS */
-            result = codss_simulation(t->dss_eng, t->currBAI, t->currBCM, t->ai);
+            /* CoDSS */
+            printf_dbg("run_tsi(): loading AI grid\n");
+            t->ai = load_grid(t->heap, t->ai_idx);
+            if (t->ai && t->currBAI && t->currBCM) {
+                result = codss_simulation(t->dss_eng, t->currBAI, t->currBCM, t->ai);
+                clear_grid(t->heap, t->currBAI_idx);
+                clear_grid(t->heap, t->currBCM_idx);
+            } else {
+                printf_dbg("run_tsi(): failed to load AI, currBAI or currBCM for CoDSS!\n");
+                return 0;
+            }
 
             /* SI */
             if (result) {
                 t->cm = load_grid(t->heap, t->cm_idx);
                 t->seismic = load_grid(t->heap, t->seismic_idx);
                 if (t->cm && t->seismic) {
-                    result = si_simulation(t->si_eng, t->ai, t->seismic, t->cm);
+                    printf_dbg("run_tsi(): running CoDSS\n");
+                    result = si_simulation(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
                     clear_grid(t->heap, t->seismic_idx);
                 } else {
-                    printf_dbg("run_tsi(): failed to load CM and Seismic for SI!\n");
+                    printf_dbg("run_tsi(): failed to load CM, Seismic or SY for SI!\n");
                     return 0;
                 }
             } else {
-                printf_dbg("run_tsi(): dss simulation failed!\n");
+                printf_dbg("run_tsi(): CoDSS simulation failed!\n");
                 return 0;
             }
-            if (result) {
 
-                /* Is best? */
-                ai_corr = grid_correlation(t->seismic, t->ai);
+            /* Is best? */
+            if (result) {
+                ai_corr = grid_correlation(t->seismic, t->sy);
                 if (ai_corr > best_corr) {
                     delete_grid(t->heap, t->bestAI_idx);
+                    clear_grid(t->heap, t->sy_idx);
                     t->bestAI_idx = t->ai_idx;
-                }
-                /* Compare */
-                tsi_compare(t);   /* builds nextBAI and nextBCM */
-              
-                if (t->ai_idx == t->bestAI_idx) {
-                    dirty_grid(t->heap, t->bestAI_idx);
-                    t->ai_idx = new_grid(t->heap);
-                    t->ai = load_grid(t->heap, t->ai_idx);
                 }
             } else {
                 printf_dbg("run_tsi(): si simulation failed!\n");
                 return 0;
             }
 
+            /* Compare */
+            result = tsi_compare(t);   /* builds nextBAI and nextBCM */
+            if (result) {
+                if (t->ai_idx == t->bestAI_idx) {
+                    dirty_grid(t->heap, t->bestAI_idx);
+                    t->ai_idx = new_grid(t->heap);
+                    t->ai = load_grid(t->heap, t->ai_idx);
+                }
+            } else {
+                printf_dbg("run_tsi(): Compare failed!\n");
+                return 0;
+            }
         } /* for */
         
     } /* for */

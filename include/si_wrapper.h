@@ -15,7 +15,7 @@ typedef struct si_type {
 
 si *new_si(registry *r, grid_heap *h);
 
-int si_simulation(si *s, float *AI, float *seismic, float *CM);
+int si_simulation(si *s, float *AI, float *seismic, float *CM, float *SY);
 
 void delete_si(si *s);
 

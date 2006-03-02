@@ -28,6 +28,7 @@ typedef struct tsi_type {
     int xsize,
         ysize,
         zsize;
+    unsigned int grid_size;
 
     /* ramdom layers */
     int layers_min,
@@ -41,7 +42,8 @@ typedef struct tsi_type {
         nextBAI_idx,
         nextBCM_idx,
         ai_idx,
-        cm_idx;
+        cm_idx,
+        sy_idx;
         
     /* data pointers */
     float *seismic,
@@ -51,7 +53,8 @@ typedef struct tsi_type {
           *nextBAI,
           *nextBCM,
           *ai,
-          *cm;
+          *cm,
+          *sy;
 } tsi;
 
 tsi *new_tsi(registry *reg);
