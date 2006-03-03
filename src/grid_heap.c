@@ -5,7 +5,6 @@
 #include "debug.h"
 
 #define ALLIGNMENT 16          /* byte allignment */
-#define FBUF_SIZE  32768       /* file I/O buffer size */
 
 
 grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, int xsize, int ysize, int zsize) {
@@ -29,6 +28,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
     h->heap_size = heap_size;   /* number of grids in heap */
     h->grid_size = (unsigned int)xsize * (unsigned int)ysize * (unsigned int)zsize; // + ALLIGNMENT/sizeof(float);
     h->threshold = swap_thr;
+    h->use_fs = use_fs;
 
     /* free grids stack */
     h->next_grid = 0;      /* free grids stack */
@@ -48,8 +48,8 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
     } /* if */
 
     /* create the swap files for each grid */
-    if (use_fs) {
-        for(i = 0; i < heap_size; i++) {
+    for(i = 0; i < heap_size; i++) {
+        if (h->use_fs) {      
             sprintf(filename, "/tmp/tsi_grid.node%d.%d", rank, i);
             printf_dbg2("new_heap(): filename string >%s<\n", filename);
             h->g[i].fp = fopen(filename, "w+b");
@@ -58,10 +58,10 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
                 delete_heap(h);
                 return NULL;
             } /* if */
-            h->g[i].next_grid = i+1;  /* set free grid stack */
-            h->g[i].swappable = 1;
-        } /* for */
-    } /* if */
+        }
+        h->g[i].next_grid = i+1;  /* set free grid stack */
+        h->g[i].swappable = 1;
+    } /* for */
 
     return h;
 } /* new_heap */
@@ -112,14 +112,14 @@ float *load_grid(grid_heap *h, int idx) {
         if (h->g[idx].grid) {   /* check if this grid still has its space allocated */
             h->g[idx].swappable = 0;   /* mark grid in use flag */
             return h->g[idx].grid;     /* return pointer to grid space */
-        } else if (h->curr_grids < h->threshold) {  /* if number of grids is bellow threshold do not swap */
+        } else if (h->curr_grids < h->threshold) {  /* if #grids is bellow threshold */
             h->curr_grids++;
             h->g[idx].grid = (float *) malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
             return h->g[idx].grid;
         }
-
+        
         /* seek for a cleared grid */
         j = h->heap_size;
         for (i = 0; i < h->heap_size; i++) {
@@ -130,17 +130,17 @@ float *load_grid(grid_heap *h, int idx) {
         }
         printf_dbg2("load_grid(): j = %d, i = %d\n", j, i);
 
-        if (i != j) { /* found dirty grid */
+        if ((h->use_fs) && (i != j)) { /* found dirty grid */
             /* dump j grid */
             h->writes++;
             if (fseek(h->g[j].fp, 0, SEEK_SET)) {
-                 printf_dbg2("load_grid(): failed to reset file position for dirty grid %d\n", j);
-                 return NULL;
+                printf_dbg2("load_grid(): failed to reset file position for dirty grid %d\n", j);
+                return NULL;
             }
             printf_dbg2("load_grid(): swapping dirty grid %d to disk\n", j);
             if (fwrite(h->g[j].grid, sizeof(float), h->grid_size, h->g[j].fp) < h->grid_size) {
-                 printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
-                 return NULL;
+                printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
+                return NULL;
             }
             h->g[j].dirty = 0;
             i = j;
@@ -160,7 +160,7 @@ float *load_grid(grid_heap *h, int idx) {
             h->g[j].grid = h->g[j].pointer = NULL;
         }
         
-        if (!h->g[idx].dirty) {
+        if ((h->use_fs) && (!h->g[idx].dirty)) {
             /* load grid */
             h->reads++;
             if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
