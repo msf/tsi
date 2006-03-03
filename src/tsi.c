@@ -76,7 +76,7 @@ tsi *new_tsi(registry *reg) {
     t->grid_size = (unsigned int)t->zsize * (unsigned int)t->ysize * (unsigned int)t->xsize;
 
     /* get heap data */
-    k = get_key(reg, "GLOBAL", "USEFS");
+    k = get_key(reg, "HEAP", "USEFS");
     if (k)
        t->usefs = get_int(k);
     else {
