@@ -8,7 +8,7 @@
 #define FBUF_SIZE  32768       /* file I/O buffer size */
 
 
-grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, int xsize, int ysize, int zsize) {
+grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, int xsize, int ysize, int zsize) {
 
     grid_heap *h;
     int i, j;
@@ -28,6 +28,7 @@ grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, int xsize, i
     /* heap constants */
     h->heap_size = heap_size;   /* number of grids in heap */
     h->grid_size = (unsigned int)xsize * (unsigned int)ysize * (unsigned int)zsize; // + ALLIGNMENT/sizeof(float);
+    h->threshold = swap_thr;
 
     /* free grids stack */
     h->next_grid = 0;      /* free grids stack */
@@ -108,9 +109,15 @@ float *load_grid(grid_heap *h, int idx) {
     printf_dbg2("load_grid(): grid req=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
     if (idx < h->heap_size) {
 
-        if (h->g[idx].grid) {    /* check if this grid still has its space allocated */
-           h->g[idx].swappable = 0;   /* mark grid in use flag */
-           return h->g[idx].grid;     /* return pointer to grid space */
+        if (h->g[idx].grid) {   /* check if this grid still has its space allocated */
+            h->g[idx].swappable = 0;   /* mark grid in use flag */
+            return h->g[idx].grid;     /* return pointer to grid space */
+        } else if (h->curr_grids < h->threshold) {  /* if number of grids is bellow threshold do not swap */
+            h->curr_grids++;
+            h->g[idx].grid = (float *) malloc(h->grid_size*sizeof(float));
+            h->g[idx].pointer = h->g[idx].grid;
+            h->g[idx].swappable = 0;
+            return h->g[idx].grid;
         }
 
         /* seek for a cleared grid */

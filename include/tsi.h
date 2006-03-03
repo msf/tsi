@@ -21,8 +21,7 @@ typedef struct tsi_type {
 
     /* execution parameters*/
     int iterations,
-        simulations,
-        usefs;
+        simulations;
 
     /* grid size */
     int xsize,

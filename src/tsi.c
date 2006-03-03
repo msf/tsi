@@ -17,6 +17,7 @@ tsi *new_tsi(registry *reg) {
     reg_key *k;
     int n_grids;
     char *filename;
+    int usefs, heap_size, swap_thr;
 
     t = (tsi *) malloc(sizeof(tsi));
     t->reg = reg;
@@ -78,14 +79,30 @@ tsi *new_tsi(registry *reg) {
     /* get heap data */
     k = get_key(reg, "HEAP", "USEFS");
     if (k)
-       t->usefs = get_int(k);
+       usefs = get_int(k);
     else {
        printf_dbg("new_tsi(): failed to get usefs flag from the registry!\n");
        delete_tsi(t);
        return NULL;
     }
+    k = get_key(reg, "HEAP", "SIZE");
+    if (k)
+       heap_size = get_int(k);
+    else {
+       printf_dbg("new_tsi(): failed to get heap size flag from the registry!\n");
+       delete_tsi(t);
+       return NULL;
+    }
+    k = get_key(reg, "HEAP", "THRESHOLD");
+    if (k)
+       swap_thr = get_int(k);
+    else {
+       printf_dbg("new_tsi(): failed to get swap threshold from the registry!\n");
+       delete_tsi(t);
+       return NULL;
+    }
 
-    t->heap = new_heap(HEAP_SIZE, 1, 0, t->usefs, t->xsize, t->ysize, t->zsize);
+    t->heap = new_heap(1, 0, heap_size, swap_thr, usefs, t->xsize, t->ysize, t->zsize);
     if (!t->heap) {
        printf_dbg("new_tsi(): failed to start heap\n");
        delete_tsi(t);
@@ -95,13 +112,13 @@ tsi *new_tsi(registry *reg) {
     /* init grids */
     if ((t->seismic_idx = new_grid(t->heap)) < 0) return 0;
     if ((t->bestAI_idx  = new_grid(t->heap)) < 0) return 0;
-    if ((t->currBAI_idx = new_grid(t->heap)) < 0) return 0;
-    if ((t->currBCM_idx = new_grid(t->heap)) < 0) return 0;
-    if ((t->nextBAI_idx = new_grid(t->heap)) < 0) return 0;
-    if ((t->nextBCM_idx = new_grid(t->heap)) < 0) return 0;
-    if ((t->ai_idx = new_grid(t->heap)) < 0) return 0;
     if ((t->cm_idx = new_grid(t->heap)) < 0) return 0;
     if ((t->sy_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->nextBAI_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->nextBCM_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->currBAI_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->currBCM_idx = new_grid(t->heap)) < 0) return 0;
+    if ((t->ai_idx = new_grid(t->heap)) < 0) return 0;
 
     t->dss_eng = new_dss(t->reg, t->heap);
     if (!t->dss_eng) {

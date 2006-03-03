@@ -17,25 +17,25 @@ typedef struct grid_type {
 
 typedef struct grid_heap_type {
     grid *g;                 /* grid records array */
-    void *fb;                /* file I/O buffer */
     unsigned int grid_size;  /* absolute grid size */
     
     int nodes,               /* number of threads */
         rank;                /* thread rank */
 
-    int heap_size;           /* number of grids in heap */
-    int alloc_grids;         /* number of allocated grids in the heap */
+    int heap_size,           /* number of grids in heap */
+        alloc_grids,         /* number of allocated grids in the heap */
+        threshold,           /* swap threshold */
+        use_fs;              /* swap to file flag */
 
     int curr_grids,          /* number of grids in memory */
         reads,               /* number of reads in files */
         writes;              /* number of writes to files */
 
     int next_grid;           /* next free grid in stack */
-    int use_fs;              /* swap to file flag */
 } grid_heap;
 
 /* starts a new grid heap */
-grid_heap *new_heap(int ngrids, int nodes, int rank, int use_fs, int xsize, int ysize, int zsize);
+grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, int xsize, int ysize, int zsize);
 
 /* allocates a new grid */
 int new_grid(grid_heap *h);
