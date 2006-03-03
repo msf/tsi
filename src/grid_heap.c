@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "grid_heap.h"
 #include "debug.h"
 
 #define ALLIGNMENT 16          /* byte allignment */
-#define WHAT ???               /* what define is missing here?!?!?! */
+#define FBUF_SIZE  32768       /* file I/O buffer size */
 
 
 grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, int xsize, int ysize, int zsize) {
@@ -34,6 +35,8 @@ grid_heap *new_heap(int heap_size, int nodes, int rank, int use_fs, int xsize, i
     /* grid counters*/
     h->alloc_grids = 0;    /* allocated grids counter */
     h->curr_grids = 0;     /* grids in use counter */
+    h->reads = 0;
+    h->writes = 0;
     
     /* initializes the grid records array */
     h->g = (grid *) calloc(heap_size, sizeof(grid));
@@ -96,78 +99,77 @@ int new_grid(grid_heap *h) {
 
 /* return a pointer to the grid */
 float *load_grid(grid_heap *h, int idx) {
-    int i, j;
+    int i, j, k;
+    unsigned int fsize;
+    char *x;
+    float *y;
+    FILE *f;
     
+    printf_dbg2("load_grid(): grid req=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
     if (idx < h->heap_size) {
-        printf_dbg2("load_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
 
         if (h->g[idx].grid) {    /* check if this grid still has its space allocated */
            h->g[idx].swappable = 0;   /* mark grid in use flag */
            return h->g[idx].grid;     /* return pointer to grid space */
         }
 
-        if (h->curr_grids < h->alloc_grids) {
-            /* find a cleared grid */
-            j = h->heap_size;
-            for (i = 0; i < h->heap_size; i++) {
-                if (h->g[i].swappable && h->g[i].grid)
-                    j = i;
-                if (h->g[i].swappable && !h->g[i].dirty && h->g[i].grid)
-                    break;
-            }
-            if (i != j) { /* found dirty grid */
-                /* dump j grid */
-                if (fseek(h->g[j].fp, 0, SEEK_SET)) {
-                    printf_dbg2("load_grid(): failed to reset file position for dirty grid %d\n", j);
-                    return NULL;
-                }
-                printf_dbg2("load_grid(): swapping grid %d to disk\n", j);
-                if (fwrite(h->g[j].grid, sizeof(float), h->grid_size, h->g[j].fp) < h->grid_size) {
-                    printf_dbg2("load_grid(): failed to dump grid %d\n", j);
-                    return NULL;
-                }
-                h->g[j].dirty = 0;
-            }
-
-            if (i == h->heap_size) {
-                /* no grid available, allocate more ram */
-                h->curr_grids++;
-                h->g[idx].grid = (float *) malloc(sizeof(float));
-                h->g[idx].pointer = h->g[idx].grid;
-                h->g[idx].swappable = 0;
-                if (!h->g[idx].dirty) {
-                    /* load grid */
-                    if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
-                        printf_dbg2("load_grid(): failed to reset file position for grid %d\n", idx);
-                        return NULL;
-                    }
-                    printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
-                    if (fread(h->g[idx].grid, sizeof(float), h->grid_size, h->g[idx].fp) < h->grid_size) {
-                        printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
-                        return NULL;
-                    }
-                }
-            } else {
-                h->g[idx].grid = h->g[j].grid;
-                h->g[idx].pointer = h->g[j].pointer;
-                h->g[idx].swappable = 0;
-                h->g[j].grid = h->g[j].pointer = NULL;
-                /* load grid */
-                if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
-                    printf_dbg2("load_grid(): failed to reset file position for grid %d\n", idx);
-                    return NULL;
-                }
-                printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
-                if (fread(h->g[idx].grid, sizeof(float), h->grid_size, h->g[idx].fp) < h->grid_size) {
-                    printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
-                    return NULL;
-                }
-            }
-            return h->g[idx].grid;
+        /* seek for a cleared grid */
+        j = h->heap_size;
+        for (i = 0; i < h->heap_size; i++) {
+            if (h->g[i].swappable && h->g[i].grid)
+                j = i;
+            if (h->g[i].swappable && !h->g[i].dirty && h->g[i].grid)
+                break;
         }
+        printf_dbg2("load_grid(): j = %d, i = %d\n", j, i);
+
+        if (i != j) { /* found dirty grid */
+            /* dump j grid */
+            h->writes++;
+            if (fseek(h->g[j].fp, 0, SEEK_SET)) {
+                 printf_dbg2("load_grid(): failed to reset file position for dirty grid %d\n", j);
+                 return NULL;
+            }
+            printf_dbg2("load_grid(): swapping dirty grid %d to disk\n", j);
+            if (fwrite(h->g[j].grid, sizeof(float), h->grid_size, h->g[j].fp) < h->grid_size) {
+                 printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
+                 return NULL;
+            }
+            h->g[j].dirty = 0;
+            i = j;
+        }
+
+        if (i == h->heap_size) {
+            /* no grid available, allocate more ram */
+            h->curr_grids++;
+            h->g[idx].grid = (float *) malloc(h->grid_size*sizeof(float));
+            h->g[idx].pointer = h->g[idx].grid;
+            h->g[idx].swappable = 0;
+        } else {
+            /* use available grid */
+            h->g[idx].grid = h->g[j].grid;
+            h->g[idx].pointer = h->g[j].pointer;
+            h->g[idx].swappable = 0;
+            h->g[j].grid = h->g[j].pointer = NULL;
+        }
+        
+        if (!h->g[idx].dirty) {
+            /* load grid */
+            h->reads++;
+            if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
+                 printf_dbg2("load_grid(): failed to reset file position for grid %d\n", idx);
+                 return NULL;
+            }
+            printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
+            if (fread(h->g[idx].grid, sizeof(float), h->grid_size, h->g[idx].fp) < h->grid_size) {
+                 printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
+                 return NULL;
+            }
+        }
+        return h->g[idx].grid;
     } else {
-        printf_dbg2("load_grid(): requested grid %d is off range\n", idx);
-    }   
+        printf_dbg2("load_grid(): grid %d off range\n", idx);
+    }
     return NULL;
 } /* load_grid */
 

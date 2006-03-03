@@ -159,6 +159,17 @@ float grid_correlation (float *a, float *b) {
 
 int tsi_compare (tsi *t) {
     ////////////////////////////////////////////////// TODO
+    t->ai = load_grid(t->heap, t->ai_idx);
+    t->cm = load_grid(t->heap, t->cm_idx);
+    t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
+    t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+
+    /* execute Compare */    
+
+    dirty_grid(t->heap, t->nextBAI_idx);
+    dirty_grid(t->heap, t->nextBCM_idx);
+    clear_grid(t->heap, t->ai_idx);
+    clear_grid(t->heap, t->cm_idx);
     return 1;
 } /* tsi_compare */
 
@@ -174,7 +185,7 @@ int run_tsi(tsi *t) {
     int i, j;
     float best_corr, ai_corr;
     
-    best_corr, ai_corr = 0;
+    best_corr = ai_corr = 0;
 
     /* FIRST ITERATION */
     printf_dbg("run_tsi(): first iteration\n");
@@ -185,7 +196,7 @@ int run_tsi(tsi *t) {
         t->ai = load_grid(t->heap, t->ai_idx);
         if (t->ai) {
             printf_dbg("run_tsi(): running DSS\n");
-            result = dss_simulation(t->dss_eng, t->ai);
+            result = run_dss(t->dss_eng, t->ai);         /* 6 grids */
         } else {
             printf_dbg("run_tsi(): failed to load AI for DSS\n");
             return 0;
@@ -201,7 +212,7 @@ int run_tsi(tsi *t) {
             t->sy = load_grid(t->heap, t->sy_idx);
             if (t->cm && t->seismic && t->sy) {
                 printf_dbg("run_tsi(): running SI \n");
-                result = si_simulation(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
+                result = si_simulation(t->si_eng, t->ai, t->seismic, t->cm, t->sy);  /* 4 grids */
             } else {
                 printf_dbg("run_tsi(): failed to load CM, Seismic or SY for SI!\n");
                 return 0;
@@ -212,7 +223,7 @@ int run_tsi(tsi *t) {
         }
 
 
-        /* Is best? */
+        /* Is best? */                                 /* 4 grids */
         if (result) {
             printf_dbg("run_tsi(): checking best global correlation\n");
             ai_corr = grid_correlation(t->seismic, t->sy);
@@ -230,7 +241,7 @@ int run_tsi(tsi *t) {
         
         /* Compare */
         printf_dbg("run_tsi(): running Compare\n");
-        result = tsi_compare(t);   /* builds nextBAI and nextBCM */
+        result = tsi_compare(t);   /* builds nextBAI and nextBCM */     /* 4 grids */
         if (result) {
             printf_dbg("run_tsi(): final clean-up\n");
             if (t->ai_idx == t->bestAI_idx) {
@@ -249,14 +260,10 @@ int run_tsi(tsi *t) {
     for (j = 1; j < t->iterations; j++) {
 
         printf_dbg("run_tsi(): interation %d\n", j+1);
-        t->currBAI_idx = t->nextBAI_idx;
-        t->currBCM_idx = t->nextBCM_idx;
-        t->nextBAI_idx = new_grid(t->heap);
-        t->nextBCM_idx = new_grid(t->heap);
         t->currBAI = load_grid(t->heap, t->currBAI_idx);
         t->currBCM = load_grid(t->heap, t->currBCM_idx);
-        t->nextBAI = load_grid(t->heap, t->currBAI_idx);
-        t->nextBCM = load_grid(t->heap, t->currBCM_idx);
+        t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
+        t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
         grid_copy(t->currBAI, t->nextBAI, t->grid_size);
         grid_copy(t->currBCM, t->nextBCM, t->grid_size);
         clear_grid(t->heap, t->nextBAI_idx);
@@ -321,6 +328,8 @@ int run_tsi(tsi *t) {
         } /* for */
         
     } /* for */
+    
+    printf_dbg("run_tsi(): heap performance: R=%d W=%d G=%d\n", t->heap->reads, t->heap->writes, t->heap->curr_grids);
     return 1;
 } /* run_tsi */
 

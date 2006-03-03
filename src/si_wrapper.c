@@ -21,12 +21,7 @@ si *new_si(registry *r, grid_heap *h) {
 
 
 int si_simulation(si *s, float *AI, float *seismic, float *CM, float *SY) {
-    int g_idx;
-    float *g;
-    g_idx = new_grid(s->heap);
-    g = load_grid(s->heap, g_idx);
     /* do calcs */
-    delete_grid(s->heap, g_idx);
     return 1;
 } /* si */
 

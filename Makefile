@@ -33,7 +33,7 @@ CC       := gcc-4.0
 CPP      := g++-4.0
 CFLAGS   := -pipe -march=pentium2
 LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
-OPTS     := -O3 -ffast-math -m32 -fomit-frame-pointer -DTSI_DEBUG2
+OPTS     := -DTSI_DEBUG2 -O3 -ffast-math -m32 -fomit-frame-pointer 
 #OPTS += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
