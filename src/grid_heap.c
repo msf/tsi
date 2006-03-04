@@ -6,6 +6,11 @@
 
 #define ALLIGNMENT 16          /* byte allignment */
 
+GRID_FILE *open_grid_file(char *filename);
+int close_grid_file(GRID_FILE *fp);
+int save_grid_file(GRID_FILE *fp, float *address, unsigned int size);
+int load_grid_file(GRID_FILE *fp, float *address, unsigned int size);
+
 
 grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, int xsize, int ysize, int zsize) {
 
@@ -52,7 +57,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
         if (h->use_fs) {      
             sprintf(filename, "/tmp/tsi_grid.node%d.%d", rank, i);
             printf_dbg2("new_heap(): filename string >%s<\n", filename);
-            h->g[i].fp = fopen(filename, "w+b");
+            h->g[i].fp = open_grid_file(filename);
             if (!h->g[i].fp) {
                 printf_dbg2("new_heap(): failed to open grid file!\n");
                 delete_heap(h);
@@ -133,13 +138,9 @@ float *load_grid(grid_heap *h, int idx) {
         if ((h->use_fs) && (i != j)) { /* found dirty grid */
             /* dump j grid */
             h->writes++;
-            if (fseek(h->g[j].fp, 0, SEEK_SET)) {
-                printf_dbg2("load_grid(): failed to reset file position for dirty grid %d\n", j);
-                return NULL;
-            }
             printf_dbg2("load_grid(): swapping dirty grid %d to disk\n", j);
-            if (fwrite(h->g[j].grid, sizeof(float), h->grid_size, h->g[j].fp) < h->grid_size) {
-                printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
+            if (!save_grid_file(h->g[j].fp, h->g[j].grid, h->grid_size)) {
+                printf_dbg2("load_grid(): failed to dump grid %d\n", j);
                 return NULL;
             }
             h->g[j].dirty = 0;
@@ -163,13 +164,9 @@ float *load_grid(grid_heap *h, int idx) {
         if ((h->use_fs) && (!h->g[idx].dirty)) {
             /* load grid */
             h->reads++;
-            if (fseek(h->g[idx].fp, 0, SEEK_SET)) {
-                 printf_dbg2("load_grid(): failed to reset file position for grid %d\n", idx);
-                 return NULL;
-            }
             printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
-            if (fread(h->g[idx].grid, sizeof(float), h->grid_size, h->g[idx].fp) < h->grid_size) {
-                 printf_dbg2("load_grid(): failed to dump grid %d\n", idx);
+            if (!load_grid_file(h->g[idx].fp, h->g[idx].grid, h->grid_size)) {
+                 printf_dbg2("load_grid(): failed to load grid %d\n", idx);
                  return NULL;
             }
         }
@@ -226,5 +223,74 @@ void delete_grid(grid_heap *h, int idx) {
 void delete_heap(grid_heap *h) {
     /* TODO */
 } /* delete_heap */
+
+
+
+#ifdef TSI_MPI
+
+GRID_FILE *open_grid_file(char *filename) {
+    GRID_FILE *fp;
+    int amode;
+    MPI_Info info;   /* ??? */
+    
+    amode = MPI_MODE_RDWR | MPI_MODE_CREATE;
+    if (MPI_File_open(MPI_COMM_WORLD, filename, amode, info, fp) != MPI_SUCCESS) return NULL;
+    return fp;
+} /* open_grid_file */
+
+
+
+int close_grid_file(GRID_FILE *fp) {
+    if (MPI_File_close(fp) != MPI_SUCCESS) return 0;
+    return 1;
+} /* close_grid_file */
+
+
+
+int save_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
+    MPI_Status status;
+
+    if (MPI_File_write_at(*fp, 0, address, size, MPI_FLOAT, &status) != MPI_SUCCESS) return 0;
+    return 1;
+} /* save_grid_file */
+
+
+
+int load_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
+    MPI_Status status;
+
+    if (MPI_File_read_at(*fp, 0, address, size, MPI_FLOAT, &status) != MPI_SUCCESS) return 0;
+    return 1;
+} /* load_grid_file */
+
+#else
+
+GRID_FILE *open_grid_file(char *filename) {
+    return fopen(filename, "w+b");
+} /* open_grid_file */
+
+
+
+int close_grid_file(GRID_FILE *fp) {
+    return fclose(fp);
+} /* close_grid_file */
+
+
+
+int save_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
+    if (fseek(fp, 0, SEEK_SET)) return 0;
+    if (fwrite(address, sizeof(float), size, fp) < size) return 0;
+    return 1;
+} /* save_grid_file */
+
+
+
+int load_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
+    if (fseek(fp, 0, SEEK_SET)) return 0;
+    if (fread(address, sizeof(float), size, fp) < size) return 0;
+    return 1;
+} /* load_grid_file */
+
+#endif /* TSI_MPI */
 
 /* end of grid_heap.c */

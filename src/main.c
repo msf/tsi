@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
     }
     
     r = new_registry(reg_file);   /* attempts to load registry file */
- 
+
     if (r)   /* evaluate if the first registry file was loaded successfully */
     {
         i = 2;
@@ -42,7 +42,6 @@ int main (int argc, char *argv[])
     /* starting new program from registry */
     if (!(t = new_tsi(r))) {
         printf_dbg("Failed to load TSI!\n");
-        delete_tsi(t);
         return 2;
     }
 

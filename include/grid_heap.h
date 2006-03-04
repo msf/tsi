@@ -1,10 +1,16 @@
 #ifndef _GRID_HEAP_H_
 #define _GRID_HEAP_H_
 
+#ifdef TSI_MPI
+#include <mpi.h>
+#define GRID_FILE MPI_File
+#else
 #include <stdio.h>
+#define GRID_FILE FILE
+#endif /* TSI_MPI */
 
 typedef struct grid_type {
-    FILE *fp;       /* file where the grid is stored */
+    GRID_FILE *fp;       /* file where the grid is stored */
 
     float *grid,    /* alligned grid */
           *pointer; /* original grid pointer */

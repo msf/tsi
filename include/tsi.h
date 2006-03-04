@@ -6,22 +6,18 @@
 #include "dss_wrapper.h"
 #include "si_wrapper.h"
 
-#ifdef TSI_MPI
-#include "tsi_parallel.h"
-#else
-
 typedef struct tsi_type {
     /* auxiliar objects */
-    registry *reg;
-    grid_heap *heap;
+    registry *reg;            /* reference to the registry */
+    grid_heap *heap;          /* reference to the grid heap */
 
     /* geo-stats engines */
-    dss *dss_eng;
-    si  *si_eng;
+    dss *dss_eng;             /* reference to the DSS and CoDSS engines */
+    si  *si_eng;              /* reference to the SI engine */
 
     /* execution parameters*/
-    int iterations,
-        simulations;
+    int iterations,           /* number of iterations */
+        simulations;          /* number of simulations for each iteration */
 
     /* grid size */
     int xsize,
@@ -29,7 +25,8 @@ typedef struct tsi_type {
         zsize;
     unsigned int grid_size;
 
-    /* ramdom layers */
+
+    /* random layers */
     int layers_min,
         size_layers_min;
 
@@ -54,6 +51,12 @@ typedef struct tsi_type {
           *ai,
           *cm,
           *sy;
+
+    /* parallel execution related data */
+    unsigned int grid_segsize;   /* grid segment size = (int)grid_size/n_procs */
+    int haveBestAI,
+        n_procs,              /* number of processes running */
+        proc_id;              /* process ID */
 } tsi;
 
 tsi *new_tsi(registry *reg);
@@ -62,5 +65,4 @@ void delete_tsi(tsi *t);
 
 int run_tsi(tsi *t);
 
-#endif /* TSI_MPI */
 #endif /* TSI_H */

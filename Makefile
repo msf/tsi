@@ -2,33 +2,9 @@
 
 #                                     
 # Compiler settings (gcc, icc, win32)
-COMPILER := gcc
+COMPILER := mpicc
 
-ifeq ($(COMPILER), icc)
-CC       := icc
-CPP      := icc
-CFLAGS   := -O3
-LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
-OPTS     :=
-DEBUG    :=
-
-elif ($(COMPILER), win32)
-CC       := cl
-CPP      := cl
-CFLAGS   :=
-LDFLAGS  :=
-OPTS     :=
-DEBUG    :=
-
-elif ($(COMPILER), mpicc)
-CC       := mpicc
-CPP      := mpiCC
-CFLAGS   := -pipe -march=pentium2
-LDFLAGS  :=  -lm -lc -lpthread -lstdc++ -lgcc
-OPTS     := -DTSI_MPI -pipe -O3 -ffast-math -m32 -fomit-frame-pointer
-DEBUG    := -DTSI_MPI -g -pg -ggdb -DTSI_DEBUG
-
-else  #gcc
+# Default settings for gcc
 CC       := gcc-4.0
 CPP      := g++-4.0
 CFLAGS   := -pipe -march=pentium2
@@ -49,6 +25,32 @@ DEBUG    := -g -pg -ggdb -DTSI_DEBUG
 #DEBUG    += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow
 #DEBUG    += -Wmissing-field-initializers -Wunreachable-code -Wdisabled-optimization
 #DEBUG    += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
+
+ifeq ($(COMPILER), icc)
+CC       := icc
+CPP      := icc
+CFLAGS   := -O3
+LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
+OPTS     :=
+DEBUG    :=
+endif
+
+ifeq ($(COMPILER), win32)
+CC       := cl
+CPP      := cl
+CFLAGS   :=
+LDFLAGS  :=
+OPTS     :=
+DEBUG    :=
+endif
+
+ifeq ($(COMPILER), mpicc)
+CC       := mpicc
+CPP      := mpiCC
+CFLAGS   := -pipe -march=pentium2
+LDFLAGS  :=  -lm -lc -lpthread -lstdc++ -lgcc
+OPTS     := -DTSI_MPI -DTSI_DEBUG -pipe -O3 -ffast-math -m32 -fomit-frame-pointer
+DEBUG    := -DTSI_MPI -g -pg -ggdb -DTSI_DEBUG2
 endif
 
 
