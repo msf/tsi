@@ -15,5 +15,5 @@
 #define printf_dbg2 //
 #endif
 
-#endif //_TSI_DEBUG_H
+#endif /* _TSI_DEBUG_H */
 

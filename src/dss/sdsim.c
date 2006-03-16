@@ -116,7 +116,8 @@
 #include <math.h>
 
 #include "dss.h"
-#include "acorni.h"
+#include "dss_legacy.h"
+//#include "acorni.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -128,8 +129,6 @@
 
 /* Table of constant values */
 
-static int five = 5;
-static int one = 1;
 
 int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *mask_data,
 		general_vars_t			*	general,
@@ -172,17 +171,15 @@ int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	int testind;
 	int nsbtosr;
 
-#ifdef PROFILE
-	profile.sdsim++;
-	profBegin("sdsim");
-#endif
+        int five = 5;
+        int one = 1;
 
 	/* Parameter adjustments */
-	--mask_data;
-	--order;
-	--bestCorrCube;
-	--bestAICube;
-	--sim;
+	//--mask_data;
+	//--order;
+	//--bestCorrCube;
+	//--bestAICube;
+	//--sim;
 
 	/* Function Body */
 	i__1 = covariance->nst[0];
@@ -220,7 +217,7 @@ int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* !Work out a random path for this realization: */
 		i__2 = general->nxyz;
 		for (ind = 1; ind <= i__2; ++ind) {
-			sim[ind] = (float) acorni();
+			sim[ind] = (float) acorni(general->ixv);
 			order[ind] = ind;
 		}
 		/* ! 33 + 1 = SEED_POS */
@@ -283,15 +280,13 @@ int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		i__2 = general->nd;
 		/*   printf("Step7\n"); */
 		for (id = 1; id <= i__2; ++id) {
-		/*
 			getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[id - 1], &ix, &testind);
 			getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[id - 1], &iy, &testind);
 			getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[id - 1], &iz, &testind);
-		*/
-			GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[id - 1], &ix);
+/*			GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[id - 1], &ix);
 			GETINDX(&general->ny, &general->ymn, &general->ysiz, &general->y[id - 1], &iy);
 			GETINDX(&general->nz, &general->zmn, &general->zsiz, &general->z__[id - 1], &iz);
-			ind = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+*/			ind = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
 			xx = general->xmn + (float) (ix - 1) * general->xsiz;
 			yy = general->ymn + (float) (iy - 1) * general->ysiz;
 			zz = general->zmn + (float) (iz - 1) * general->zsiz;
@@ -456,7 +451,7 @@ L9999:
 			vms = 0.f;
 			i__3 = covtable_lookup->ntry;
 			for (kkk = 1; kkk <= i__3; ++kkk) {
-				p = acorni();
+				p = acorni(general->ixv);
 				gauinv(&p, &xp, &ierr);
 				xp = xp * cstdev + vmy;
 				/* !Transformada inversa final (iv)               (SDSIM) */
@@ -500,10 +495,6 @@ L5:
 		*/
 		/* !END MAIN LOOP OVER SIMULATIONS: */
 	}
-
-#ifdef PROFILE
-	profEnd("sdsim");
-#endif
 
 	/* !Return to the main program: */
 	return 0;

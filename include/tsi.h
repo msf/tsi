@@ -1,34 +1,37 @@
-#ifndef TSI_H
-#define TSI_H
+#ifndef _TSI_H
+#define _TSI_H
 
 #include "registry.h"
 #include "grid_heap.h"
-#include "dss_wrapper.h"
-#include "si_wrapper.h"
+#include "dss.h"
+#include "si.h"
 
 typedef struct tsi_type {
     /* auxiliar objects */
     registry *reg;            /* reference to the registry */
     grid_heap *heap;          /* reference to the grid heap */
 
-    /* geo-stats engines */
+    /* geostats engines */
     dss *dss_eng;             /* reference to the DSS and CoDSS engines */
     si  *si_eng;              /* reference to the SI engine */
 
-    /* execution parameters*/
+    /* TSI execution parameters*/
     int iterations,           /* number of iterations */
         simulations;          /* number of simulations for each iteration */
 
-    /* grid size */
+    /* grid dimensions */
     int xsize,
         ysize,
         zsize;
-    unsigned int grid_size;
+    unsigned int grid_size;   /* = xsize * ysize * zsize */
 
-
-    /* random layers */
-    int layers_min,
-        size_layers_min;
+    /* correlation data */
+    int layers_min,           /* SI/Compare? */
+        layers_size_min,
+        nlayers,
+        *layer_size,
+        root;
+    float best_corr;
 
     /* grid heap references */
     int seismic_idx,
@@ -54,9 +57,10 @@ typedef struct tsi_type {
 
     /* parallel execution related data */
     unsigned int grid_segsize;   /* grid segment size = (int)grid_size/n_procs */
-    int haveBestAI,
-        n_procs,              /* number of processes running */
-        proc_id;              /* process ID */
+    int haveBestAI,              /* current bestAI holder flag */
+        n_procs,                 /* number of processes running */
+        proc_id,                 /* process ID */
+        optimize;                /* runtime optimization flag */
 } tsi;
 
 tsi *new_tsi(registry *reg);
@@ -65,4 +69,4 @@ void delete_tsi(tsi *t);
 
 int run_tsi(tsi *t);
 
-#endif /* TSI_H */
+#endif /* _TSI_H */

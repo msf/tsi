@@ -1,16 +1,11 @@
 #ifndef _GRID_HEAP_H_
 #define _GRID_HEAP_H_
 
-#ifdef TSI_MPI
-#include <mpi.h>
-#define GRID_FILE MPI_File
-#else
-#include <stdio.h>
-#define GRID_FILE FILE
-#endif /* TSI_MPI */
+#include "tsi_io.h"
+
 
 typedef struct grid_type {
-    GRID_FILE *fp;       /* file where the grid is stored */
+    TSI_FILE *fp;       /* file where the grid is stored */
 
     float *grid,    /* alligned grid */
           *pointer; /* original grid pointer */
@@ -35,7 +30,8 @@ typedef struct grid_heap_type {
 
     int curr_grids,          /* number of grids in memory */
         reads,               /* number of reads in files */
-        writes;              /* number of writes to files */
+        writes,              /* number of writes to files */
+        max_grids;           /* max number of grids allocated */
 
     int next_grid;           /* next free grid in stack */
 } grid_heap;
@@ -64,4 +60,4 @@ void delete_heap(grid_heap *h);
 /* print heap data */
 void print_heap_data(grid_heap *h);
 
-#endif
+#endif /* _GRID_HEAP_H */

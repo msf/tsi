@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dss.h"
-
+#include "dss_legacy.h"
+#include "debug.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -77,16 +78,12 @@ int readdata(float *lvm,
 	/* float testind; */
 	int testind;    /* LPL */
 
-#ifdef PROFILE
-    profile.readdata++;
-    profBegin("readdata");
-#endif
-
 
 	/* Parameter adjustments */
-	--hard_data;
-	--lvm;
+	//--hard_data;
+	//--lvm;
 
+        printf_dbg2("readdata(): begin\n");
 	/* Function Body */
 	if (*hard_data_size == 0) {
 		/* !it means that there is no Hard Data file! */
@@ -122,6 +119,7 @@ int readdata(float *lvm,
 		general->ntr = 0;
 		twt = 0;
 		nelem = 0;
+                printf_dbg2("readdata(): L3 %d\n", *hard_data_size);
 L3:
 		if (nelem == *hard_data_size) {
 			goto L4;
@@ -165,6 +163,7 @@ L3:
 		/* !Go back for another datum: */
 		goto L3;
 L4:
+                printf_dbg2("readdata(): L4\n");
 		if (general->ntr <= 1) {
 			fprintf(stderr,"EROOR: too few data for transformation\n");
 			fprintf(stderr,"\taborting.\n");
@@ -230,6 +229,7 @@ L4:
 		nt = 0;
 		nelem = 0;
 L5:
+                printf_dbg2("readdata(): L5\n");
 		if (nelem == *hard_data_size) {
 			goto L6;
 		}
@@ -244,7 +244,7 @@ L5:
 			goto L5;
 		}
 		++general->nd;
-		if (general->nd > 7000) {
+		if (general->nd > general->maxdat) {
 			fprintf(stderr,"ERROR execeeded MAXDAT - check config file\n");
 			return -1; /* ERROR */
 		}
@@ -281,6 +281,7 @@ L5:
 			general->nd - 1];
 		goto L5;
 L6:
+                printf_dbg2("readdata(): L6\n");
 		if (general->imask == 1) {
 			fprintf(stderr,"imaks = 1\n");
 		}
@@ -362,15 +363,13 @@ L6:
 		else if (general->ktype == 2) {
 			i__1 = general->nd;
 			for (i__ = 1; i__ <= i__1; ++i__) {
-			/*
 				getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix, &testind);
 				getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy, &testind);
 				getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz, &testind);
-			*/
-				GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix);
+/*				GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix);
 				GETINDX(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy);
 				GETINDX(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz);
-				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+*/				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
 				general->sec[i__ - 1] = lvm[index];
 				/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
 			}
@@ -380,15 +379,13 @@ L6:
 			i__1 = general->nd;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 				if (general->sec[i__ - 1] == general->nosvalue) {
-				/*
 					getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix, &testind);
 					getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy, &testind);
 					getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz, &testind);
-				*/
-					GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix);
+/*					GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix);
 					GETINDX(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy);
 					GETINDX(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz);
-					index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+*/					index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
 					general->sec[i__ - 1] = lvm[index];
 				}
 			}
@@ -402,7 +399,7 @@ L6:
 		inull = 0;
 		i__1 = general->nxyz;
 		for (ind = 1; ind <= i__1; ++ind) {
-			if (lvm[ind] != -999.25f) {
+			if (lvm[ind] != -999.25f) {   /* > -999.25? */ 
 				simulation->vmedsec += lvm[ind];
 			} else {
 				++inull;
@@ -421,28 +418,24 @@ L6:
 		i__1 = general->nxyz;
 		for (ind = 1; ind <= i__1; ++ind) {
 			if (lvm[ind] != -999.25f) {
-				lvm[ind] = (lvm[ind] - simulation->vmedsec) / sqrt(
+				lvm[ind] = (lvm[ind] - simulation->vmedsec) / sqrt(   /* fuck-up */
 						simulation->vvarsec) * sqrt(simulation->vvarexp) + 
 					simulation->vmedexp;
 			}
 		}
 	}
 
-#ifdef PROFILE
-    profEnd("readdata");
-#endif
-
 	return 0;
 	/* Error in an Input File Somewhere: */
 	/* L97: */
-	fprintf(stderr,"ERROR in secondary data file!\n");
-	return -1; /* ERROR */
+	//fprintf(stderr,"ERROR in secondary data file!\n");
+	//return -1; /* ERROR */
 	/* L98: */
-	fprintf(stderr,"ERROR in correlation coef. data file!\n");
-	return -1; /* ERROR */
+	//fprintf(stderr,"ERROR in correlation coef. data file!\n");
+	//return -1; /* ERROR */
 	/* L99: */
-	fprintf(stderr,"ERROR in data file!\n");
-	return -1; /* ERROR */
+	//fprintf(stderr,"ERROR in data file!\n");
+	//return -1; /* ERROR */
 } /* readdata_ */
 
 

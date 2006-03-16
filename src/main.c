@@ -26,7 +26,7 @@ int main (int argc, char *argv[])
     if (r)   /* evaluate if the first registry file was loaded successfully */
     {
         i = 2;
-        while (i <= argc)   /* try to load any other parameter files */
+        while (i < argc)   /* try to load any other parameter files */
         {
             res = 0;
             reg_file = argv[i];

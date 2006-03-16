@@ -15,11 +15,10 @@
 #define END_VALUE      7
 
 
-/* return true if char c is a valid token char */
-int is_alpha(char c) {
-    return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-            (strchr("-_+*'?|!\\/()@\"$\%&{}<>,.;:", c)));
-} /* is_alpha */
+/* registry prototypes */
+int is_alpha(char c);
+void delete_keylist(reg_key *k);
+reg_key *get_key_from_klist(reg_key *key, char *section, char *parm);
 
 
 
@@ -29,7 +28,7 @@ registry *new_registry (char *filename) {
     int l;
     
     reg = NULL;
-    if (l = merge_registry(&reg, filename)) {
+    if ((l = merge_registry(&reg, filename)) > 0) {
         delete_registry(reg);
         reg = NULL;
         printf("Registry parsing failed on file %s at line %d!\n", filename, l);
@@ -54,7 +53,7 @@ int merge_registry(registry **r, char *filename)
     i = 0;
     nl = 1;
 
-    if (f = fopen(filename, "r")) {
+    if ((f = fopen(filename, "r")) != NULL) {
         while((c = fgetc(f)) != EOF) {
             switch(state) {
                 case IDLE:  /* parser waiting for something... */
@@ -171,6 +170,9 @@ int merge_registry(registry **r, char *filename)
                         nl++;
                     }
                     break;
+                default:
+                    /* do nothing */
+                    break;
             } /* switch */
         } /* while */
         /* parse file */
@@ -206,13 +208,15 @@ void delete_registry(registry *r) {
 
 
 /* searches for the key on a given section and returns the key */
-reg_key *get_key_from_klist(reg_key *key, char *parm)
+reg_key *get_key_from_klist(reg_key *key, char* section, char *parm)
 {
-    if (key)
+    if (key) {
         if (strcmp(key->name, parm))
-            return get_key_from_klist(key->next, parm);
+            return get_key_from_klist(key->next, section, parm);
         else
             return key;
+    }
+    printf_dbg("Failed to get key %s:%s from registry!", section, parm);
     return NULL;
 } /* get_key */
 
@@ -221,11 +225,13 @@ reg_key *get_key_from_klist(reg_key *key, char *parm)
 /* searches for any given entry and returns the key */
 reg_key *get_key(registry *reg, char *section, char *parm)
 {
-    if (reg)
+    if (reg) {
         if (strcmp(reg->name, section))
             return get_key(reg->next, section, parm);
         else
-            return get_key_from_klist(reg->klist, parm);
+            return get_key_from_klist(reg->klist, section, parm);
+    }
+    printf_dbg("Failed to get key %s:%s from registry!", section, parm);
     return NULL;
 } /* get_key */
 
@@ -310,3 +316,12 @@ void dump_registry(registry *reg, char *filename) {
     fclose(f);
 } /* dump_registry */
 
+
+
+/* return true if char c is a valid token char */
+int is_alpha(char c) {
+    return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+            (strchr("-_+*'?|!\\/()@\"$&{}<>,.;:%%", c)));
+} /* is_alpha */
+
+/* end of registry.c */

@@ -1,5 +1,5 @@
-#ifndef _REGISTRY_H_
-#define _REGISTRY_H_
+#ifndef _REGISTRY_H
+#define _REGISTRY_H
 
 #include <stdio.h>
 
@@ -52,4 +52,6 @@ float get_float(reg_key *k);
 /* parses the key as a double and returns the value */
 double get_double(reg_key *k);
 
-#endif
+void dump_registry(registry *r, char *filename);
+
+#endif /* _REGISTRY_H */

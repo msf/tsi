@@ -1,16 +1,18 @@
-#ifndef TSI_PARALLEL_H
-#define TSI_PARALLEL_H
+#ifndef _TSI_PARALLEL_H
+#define _TSI_PARALLEL_H
 
-#include "registry.h"
+#include "tsi.h"
 
-typedef struct tsi_parallel_type {
-    int rank;
-    int comsize;
-} tsi;
+int new_tsi_parallel(int *n_procs, int *proc_id);
 
-tsi *new_tsi(registry *r);
+int delete_tsi_parallel();
 
-void delete_tsi(tsi_parallel *);
+/* TSI functions */
+int tsi_is_best_parallel(tsi *t);
+
+int tsi_compare_parallel(tsi *t);
+
+int tsi_generate_layers_parallel(tsi *t, int *nlayers, int **layer_size);
 
 
-#endif /* TSI_PARALLEL_H */
+#endif /* _TSI_PARALLEL_H */

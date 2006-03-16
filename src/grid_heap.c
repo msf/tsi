@@ -3,19 +3,13 @@
 #include <string.h>
 #include "grid_heap.h"
 #include "debug.h"
+#include "tsi_io.h"
 
 #define ALLIGNMENT 16          /* byte allignment */
 
-GRID_FILE *open_grid_file(char *filename);
-int close_grid_file(GRID_FILE *fp);
-int save_grid_file(GRID_FILE *fp, float *address, unsigned int size);
-int load_grid_file(GRID_FILE *fp, float *address, unsigned int size);
-
-
 grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, int xsize, int ysize, int zsize) {
-
     grid_heap *h;
-    int i, j;
+    int i;
     char filename[32];
     
     /* initializes the heap record */
@@ -43,6 +37,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
     h->curr_grids = 0;     /* grids in use counter */
     h->reads = 0;
     h->writes = 0;
+    h->max_grids = 0;
     
     /* initializes the grid records array */
     h->g = (grid *) calloc(heap_size, sizeof(grid));
@@ -68,6 +63,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
         h->g[i].swappable = 1;
     } /* for */
 
+    printf_dbg2("new_heap(%d): heap started\n", rank);
     return h;
 } /* new_heap */
 
@@ -75,9 +71,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
 
 /* allocates a new grid */
 int new_grid(grid_heap *h) {
-
     grid *g;
-    float *f;
     int idx;
 
     idx = 0;
@@ -85,6 +79,7 @@ int new_grid(grid_heap *h) {
     if (h->alloc_grids < h->heap_size) {       /* check if there are any grids available */
 
         h->alloc_grids++;        /* increase the number of allocated grids */
+        if (h->alloc_grids > h->max_grids) h->max_grids = h->alloc_grids;
         idx = h->next_grid;      /* get index from free grids stack */
 
         g = h->g + idx;
@@ -105,11 +100,7 @@ int new_grid(grid_heap *h) {
 
 /* return a pointer to the grid */
 float *load_grid(grid_heap *h, int idx) {
-    int i, j, k;
-    unsigned int fsize;
-    char *x;
-    float *y;
-    FILE *f;
+    int i, j;
     
     printf_dbg2("load_grid(): grid req=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
     if (idx < h->heap_size) {
@@ -119,6 +110,7 @@ float *load_grid(grid_heap *h, int idx) {
             return h->g[idx].grid;     /* return pointer to grid space */
         } else if (h->curr_grids < h->threshold) {  /* if #grids is bellow threshold */
             h->curr_grids++;
+            printf("Number of grids raised to %d\n", h->curr_grids);
             h->g[idx].grid = (float *) malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
@@ -139,7 +131,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* dump j grid */
             h->writes++;
             printf_dbg2("load_grid(): swapping dirty grid %d to disk\n", j);
-            if (!save_grid_file(h->g[j].fp, h->g[j].grid, h->grid_size)) {
+            if (!write_grid_file(h->g[j].fp, h->g[j].grid, h->grid_size)) {
                 printf_dbg2("load_grid(): failed to dump grid %d\n", j);
                 return NULL;
             }
@@ -150,6 +142,7 @@ float *load_grid(grid_heap *h, int idx) {
         if (i == h->heap_size) {
             /* no grid available, allocate more ram */
             h->curr_grids++;
+            printf("Number of grids raised to %d\n", h->curr_grids);
             h->g[idx].grid = (float *) malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
@@ -165,7 +158,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* load grid */
             h->reads++;
             printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
-            if (!load_grid_file(h->g[idx].fp, h->g[idx].grid, h->grid_size)) {
+            if (!read_grid_file(h->g[idx].fp, h->g[idx].grid, h->grid_size)) {
                  printf_dbg2("load_grid(): failed to load grid %d\n", idx);
                  return NULL;
             }
@@ -221,76 +214,18 @@ void delete_grid(grid_heap *h, int idx) {
 
 
 void delete_heap(grid_heap *h) {
-    /* TODO */
+    int i;
+    if (h) {
+        if (h->g) {
+            for (i = 0; i < h->heap_size; i++) {
+                if (h->g[i].fp) close_file(h->g[i].fp);
+                if (h->g[i].grid) free(h->g[i].grid);
+            }
+            free(h->g);
+        }
+        free(h);
+    }
 } /* delete_heap */
 
-
-
-#ifdef TSI_MPI
-
-GRID_FILE *open_grid_file(char *filename) {
-    GRID_FILE *fp;
-    int amode;
-    MPI_Info info;   /* ??? */
-    
-    amode = MPI_MODE_RDWR | MPI_MODE_CREATE;
-    if (MPI_File_open(MPI_COMM_WORLD, filename, amode, info, fp) != MPI_SUCCESS) return NULL;
-    return fp;
-} /* open_grid_file */
-
-
-
-int close_grid_file(GRID_FILE *fp) {
-    if (MPI_File_close(fp) != MPI_SUCCESS) return 0;
-    return 1;
-} /* close_grid_file */
-
-
-
-int save_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
-    MPI_Status status;
-
-    if (MPI_File_write_at(*fp, 0, address, size, MPI_FLOAT, &status) != MPI_SUCCESS) return 0;
-    return 1;
-} /* save_grid_file */
-
-
-
-int load_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
-    MPI_Status status;
-
-    if (MPI_File_read_at(*fp, 0, address, size, MPI_FLOAT, &status) != MPI_SUCCESS) return 0;
-    return 1;
-} /* load_grid_file */
-
-#else
-
-GRID_FILE *open_grid_file(char *filename) {
-    return fopen(filename, "w+b");
-} /* open_grid_file */
-
-
-
-int close_grid_file(GRID_FILE *fp) {
-    return fclose(fp);
-} /* close_grid_file */
-
-
-
-int save_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
-    if (fseek(fp, 0, SEEK_SET)) return 0;
-    if (fwrite(address, sizeof(float), size, fp) < size) return 0;
-    return 1;
-} /* save_grid_file */
-
-
-
-int load_grid_file(GRID_FILE *fp, float *address, unsigned int size) {
-    if (fseek(fp, 0, SEEK_SET)) return 0;
-    if (fread(address, sizeof(float), size, fp) < size) return 0;
-    return 1;
-} /* load_grid_file */
-
-#endif /* TSI_MPI */
 
 /* end of grid_heap.c */

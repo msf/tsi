@@ -1,5 +1,5 @@
 #include "dss.h"
-#include "profile.h"
+#include "dss_legacy.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -114,10 +114,6 @@ int srchsupr(float *xloc,
 	int isup, nums, inoct[8], ixsup, iysup, izsup;
 	int inflag;
 
-#ifdef PROFILE
-	profile.srchsupr++;
-#endif
-
 	/* Determine the super block location of point being estimated: */
 
 	/* Parameter adjustments */
@@ -135,15 +131,13 @@ int srchsupr(float *xloc,
 	--close;
 
 	/* Function Body */
-	/*
 	getindx(nxsup, xmnsup, xsizsup, xloc, &ix, &inflag);
 	getindx(nysup, ymnsup, ysizsup, yloc, &iy, &inflag);
 	getindx(nzsup, zmnsup, zsizsup, zloc, &iz, &inflag);
-	*/
-	GETINDX(nxsup, xmnsup, xsizsup, xloc, &ix);
+/*	GETINDX(nxsup, xmnsup, xsizsup, xloc, &ix);
 	GETINDX(nysup, ymnsup, ysizsup, yloc, &iy);
 	GETINDX(nzsup, zmnsup, zsizsup, zloc, &iz);
-
+*/
 	/* Loop over all the possible Super Blocks: */
 
 	*nclose = 0;
