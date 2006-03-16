@@ -8,11 +8,12 @@ COMPILER := gcc
 # Default settings for gcc
 CC       := gcc
 CPP      := g++
-CFLAGS   := -m32 -march=pentium2 -pipe
-LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc -m32
+CFLAGS   := -pipe 
+LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
 OPTS     := -O3 -ffast-math -fomit-frame-pointer 
 OPTS	+=  -g  -ggdb -DTSI_DEBUG2
-
+OPTS	+= -march=pentium2 
+#OPTS	+= -m32
 #OPTS     += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS     += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS     += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
