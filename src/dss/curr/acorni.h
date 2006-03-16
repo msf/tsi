@@ -30,8 +30,8 @@
  * ----------------------------------------------------------------------- 
  */
 
-#ifndef __ACORNI_H
-#define __ACORNI_H
+#ifndef _ACORNI_H
+#define _ACORNI_H
  
 int ixv[17];
 
@@ -40,6 +40,5 @@ void newAcorni(int seed);
 
 double acorni(void);
 
-#endif
-
+#endif /* _ACORNI_H */
 

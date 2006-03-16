@@ -5,8 +5,8 @@
  *
  */
  
-#ifndef __PROFILE_H
-#define __PROFILE_H
+#ifndef _PROFILE_H
+#define _PROFILE_H
  
  
 struct {
@@ -43,5 +43,5 @@ void profEnd(char *);
 
 void profPrint(char *);
  
-#endif
+#endif /* _PROFILE_H */
 

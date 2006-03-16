@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h> // for posix threads and mutexes
 #include <semaphore.h> // for posix semaphores, used to control the number of running threads
-
 #include "tsi.h"
 #include "tsi-utils.h"
 #include "timer.h"
@@ -108,6 +107,9 @@ int main(int argc, char *argv[])
 	
 	/* from here on, counts has iteration time */
 	Timer_Start(&iterationTimer);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 
 	/* lets generate new layers */
 	if(generateRandomLayers(tsi->layers) != 0)

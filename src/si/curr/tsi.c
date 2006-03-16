@@ -69,7 +69,6 @@ int TSI_Initialization(char *configFile, tTSI* this)
 	printf("read dss parms\n");
 
 
-
 	// read HardData from the hard data file
 	ret_value = TSI_ReadHardDataFile(Configs_GetParam("HARDDATA", "FILENAME", this->configs), this);
 	if (ret_value < 0) {
@@ -77,6 +76,7 @@ int TSI_Initialization(char *configFile, tTSI* this)
 		return ret_value;
 	}
 	printf("read hard data\n");
+
 
 	// Read Wavelet from file to memory, including wavelet parameters
 	Wavelet(this->configs, &this->wavelet);
@@ -87,6 +87,9 @@ int TSI_Initialization(char *configFile, tTSI* this)
 		return ret_value;
 	}
 	printf ("read wavelet\n");
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Read Seismic Cube from file to memory
 	Cube(this->x_values, this->y_values, this->z_values, 1, CORR_CUBE, &this->seismic_cube); //the 1 is because we don't know yet how many layers we'll use
 	printf ("init cube\n");	

@@ -136,6 +136,7 @@ int readparam(float *params, float *models,
 	icollvm_pos__ = 52;
 	nst1_pos__ = 53;
 	c01_pos__ = 54;
+
 	general->nvari = params[nvari_pos__];
 	general->ixl = params[ixl_pos__];
 	general->iyl = params[iyl_pos__];
@@ -145,6 +146,7 @@ int readparam(float *params, float *models,
 	general->isecvr = params[isecvr_pos__];
 	general->tmin = params[tmin_pos__];
 	general->tmax = params[tmax_pos__];
+
 	general->itrans = params[itrans_pos__];
 	/* !	read(lin,'(a256)',err=98) transfl */
 	general->ismooth = params[ismooth_pos__];
@@ -157,11 +159,13 @@ int readparam(float *params, float *models,
 	general->ltpar = params[ltpar_pos__];
 	general->utail = params[utail_pos__];
 	general->utpar = params[utpar_pos__];
+
 	/* !MARTELADO para só fazer 1 simulação */
 	simulation->nsim = 1;
 	covt_lookup->ntry = params[ntry_pos__];
 	covt_lookup->icmean = params[icmean_pos__];
 	covt_lookup->icvar = params[icvar_pos__];
+
 	general->nx = params[nx_pos__];
 	general->xmn = params[xmn_pos__];
 	general->xsiz = params[xsiz_pos__];
@@ -177,11 +181,14 @@ int readparam(float *params, float *models,
 	general->imask = params[imask_pos__];
 	/*	iaco_1.ixv[0] = params[seed_pos__];*/
 
-	int rand = (int) random();
-	newAcorni(rand);
-	for (i__ = 1; i__ <= 1000; ++i__) {
-		p = acorni();
-	}
+        ///////////////////////////////////////////////////////////////
+	int rand = (int) random();                                   //
+	newAcorni(rand);                                             //
+	for (i__ = 1; i__ <= 1000; ++i__) {                          //
+		p = acorni();                                        //
+	}                                                            //
+        ///////////////////////////////////////////////////////////////
+
 	search->ndmin = (int) params[ndmin_pos__];   /* LPL */
 	search->ndmax = (int) params[ndmax_pos__];
 	/*search->ndmin = params[ndmin_pos__];
@@ -195,6 +202,7 @@ int readparam(float *params, float *models,
 	search->nmult = params[nmult_pos__];
 	/*search->noct =  params[noct_pos__]; */          /* LPL */
 	search->noct = (int) params[noct_pos__];
+
 	search->radius = params[radius_pos__];
 	radius1 = params[radius1_pos__];
 	radius2 = params[radius2_pos__];
@@ -205,20 +213,23 @@ int readparam(float *params, float *models,
 	search->radsqd = search->radius * search->radius;
 	search->sanis1 = radius1 / search->radius;
 	search->sanis2 = radius2 / search->radius;
+
 	search->sang1 = params[sang1_pos__];
 	search->sang2 = params[sang2_pos__];
 	search->sang3 = params[sang3_pos__];
-	general->ktype = params[ktype_pos__];
-	general->colocorr = params[colocorr_pos__];
-	general->varred = params[varred_pos__];
-	/* !      read(lin,'(a256)',err=98) corrfl */
+
+	general->ktype = params[ktype_pos__];                        
+	general->colocorr = params[colocorr_pos__];                  
+	general->varred = params[varred_pos__];                               
+	/* !      read(lin,'(a256)',err=98) corrfl */                          
 	/* !      read(lin,'(a256)',err=98) lvmfl */
 	general->nvaril = params[nvaril_pos__];
 	general->icollvm = params[icollvm_pos__];
 	covariance->nst[0] = params[nst1_pos__];
 	covariance->c0[0] = params[c01_pos__];
+
 	sill = covariance->c0[0];
-	i__1 = covariance->nst[0];
+	i__1 = covariance->nst[0];         //varnum
 	for (i__ = 1; i__ <= i__1; ++i__) {
 		covariance->it[i__ - 1] = models[(i__ << 3) - 7];
 		covariance->cc[i__ - 1] = models[(i__ << 3) - 6];
