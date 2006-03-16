@@ -131,31 +131,22 @@ int write_block_file(TSI_FILE *fp, int offset, void *address, int block_size) {
 
 int read_ascii_grid_file(TSI_FILE *fp, float *g, unsigned int grid_size) {
     unsigned int i;
-    char val[64];
-    int ret;
+	
+	for(i=0; i < grid_size; i++)
+		fscanf(fp, "%f\n", &g[i]);
 
-    for (i = 0; i < grid_size; i++) {
-        ret = read_line_file(fp, val);
-        if (ret == EOF) return ret;
-        sscanf(val, "%f\n", g+i);
-    }
-    return i;
+	return i;
 }
 
 int write_ascii_grid_file(TSI_FILE *fp, float *g, unsigned int grid_size) { /* TEST */
     unsigned int i;
-    char val[64];
-    int ret;
 
-    strcpy(val, "tsi\n1\ngrid\n");  /* ugly hack for SGEMS */
-    ret = write_line_file(fp, val);
-    if (ret < 0) return ret;
-    for (i = 0; i < grid_size; i++) {
-        sprintf(val, "%.3f\n", g[i]);
-        ret = write_line_file(fp, val);
-        if (ret < 0) return ret;
-    }
-    return i;
+	fprintf(fp,"tsi\n1\ngrid\n"); /* ugly hack for SGEMS */
+
+	for(i=0; i < grid_size; i++)
+		fprintf(fp, "%.3f\n", g[i]);
+
+	return i;
 } /* write_ascii_grid_file */
 
 

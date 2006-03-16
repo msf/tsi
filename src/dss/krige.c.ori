@@ -36,7 +36,6 @@
  */
 
 #include <math.h>
-#include "profile.h"
 #include "dss.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))

@@ -9,6 +9,7 @@
 #include "tsi.h"
 #include "tsi_parallel.h"
 #include "tsi_math.h"
+#include "timer.h"
 
 
 /* additional prototypes to TSI */
@@ -185,6 +186,7 @@ tsi *new_tsi(registry *reg) {
        delete_tsi(t);
        return NULL;
     }
+	printf_dbg("new_tsi(): DSS engine loaded\n");
     
     /* start SI engine */
     t->si_eng = new_si(t->reg, t->heap);
@@ -193,6 +195,7 @@ tsi *new_tsi(registry *reg) {
        delete_tsi(t);
        return NULL;
     }
+	printf_dbg("new_tsi(): SI engine loaded\n");
 
 
     /* load seismic grid */
@@ -219,6 +222,7 @@ tsi *new_tsi(registry *reg) {
         delete_tsi(t);
         return NULL;
     }
+	printf_dbg("new_tsi(): Seismic Data loaded\n");
     dirty_grid(t->heap, t->seismic_idx);
 
     return t;
@@ -256,6 +260,7 @@ int run_tsi(tsi *t) {
     int result;
     int i, j;
     float ai_corr;
+	struct timeval t1,t2;
     TSI_FILE *fp;
 
     ai_corr = 0;
@@ -271,13 +276,18 @@ int run_tsi(tsi *t) {
         return 0;
     }
     t->ai = load_grid(t->heap, t->ai_idx);
+	printf_dbg("run_tsi(%d): DSS is starting \n",t->proc_id);
     if (t->ai) {
         printf_dbg("run_tsi(%d): running DSS 1/1\n", t->proc_id);
+		getCurrTime(&t1);
         result = run_dss(t->dss_eng, t->ai);
+		getCurrTime(&t2);
     } else {
         printf_dbg("run_tsi(%d): failed to load AI for DSS 1/1\n", t->proc_id);
         return 0;
     }
+
+	printf_dbg("run_tsi(%d): DSS terminated (%fsecs)\n",t->proc_id,getElapsedTime(&t1,&t2));
 
     //////////////////////////////////////////////////////////
     fp = create_file("test_grid.out");

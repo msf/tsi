@@ -119,7 +119,7 @@ int readdata(float *lvm,
 		general->ntr = 0;
 		twt = 0;
 		nelem = 0;
-                printf_dbg2("readdata(): L3 %d\n", *hard_data_size);
+        printf_dbg2("readdata(): L3 %d\n", *hard_data_size);
 L3:
 		if (nelem == *hard_data_size) {
 			goto L4;
@@ -163,7 +163,7 @@ L3:
 		/* !Go back for another datum: */
 		goto L3;
 L4:
-                printf_dbg2("readdata(): L4\n");
+        printf_dbg2("readdata(): L4\n");
 		if (general->ntr <= 1) {
 			fprintf(stderr,"EROOR: too few data for transformation\n");
 			fprintf(stderr,"\taborting.\n");
@@ -228,8 +228,8 @@ L4:
 		general->nd = 0;
 		nt = 0;
 		nelem = 0;
+        printf_dbg2("readdata(): L5\n");
 L5:
-                printf_dbg2("readdata(): L5\n");
 		if (nelem == *hard_data_size) {
 			goto L6;
 		}
