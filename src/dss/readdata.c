@@ -80,8 +80,8 @@ int readdata(float *lvm,
 
 
 	/* Parameter adjustments */
-	//--hard_data;
-	//--lvm;
+	--hard_data;
+	--lvm;
 
         printf_dbg2("readdata(): begin\n");
 	/* Function Body */

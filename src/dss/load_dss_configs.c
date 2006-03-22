@@ -247,37 +247,31 @@ int  load_dss_configs(dss *d, registry *r )
         sprintf(variogram, "VARIOGRAM%d", i+1);
         if ((k = get_key(r, variogram, "TYPE")) == NULL) return 1;
         d->covariance->it[i] = get_int(k);
-		printf("%s - type: %d\n\t %d",variogram,get_int(k),d->covariance->it[i]);
+		printf("%s - type: %d\t %d",variogram,get_int(k),d->covariance->it[i]);
         if (d->covariance->it[i] == 4) {
             printf("load_dss_configs(): ERROR - A power model is not allowed! Choose a different model and re-start.\n");
             return 1;
         }
 
         if ((k = get_key(r, variogram, "COV")) == NULL) return 1;
-		printf("%s - cov: %d\n",variogram,get_int(k));
         d->covariance->cc[i] = get_float(k);
         sill += d->covariance->cc[i];
 
         if ((k = get_key(r, variogram, "ANG1")) == NULL) return 1;
-		printf("%s - ang1: %d\n",variogram,get_int(k));
         d->covariance->ang1[i] = get_float(k);
 
         if ((k = get_key(r, variogram, "ANG2")) == NULL) return 1;
-		printf("%s - ang2: %d\n",variogram,get_int(k));
         d->covariance->ang2[i] = get_float(k);
 
         if ((k = get_key(r, variogram, "ANG3")) == NULL) return 1;
-		printf("%s - ang3: %d\n",variogram,get_int(k));
         d->covariance->ang3[i] = get_float(k);
 
         if ((k = get_key(r, variogram, "AA")) == NULL) return 1;
-		printf("%s - aa: %d\n",variogram,get_int(k));
         aa = d->covariance->aa[i] = get_float(k);
         if (aa < 1e-20)
 			aa = 1e-20;
 
         if ((k = get_key(r, variogram, "AA1")) == NULL) return 1;
-		printf("%s - aa1: %d\n",variogram,get_int(k));
         aa1 = get_float(k);
         d->covariance->anis1[i] = aa1 / aa; 
 

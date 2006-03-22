@@ -175,11 +175,11 @@ int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
         int one = 1;
 
 	/* Parameter adjustments */
-	//--mask_data;
-	//--order;
-	//--bestCorrCube;
-	//--bestAICube;
-	//--sim;
+	--mask_data;
+	--order;
+	--bestCorrCube;
+	--bestAICube;
+	--sim;
 
 	/* Function Body */
 	i__1 = covariance->nst[0];
