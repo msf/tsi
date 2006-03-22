@@ -1,8 +1,6 @@
 #include <math.h>
 #include "dss.h"
 
-#undef PROFILE
-
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 #define TRUE (1)
@@ -92,9 +90,6 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 	double hsqd;
 	int istart;
 
-#ifdef PROFILE
-	profile.cova3++;
-#endif
 
 	/* Parameter adjustments */
 	--nst;

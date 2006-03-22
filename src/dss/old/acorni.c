@@ -1,6 +1,5 @@
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -49,9 +48,6 @@ void newAcorni(int seed)
 	--seed;
 	seed /= 2; 
 
-#ifdef PROFILE
-	profile.newAcorni++;
-#endif
 
 	for(i = 1; i <= 16; ++i) ixv[i] = 0;
 	ixv[0] = seed;
@@ -63,9 +59,6 @@ double acorni()
 {
 	int i;
 
-#ifdef PROFILE
-	profile.acorni++;
-#endif   
 
 	for (i = 1; i <= 16; ++i) {
 		ixv[i] += ixv[i - 1];

@@ -53,10 +53,6 @@ int gauinv(double *p, float *xp, int *ierr)
 	/* Local variables */
 	double y, pp;
 
-#ifdef PROFILE
-	profile.gauinv++;
-#endif
-
 	/* Coefficients of approximation: */
 
 

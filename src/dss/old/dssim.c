@@ -120,7 +120,6 @@
 
 #include "dss.h"
 #include "acorni.h"
-#include "profile.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -172,10 +171,6 @@ int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	float simval = 0;;
 	int nsbtosr;
 
-#ifdef PROFILE
-	profile.sdsim++;
-	profBegin("sdsim");
-#endif
 
 	/* Parameter adjustments */
 	--mask_data;
@@ -397,9 +392,6 @@ L9999:
 
 	printf("dssim(): DEBUG: SKIP points: %d\n",simulation->nsim);
 
-#ifdef PROFILE
-	profEnd("sdsim");
-#endif
 
 	/* !Return to the main program: */
 	return 0;

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -42,11 +41,6 @@ int dsslib(float *params,
 	/* Function Body */
 	general.lout = 2;
 
-#ifdef PROFILE
-	newProfile();
-	profile.dsslib++;
-	profBegin("dsslib");
-#endif
 
 	/* copy pointers of aiCube, BCM and BAI */
 	sim = output_data;
@@ -96,10 +90,6 @@ int dsslib(float *params,
 	free(covtable_lookup.iynode);
 	free(covtable_lookup.iznode);
 
-#ifdef PROFILE
-	showResults();
-	profEnd("dsslib");
-#endif
 
 	/* !Finished: */
 	return 0;

@@ -1,7 +1,6 @@
 #include <math.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -27,9 +26,6 @@ float gcum(float z)
 	/*    static float t, z, e2; */
 	float t;
 
-#ifdef PROFILE
-	profile.gcum++;
-#endif
 
 	/* LPL: old code */
 	/*    z = *x;
@@ -98,47 +94,6 @@ int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
 {
 	int jl, jm, ju;
 
-#ifdef PROFILE
-	profile.locate++;
-#endif
-
-	/* Initialize lower and upper methods: */
-
-	/* Parameter adjustments */
-	/*    --xx;
-	*/
-	/* Function Body */
-	/*    if (*is <= 0) {
-	 *is = 1;
-	 }
-	 jl = *is - 1;
-	 ju = *ie;
-	 if (xx[*n] <= *x) {
-	 *j = *ie;
-	 return 0;
-	 }
-	 */
-	/* If we are not done then compute a midpoint: */
-
-	/*L10:
-	  if (ju - jl > 1) {
-	  jm = (ju + jl) / 2;
-	  */
-	/* Replace the lower or upper limit with the midpoint: */
-
-	/*	if (xx[*ie] > xx[*is] == *x > xx[jm]) {
-		jl = jm;
-		} else {
-		ju = jm;
-		}
-		goto L10;
-		}
-		*/
-	/* Return with the array index: */
-
-	/*    *j = jl;
-		  return 0;
-		  */
 
 	/* Initialize lower and upper methods: */
 
@@ -192,22 +147,6 @@ double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
 
 	/* Builtin functions */
 
-#ifdef PROFILE
-	profile.powint++;
-#endif
-
-	/* LPL: old code */
-	/*    if (*xhigh - *xlow < 1e-20f) {
-		  ret_val = (*yhigh + *ylow) / 2.f;
-		  } else {
-		  d__1 = (double) ((*xval - *xlow) / (*xhigh - *xlow));
-		  d__2 = (double) (*power);
-		  ret_val = *ylow + (*yhigh - *ylow) * pow(d__1, d__2);
-		  }
-		  return ret_val;
-		  */
-
-	/* LPL: new code */
 
 	if (*xhigh - *xlow < 1e-20f) {
 		ret_val = (double) ((*yhigh + *ylow) / 2.f);
@@ -266,10 +205,6 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 	/* parameter(EPSLON=1.0e-20) */
 
 	/* Value in the lower tail?    1=linear, 2=power, (3 and 4 are invalid): */
-
-#ifdef PROFILE
-	profile.backtr++;
-#endif
 
 
 	/* Parameter adjustments */

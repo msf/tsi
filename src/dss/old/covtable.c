@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -87,11 +86,6 @@ int covtable(int *order, float * tmp,
 	float xx, yy, zz;
 	int loc;
 	double hsqd;
-
-#ifdef PROFILE
-	profile.ctable++;
-	profBegin("ctable");
-#endif
 
 	/* Parameter adjustments */
 	--order;
@@ -197,9 +191,6 @@ int covtable(int *order, float * tmp,
 		covtable_lookup->nodmax = 64;
 	}
 
-#ifdef PROFILE
-	profEnd("ctable");
-#endif
 	return 0;
 } /* ctable */
 
