@@ -1,3 +1,15 @@
+#include <math.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
 /* ----------------------------------------------------------------------- */
 /* Computes the inverse of the standard normal cumulative distribution */
 /* function with a numerical approximation from : Statistical Computing, */
@@ -20,8 +32,6 @@
 /** structs globais utilizadas:
  */
 
-#include <math.h>
-#include "profile.h"
 
 int gauinv(double *p, float *xp, int *ierr)
 {
@@ -79,7 +89,7 @@ int gauinv(double *p, float *xp, int *ierr)
 	y = sqrt(log(1.f / (pp * pp)));
 	*xp = (float) (y + ((((y * p4 + p3) * y + p2) * y + p1) * y + p0) / ((((y *
 							q4 + q3) * y + q2) * y + q1) * y + q0));
-	if ((float) (*p) == (float) pp) {
+	if ((*p) ==  pp) {
 		*xp = -(*xp);
 	}
 
@@ -87,4 +97,5 @@ int gauinv(double *p, float *xp, int *ierr)
 
 	return 0;
 } /* gauinv_ */
+
 

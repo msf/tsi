@@ -1,15 +1,12 @@
 #include <math.h>
+#include "dss.h"
 
-#include "profile.h"
+#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
-
-/* Table of constant values */
-
-static float c_b2 = 0.f;
-static float c_b3 = 1.f;
-static int one = 1;
+#define TRUE (1)
+#define FALSE (0)
 
 
 /* -----------------------------------------------------------------------
@@ -19,7 +16,7 @@ static int one = 1;
  * accurate only to about 5 decimal places. 
  *
  * ----------------------------------------------------------------------- */
-float gcum(float z__)
+float gcum(float z)
 {
 	/* System generated locals */
 	float ret_val;
@@ -27,7 +24,7 @@ float gcum(float z__)
 
 
 	/* Local variables */
-	/*    static float t, z__, e2; */
+	/*    static float t, z, e2; */
 	float t;
 
 #ifdef PROFILE
@@ -35,21 +32,21 @@ float gcum(float z__)
 #endif
 
 	/* LPL: old code */
-	/*    z__ = *x;
+	/*    z = *x;
 
-		  if (z__ < 0.f) {    //ub
-		  z__ = -z__;
+		  if (z < 0.f) {    //ub
+		  z = -z;
 		  }
 
-		  t = 1.f / (z__ * .2316419f + 1.f);
+		  t = 1.f / (z * .2316419f + 1.f);
 		  ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
 		  1.781477937f) - .356563782f) + .31938153f);
 		  e2 = 0.f;
 		  */
 	/*  6 standard deviations out gets treated as infinity: */
 
-	/*    if (z__ <= 6.f) {       //ub
-		  e2 = exp(-z__ * z__ / 2.f) * .3989422803f;
+	/*    if (z <= 6.f) {       //ub
+		  e2 = exp(-z * z / 2.f) * .3989422803f;
 		  }
 
 		  ret_val = 1.f - e2 * ret_val;
@@ -62,21 +59,21 @@ float gcum(float z__)
 		  */
 
 	/* LPL: new code */
-	if (z__ < 0.f) {   /* unpredictable branch */
-		if (z__ >= -6.f) {   /* unpredictable branch */
-			t = 1.f / (z__ * -.2316419f + 1.f);
+	if (z < 0.f) {   /* unpredictable branch */
+		if (z >= -6.f) {   /* unpredictable branch */
+			t = 1.f / (z * -.2316419f + 1.f);
 			ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
 							1.781477937f) - .356563782f) + .31938153f);
-			ret_val = exp(-z__ * z__ / 2.f) * .3989422803f * ret_val;
+			ret_val = exp(-z * z / 2.f) * .3989422803f * ret_val;
 		} else {
 			ret_val = 0.f;
 		}
 	} else {
-		if (z__ <= 6.f) {   /* unpredictable branch */
-			t = 1.f / (z__ * .2316419f + 1.f);
+		if (z <= 6.f) {   /* unpredictable branch */
+			t = 1.f / (z * .2316419f + 1.f);
 			ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
 							1.781477937f) - .356563782f) + .31938153f);
-			ret_val = 1.f - exp(-z__ * z__ / 2.f) * .3989422803f * ret_val;
+			ret_val = 1.f - exp(-z * z / 2.f) * .3989422803f * ret_val;
 		} else {
 			ret_val = 1.f;
 		}
@@ -164,7 +161,7 @@ int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
 		jm = (ju + jl) / 2;
 
 		/* Replace the lower or upper limit with the midpoint: */
-		if (xx[*ie] > xx[*is] == *x > xx[jm]) {
+		if ((xx[*ie] > xx[*is]) == (*x > xx[jm])) {
 			jl = jm;
 		} else {
 			ju = jm;
@@ -211,6 +208,7 @@ double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
 		  */
 
 	/* LPL: new code */
+
 	if (*xhigh - *xlow < 1e-20f) {
 		ret_val = (double) ((*yhigh + *ylow) / 2.f);
 	} else {
@@ -251,14 +249,19 @@ double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
 double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin, 
 		float *zmax, int *ltail, float *ltpar, int *utail, float *utpar)
 {
+        /* Table of constant values */
+        float c_b2 = 0.f;
+        float c_b3 = 1.f;
+        int one = 1;
+
 	/* System generated locals */
-	static int i__1, i__2;
-	static float ret_val;
-	static double d__1, d__2;
+	int i__1, i__2;
+	float ret_val;
+	double d__1, d__2;
 
 	/* Local variables */
-	static int j;
-	static float cpow, cdfhi, cdfbt, cdflo, lambda;
+	int j;
+	float cpow, cdfhi, cdfbt, cdflo, lambda;
 
 	/* parameter(EPSLON=1.0e-20) */
 
@@ -312,11 +315,10 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 		/* Computing MAX */
 		/* Computing MIN */
 		i__2 = *nt - 1;
-		i__1 = MIN(i__2,j); //min(i__2,j)
-		j = MAX(i__1,1); //max(i__1,1);
+		i__1 = MIN(i__2,j); /* min(i__2,j) */
+		j = MAX(i__1,1); /* max(i__1,1); */
 		ret_val = powint(&vrg[j], &vrg[j + 1], &vr[j], &vr[j + 1], vrgs, & c_b3);
 	}
 	return ret_val;
 } /* backtr_ */
-
 

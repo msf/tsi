@@ -1,3 +1,14 @@
+#include <math.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
 /* ----------------------------------------------------------------------- */
 /*                    Covariance Between Two Points */
 /*                    ***************************** */
@@ -61,13 +72,6 @@
  * cova3d_1
  */
 
-#include <math.h>
-
-#include "profile.h"
-
-#define MIN(a,b) ((a) <= (b) ? (a) : (b))
-
-extern double sqdist(float *, float *, float *, float *, float *, float *, int *, int *, double *);
 
 int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 		int *ivarg, int *nst, int *maxnst, float *c0, int *it, float *cc,
@@ -136,7 +140,7 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 		if (ist != 1) {
 			/* Computing MIN */
 			i__2 = *irot + is - 1;
-			ir = MIN(i__2, *maxrot); //min(i__2,*maxrot);
+			ir = MIN(i__2, *maxrot); /* min(i__2,*maxrot); */
 			hsqd = sqdist(x1, y1, z1, x2, y2, z2, &ir, maxrot, &rotmat[
 					rotmat_offset]);
 		}

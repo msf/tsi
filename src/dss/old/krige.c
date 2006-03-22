@@ -86,6 +86,9 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 	/* Parameter adjustments */
 	--bestAICube;
 
+	/* init vars */
+	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
+	
 	/* Function Body */
 	first = FALSE_;
 	na = search->nclose + covtable_lookup->ncnode;
@@ -271,21 +274,6 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 		/*           if((sfmax-sfmin).lt.EPSLON) neq = neq - 1 */
 	}
 	/* 		Write out the kriging Matrix if Seriously Debugging: */
-//	if (general->idbg >= 3) {
-		/* apagar */
-		/*            write(ldbg,100) ix,iy,iz */
-//		is = 1;
-//		i1 = neq;
-//		for (i = 1; i <= i1; ++i) {
-//			ie = is + i - 1;
-			/* apagar */
-			/*                 write(ldbg,101) i,r(i),(a(j),j=is,ie) */
-//			is += i;
-//		}
-		/* apagar */
-		/* 100        format(/,'Kriging Matrices for Node: ',3i4,' RHS first') */
-		/* 101        format('    r(',i2,') =',f7.4,'  a= ',99f7.4) */
-//	}
 	/* 		Solve the Kriging System: */
 	if (neq == 1 && *lktype != 3) {
 		krige_vars->s[0] = krige_vars->r__[0] / krige_vars->a[0];
@@ -341,7 +329,7 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 		/*            write(ldbg,*) 'ERROR: Negative Variance: ',cstdev */
 		*cstdev = 0.f;
 	}
-	*cstdev = sqrt((double) MAX(*cstdev, 0.f)); //sqrt((dmax(*cstdev,0.f)));
+	*cstdev = sqrt((double) MAX(*cstdev, 0.f)); /* sqrt((dmax(*cstdev,0.f))); */
 	/*      Write out the kriging Weights if Seriously Debugging: */
 
 	/*      if(idbg.ge.3) then */

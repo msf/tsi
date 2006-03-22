@@ -1,3 +1,16 @@
+#include <math.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
+
 /* ----------------------------------------------------------------------- */
 /*                Solution of a System of Linear Equations */
 /*                **************************************** */
@@ -50,9 +63,6 @@
  */
 
 
-#include <math.h>
-
-#include "profile.h"
 
 
 int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
@@ -65,7 +75,7 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 	/* Local variables */
 	int i__, j, k, m1;
 	double ak, ap;
-	int ii, ij, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, 
+	int ii, ij = 0, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, 
 			   ijm;
 	double tol, piv;
 
@@ -121,9 +131,9 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 					ll += j;
 					a[ij] -= ap * a[ll];
 				}
-				// optimizacoes.
+				/* optimizacoes. */
 				i__1 = lp + nm1;
-				// fim das opts
+				/* fim das opts */
 				for (llb = k; llb <= nm; llb += *neq) {
 					in = llb + i__1;
 					ll1 = llb + nm1;
@@ -176,4 +186,5 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 
 	return 0;
 } /* ksol_ */
+
 

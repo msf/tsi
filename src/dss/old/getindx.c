@@ -1,3 +1,14 @@
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
 /* ----------------------------------------------------------------------- */
 /*     Gets the coordinate index location of a point within a grid */
 /*     *********************************************************** */
@@ -25,10 +36,6 @@
 
 /** structs globais utilizadas:
  */
-#include "profile.h"
-
-#define TRUE_ (1)
-#define FALSE_ (0)
 
 int getindx(int *n, float *min__, float *siz, float *loc, int *index, int *inflag)
 {
@@ -44,16 +51,18 @@ int getindx(int *n, float *min__, float *siz, float *loc, int *index, int *infla
 
 	if (*index < 1) {
 		*index = 1;
-		*inflag = FALSE_;
+		*inflag = FALSE;
 	} else if (*index > *n) {
 		*index = *n;
-		*inflag = FALSE_;
+		*inflag = FALSE;
 	} else {
-		*inflag = TRUE_;
+		*inflag = TRUE;
 	}
 
 	/* Return to calling program: */
 
 	return 0;
 } /* getindx_ */
+
+
 

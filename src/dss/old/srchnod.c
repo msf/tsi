@@ -1,3 +1,14 @@
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
 /* ----------------------------------------------------------------------- */
 /*               Search for nearby Simulated Grid nodes */
 
@@ -45,8 +56,6 @@
  * covtable_lookup
  */
 
-#include "profile.h"
-#include "dss.h"
 
 
 int srchnod(int *ix, int *iy, int *iz, float *sim,
@@ -70,7 +79,7 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 
 	/* Function Body */
 	covtable_lookup->ncnode = 0;
-	if (search->noct > 0.f) {
+	if (search->noct > 0) {
 		for (i__ = 1; i__ <= 8; ++i__) {
 			ninoct[i__ - 1] = 0;
 		}
@@ -92,7 +101,7 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 		ind = i__ + (j - 1) * general->nx + (k - 1) * general->nxy;
 		if (sim[ind] > general->nosvalue) {
 			/* Check the number of data already taken from this octant: */
-			if (search->noct > 0.f) {
+			if (search->noct > 0) {
 				idx = *ix - i__;
 				idy = *iy - j;
 				idz = *iz - k;
@@ -120,7 +129,7 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 					}
 				}
 				++ninoct[iq - 1];
-				if ((float) ninoct[iq - 1] > search->noct) {
+				if (ninoct[iq - 1] > search->noct) {
 					continue;
 				}
 			}

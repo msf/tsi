@@ -1,3 +1,15 @@
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+int ixv[17];    /* acorni */
+
 /* ----------------------------------------------------------------------- 
  * Fortran implementation of ACORN random number generator of order less 
  * than or equal to 12 (higher orders can be obtained by increasing the 
@@ -29,11 +41,6 @@
  * Author: R.S.Wikramaratna,                           Date: October 1990 
  * ----------------------------------------------------------------------- 
  */
-
-#include "acorni.h"
-#include "profile.h"
-
-
 void newAcorni(int seed)
 {
 	int i;
@@ -52,7 +59,7 @@ void newAcorni(int seed)
 
 
 
-double acorni(void)
+double acorni()
 {
 	int i;
 
@@ -67,11 +74,10 @@ double acorni(void)
 			ixv[i] += -1073741824;
 			}
 		/* LPL: hack only for 32 bit ints */
-//		ixv[i] &= 1073741823;
+		/* ixv[i] &= 1073741823; */
 	}
 
 	return (double) ((double)ixv[16] / 1073741824.f);
 } /* acorni_ */
-
 
 

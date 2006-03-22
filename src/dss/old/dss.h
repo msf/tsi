@@ -1,3 +1,12 @@
+/*
+ *  DSS.H
+ *
+ *
+ */
+
+#ifndef TSI_DSS
+#define TSI_DSS
+
 #define NVARI 0
 #define IXL 1
 #define IYL 2
@@ -50,8 +59,8 @@
 #define VARRED 49
 #define NVARIL 50
 #define ICOLLVM 51
-#define VARNUM 52
-#define NUGGET 53
+#define VARNUM 52 /* covariance->nst[0] */
+#define NUGGET 53 /* covariance->c0[0] */
 #define DSS_TOTAL_PARAMS_NUM 54
 
 /* Common Block Declarations */
@@ -60,8 +69,9 @@ struct general_vars {
     int nx, ny, nz;
     float xsiz, ysiz, zsiz, xmn, ymn, zmn;
     int nxy, nxyz, nd, itrans, ntr, idbg;
-    float x[7000], y[7000], z__[7000], vr[7000], wt[7000], vrtr[7000], vrgtr[
-	    7000], close[7000], sec[7000];
+    float x[7000], y[7000], z__[7000], vr[7000], wt[7000], vrtr[7000];
+    float vrgtr[7000];
+    float close[7000], sec[7000];
     int lin, lout, ldbg, llvm, icollvm, nvari, nvaril, ktype;
     float colocorr;
     int ltail;
@@ -73,6 +83,8 @@ struct general_vars {
     int ismooth, isvr, iswt;
     float nosvalue;
     int imask;
+	unsigned int wellsNPoints, *wellsDataPos; /* new wells hard data containers */
+	double *wellsDataVal;
 } generl_;
 
 typedef struct general_vars general_vars_t;
@@ -87,13 +99,13 @@ struct search_vars {
           sang3,
           sanis1,
           sanis2,
-          noct,
-          nclose, 
-	  ndmin,
-          ndmax;
+          nmult;
     int sstrat,
-             mults;
-    float nmult;
+          noct,
+          mults;
+    float nclose;     /* LPL SHOULD BE INT!!!!! */
+    int ndmin;
+    int ndmax;
 } search_;
 
 typedef struct search_vars  search_vars_t;
@@ -159,4 +171,173 @@ struct file_vars {
 typedef struct file_vars file_vars_t;
 
 #define files_1 files_
+
+extern double acorni();
+
+extern void newAcorni(int );
+
+
+extern float gcum(float );
+
+extern int locate(float *, int *, int *, int *, float *, int *);
+
+extern double powint(float *, float *, float *, float *, float *, float *);
+
+extern double backtr(float *, int *, float *, float *, float *, float *, int *, float *, int *, float *);
+
+extern int cova3(float *,
+          float *,
+          float *,
+          float *,
+          float *,
+		  float *,
+          int *,
+          int *,
+          int *,
+          float *,
+          int *,
+          float *,
+          float *,
+          int *,
+          int *,
+          double *,
+          float *,
+          float *);
+
+extern int covtable(int *, float *,
+	     general_vars_t *,
+	     search_vars_t *,
+	     covariance_vars_t *,
+	     covtable_lookup_vars_t *,
+	     krige_vars_t *);
+
+
+extern int coDss(float *, float *, double *, int *, float *, float *, float *);
+extern int dss(float *, float *, double *, int *, float *);
+
+extern int getPos(int, int, int, int, int);
+
+extern int gauinv(double *, float *, int *);
+
+extern int getindx(int *, float *, float *, float *, int *, int *);
+
+extern int krige(int *, int *, int *, float * , float *, float *,
+		int *, float *, float *, float *, float *, float *,
+		general_vars_t *,
+		search_vars_t *,
+		simulation_vars_t *,
+		covariance_vars_t *,
+		covtable_lookup_vars_t *,
+		krige_vars_t *);
+
+extern int krige1(int *, int *, int *, float * , float *, float *,
+		float *, float *, float *, float *, float *,
+		general_vars_t *,
+		search_vars_t *,
+		simulation_vars_t *,
+		covariance_vars_t *,
+		covtable_lookup_vars_t *,
+		krige_vars_t *);
+
+extern int krige5(int *, int *, int *, float * , float *, float *,
+		float *, float *, float *, float *, float *,
+		general_vars_t *,
+		search_vars_t *,
+		simulation_vars_t *,
+		covariance_vars_t *,
+		covtable_lookup_vars_t *,
+		krige_vars_t *);
+
+
+extern int ksol(int *, int *, int *, double *, double *, double *, int *);
+
+extern int picksup(int *, float *, int *, float *,
+			int *, float *, int *, int *, double *, float *, 
+			int *, int *, int *, int *);
+
+
+extern int readdata(float *,
+             double *,
+             int ,
+             general_vars_t *,
+             search_vars_t *,
+             simulation_vars_t *);	
+
+extern int readparam(float *,
+              float *, 
+		      general_vars_t *,
+              search_vars_t *,
+              simulation_vars_t *,
+		      covariance_vars_t *,
+              covtable_lookup_vars_t *);
+
+extern int readWellsData(general_vars_t *, double *, unsigned int);
+		
+
+
+extern int sdsim(float *,
+          float *,
+          float *,
+          int *,
+          int *,
+		  general_vars_t *,
+		  search_vars_t *,
+		  simulation_vars_t *,
+		  covariance_vars_t *,
+		  covtable_lookup_vars_t *,
+		  krige_vars_t *);
+
+
+extern int setrot(float *, float *, float *, float *, float *
+			, int *, int *, double *);
+
+extern int setsupr(int *, float *, float *, int *,
+			float *, float *, int *, float *, float *, int *, float *, 
+			float *, float *, float *, float *, int *, float *, float *, float *,
+			int *, int *, int *, int *, int *, float *, 
+			float *, int *, float *, float *, int *, float *, float *);
+
+extern int sortem(int *, int *,
+           float *,
+           int *, float *,
+           float *, float *, float *, float *, float *, float *);
+
+extern int sortemi(int *, int *,
+           float *,
+           int *, int *,
+           float *, float *, float *, float *, float *, float *);
+
+extern int sort_permute_float(int , int , float *, float *);
+extern int sort_permute_int(int , int , float *, int *);
+
+extern double sqdist(float *,
+              float *,
+              float *,
+              float *,
+              float *,
+              float *,
+              int *,
+              int *,
+              double *);
+
+
+extern int srchnod(int *, int *, int *, float *,
+		general_vars_t *, 
+		search_vars_t *, 
+		covtable_lookup_vars_t *);
+
+extern int srchsupr(float *, float *, float *, float *,
+             int *, int *,
+             double *,
+             int *, int *, int *, int *, int *, int *,
+             float *, float *, float *, float *, 
+             int *, int *,
+             float *, float *, int *,
+             float *, float *, int *,
+             float *, float *, int *,
+             float *,
+             int *);
+
+
+#endif /* TSI_DSS */
 

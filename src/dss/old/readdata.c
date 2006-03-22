@@ -1,3 +1,18 @@
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
+
 /* ----------------------------------------------------------------------- */
 /*     Read primary data and secondary data */
 /* ----------------------------------------------------------------------- */
@@ -29,36 +44,23 @@
  * search
  */
 
-#include <stdio.h>
-#include <math.h>
 
-#include "dss.h"
-#include "profile.h"
-
-#define MIN(a,b) ((a) <= (b) ? (a) : (b))
-#define MAX(a,b) ((a) >= (b) ? (a) : (b))
-
-/* Table of constant values */
-
-static int one = 1;
-
-extern int sortem(int *, int *, float *, int *,
-	   	float *, float *, float *, float *, float *, float *, float *); 
-extern int gauinv(double *, float *, int *);
-extern int getindx(int *, float *, float *, float *, int *, float *);
-
-int readdata(float *lvm, const double *hard_data, int * hard_data_size,
-				general_vars_t * general, 
-				search_vars_t * search,
-				simulation_vars_t * simulation)
+int readdata(float *lvm,
+             double *hard_data,
+             int  hard_data_size,
+	     general_vars_t * general, 
+	     search_vars_t * search,
+	     simulation_vars_t * simulation)
 {
+	/* Table of constant values */
+
+
 	/* System generated locals */
 	int i__1;
 	float r__1;
 
 
 	/* Local variables */
-	float c__, d__, e, f, g, h__;
 	int i__, j;
 	double w, cp, av;
 	int ix, nt, iy, iz;
@@ -71,7 +73,8 @@ int readdata(float *lvm, const double *hard_data, int * hard_data_size,
 	int index, inull;
 	float vvarg;
 	int icolvr, icolwt, istart;
-	float testind;
+	/* float testind; */
+	int testind;    /* LPL */
 
 #ifdef PROFILE
     profile.readdata++;
@@ -84,20 +87,20 @@ int readdata(float *lvm, const double *hard_data, int * hard_data_size,
 	--lvm;
 
 	/* Function Body */
-	if (*hard_data_size == 0) {
+	if (hard_data_size == 0) {
 		/* !it means that there is no Hard Data file! */
 		fprintf(stderr,"WARNING data file does not exist!");
 		fprintf(stderr,"\t- creating an *unconditional simulation*\n");
 		fprintf(stderr,"\t- Resetting ndmin, ndmax and itrans to 0\n");
 		fprintf(stderr,"\t- Resetting sstrar to 1\n");
-		search->ndmin = 0.f;
-		search->ndmax = 0.f;
+		search->ndmin = 0;
+		search->ndmax = 0;
 		general->itrans = 0;
 		search->sstrat = 1;
 	}
 	general->nd = 0;
-	av = 0.f;
-	ss = 0.f;
+	av = 0;
+	ss = 0;
 	/* !Establish the reference histogram for the simulation (provided that */
 	/* !we have data, and we are transforming the data): */
 	if (general->itrans == 1) {
@@ -116,10 +119,10 @@ int readdata(float *lvm, const double *hard_data, int * hard_data_size,
 		/* !Now, read in the actual data: */
 		nt = 0;
 		general->ntr = 0;
-		twt = 0.f;
+		twt = 0;
 		nelem = 0;
 L3:
-		if (nelem == *hard_data_size) {
+		if (nelem == hard_data_size) {
 			goto L4;
 		}
 		i__1 = general->nvari;
@@ -148,11 +151,11 @@ L3:
 		/* !Keep this data: Assign the data value and coordinate location: */
 		general->vrtr[general->ntr - 1] = var[icolvr - 1];
 		if (icolwt <= 0) {
-			general->vrgtr[general->ntr - 1] = 1.f;
+			general->vrgtr[general->ntr - 1] = 1;
 		} else {
 			general->vrgtr[general->ntr - 1] = var[icolwt - 1];
 		}
-		if (general->vrgtr[general->ntr - 1] <= 0.f) {
+		if (general->vrgtr[general->ntr - 1] <= 0) {
 			--general->ntr;
 			++nt;
 			goto L3;
@@ -169,14 +172,14 @@ L4:
 		/* !Sort data by value: */
 		istart = 1;
 		iend = general->ntr;
-		sortem(&istart, &iend, general->vrtr, &one, general->vrgtr, &c__, &
-				d__, &e, &f, &g, &h__);
+		/* sortem(&istart, &iend, general->vrtr, &one, general->vrgtr, &c__, &d__, &e, &f, &g, &h__); */
+		sort_permute_float(istart, iend, general->vrtr, general->vrgtr);
 		/* !Compute the cumulative probabilities and write transformation table */
-		twt = (double) MAX(twt,1e-20f); // dmax(twt,1e-20f);
-		oldcp = 0.f;
-		cp = 0.f;
-		vmedg = 0.f;
-		vvarg = 0.f;
+		twt = (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
+		oldcp = 0;
+		cp = 0;
+		vmedg = 0;
+		vvarg = 0;
 		i__1 = iend;
 		for (j = istart; j <= i__1; ++j) {
 			cp += (double) (general->vrgtr[j - 1] / twt);
@@ -208,23 +211,25 @@ L4:
 		/* !end do */
 		/* !close(lout) */
 	}
-	if (*hard_data_size != 0) {
+	if (hard_data_size != 0) {
 		/* !it means that there is no Hard Data file! */
-		if (general->ixl > general->nvari || general->iyl > general->nvari || 
-				general->izl > general->nvari || general->ivrl > 
-				general->nvari || general->isecvr > general->nvari || 
-				general->iwt > general->nvari) {
+		if ((general->ixl > general->nvari) ||
+                    (general->iyl > general->nvari) || 
+		    (general->izl > general->nvari) ||
+                    (general->ivrl > general->nvari) ||
+                    (general->isecvr > general->nvari) ||
+		    (general->iwt > general->nvari)) {
 			fprintf(stderr,"ERROR: you have asked for a column number\n");
 			fprintf(stderr,"\t\tgreater than available in file\n");
 			return -1; /* ERROR */
 		}
 		/* !Read all the data until the end of the file: */
-		twt = 0.f;
+		twt = 0;
 		general->nd = 0;
 		nt = 0;
 		nelem = 0;
 L5:
-		if (nelem == *hard_data_size) {
+		if (nelem == hard_data_size) {
 			goto L6;
 		}
 		i__1 = general->nvari;
@@ -289,8 +294,8 @@ L6:
 			/* !	write(*,*) 'mask=', mask(index) */
 			/* !	write(*,*) ' MASK_DATA=', MASK_DATA(index) */
 			/* !end do */
-		simulation->vmedexp = 0.f;
-		simulation->vvarexp = 0.f;
+		simulation->vmedexp = 0;
+		simulation->vvarexp = 0;
 		i__1 = general->nd;
 		for (i__ = 1; i__ <= i__1; ++i__) {
 			simulation->vmedexp += general->vr[i__ - 1];
@@ -304,7 +309,7 @@ L6:
 		}
 		simulation->vvarexp /= general->nd;
 		/* !Compute the averages and variances as an error check for the user: */
-		av /= (double) MAX(twt,1e-20f); // dmax(twt,1e-20f);
+		av /= (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
 		ss = ss / ((double) MAX(twt,1e-20f)) - av * av;
 		/* !write (*,*) ' Data for SGSIM: ' */
 		/* !write (*,*) ' Number of acceptable data  = ',nd */
@@ -322,8 +327,9 @@ L6:
 		}
 		*/
 		index = 0;
-		av = 0.f;
-		ss = 0.f;
+		/* what is av & ss for  ?*/
+		av = 0;
+		ss = 0;
 		nelem = 0;
 		/* lvm is allready set to a pointer of BAI on dssdll */
 		/* !BAI_DATA_SIZE = nx*ny*nz */
@@ -342,9 +348,9 @@ L6:
 		}
 		*/
 		r__1 = (float) general->nxyz;
-		av /= ((double) MAX(r__1,1.f)); //dmax(r__1,1.f);
+		av /= ((double) MAX(r__1,1)); /*dmax(r__1,1.f); */
 		r__1 = (float) general->nxyz;
-		ss = ss / ((double) MAX(r__1,1.f)) - av * av;
+		ss = ss / ((double) MAX(r__1,1)) - av * av;
 		if (general->ktype == 5) {
 			/* do nothing, dssdll allready sets clc acordingly to BCM.
 			 *  older method was to make a linear iteration
@@ -356,12 +362,12 @@ L6:
 		else if (general->ktype == 2) {
 			i__1 = general->nd;
 			for (i__ = 1; i__ <= i__1; ++i__) {
-				getindx(&general->nx, &general->xmn, &general->xsiz, &
-						general->x[i__ - 1], &ix, &testind);
-				getindx(&general->ny, &general->ymn, &general->ysiz, &
-						general->y[i__ - 1], &iy, &testind);
-				getindx(&general->nz, &general->zmn, &general->zsiz, &
-						general->z__[i__ - 1], &iz, &testind);
+				getindx(&general->nx, &general->xmn, &general->xsiz,
+					   	&general->x[i__ - 1], &ix, &testind);
+				getindx(&general->ny, &general->ymn, &general->ysiz,
+					   	&general->y[i__ - 1], &iy, &testind);
+				getindx(&general->nz, &general->zmn, &general->zsiz,
+					   	&general->z__[i__ - 1], &iz, &testind);
 				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
 				general->sec[i__ - 1] = lvm[index];
 				/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
@@ -372,46 +378,25 @@ L6:
 			i__1 = general->nd;
 			for (i__ = 1; i__ <= i__1; ++i__) {
 				if (general->sec[i__ - 1] == general->nosvalue) {
-					getindx(&general->nx, &general->xmn, &general->xsiz, &
-							general->x[i__ - 1], &ix, &testind);
-					getindx(&general->ny, &general->ymn, &general->ysiz, &
-							general->y[i__ - 1], &iy, &testind);
-					getindx(&general->nz, &general->zmn, &general->zsiz, &
-							general->z__[i__ - 1], &iz, &testind);
+					getindx(&general->nx, &general->xmn, &general->xsiz,
+						   	&general->x[i__ - 1], &ix, &testind);
+					getindx(&general->ny, &general->ymn, &general->ysiz,
+						   	&general->y[i__ - 1], &iy, &testind);
+					getindx(&general->nz, &general->zmn, &general->zsiz,
+						   	&general->z__[i__ - 1], &iz, &testind);
 					index = ix + (iy - 1) * general->nx + (iz - 1) * 
 						general->nxy;
 					general->sec[i__ - 1] = lvm[index];
 				}
 			}
 		}
-		/* Removed for DSSIM implementation */
-
-		/* Transform the secondary attribute to normal scores? */
-
-		/*      if(ktype.eq.4) then */
-		/*         write(ldbg,113) varred */
-		/* 113     format(/,' Transforming Secondary Data with', */
-		/*     +               ' variance reduction of ',f12.4,/) */
-		/*         write(*,*) 'Transforming secondary variable' */
-		/*         write(*,*) */
-		/*         call sortem(1,nxyz,lvm,1,sim,c,d,e,f,g,h) */
-		/*         oldcp = 0.0 */
-		/*         cp    = 0.0 */
-		/*         do i=1,nxyz */
-		/*               cp =  cp + dble(1.0/real(nxyz)) */
-		/*               w  = (cp + oldcp)/2.0 */
-		/*               call gauinv(w,lvm(i),ierr) */
-		/* 	         lvm(i) = lvm(i) * varred */
-		/*               oldcp  =  cp */
-		/*            end do */
-		/*            call sortem(1,nxyz,sim,1,lvm,c,d,e,f,g,h) */
-		/*         end if */
 	}
 	/* !Re-scale secondary variable to mean and variance */
 	/* !of the primary variable */
 	if (general->ktype >= 4) {
-		simulation->vmedsec = 0.f;
-		simulation->vvarsec = 0.f;
+		printf("readdata: altering BAI!\n");
+		simulation->vmedsec = 0;
+		simulation->vvarsec = 0;
 		inull = 0;
 		i__1 = general->nxyz;
 		for (ind = 1; ind <= i__1; ++ind) {
@@ -457,4 +442,5 @@ L6:
 	fprintf(stderr,"ERROR in data file!\n");
 	return -1; /* ERROR */
 } /* readdata_ */
+
 

@@ -1,3 +1,13 @@
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
 /* ----------------------------------------------------------------------- */
 /*             Establish Which Super Blocks to Search */
 /*             ************************************** */
@@ -36,19 +46,17 @@
 
 /** structs globais utilizadas:
  */
-#include "profile.h"
 
-
-extern double sqdist(float *, float *, float *, float *, float *, float *, int *, int *, double *);
-/* Table of constant values */
-
-static float c_b2 = 0.f;
 
 int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 		int *nzsup, float *zsizsup, int *irot, int * maxrot,
 		double *rotmat, float *radsqd, int *nsbtosr, int * ixsbtosr,
 		int *iysbtosr, int *izsbtosr)
 {
+        /* Table of constant values */
+
+        float c_b2 = 0.f;
+
 	/* System generated locals */
 	int rotmat_dim1, rotmat_offset, i__1, i__2, i__3;
 

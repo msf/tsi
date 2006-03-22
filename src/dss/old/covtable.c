@@ -1,3 +1,16 @@
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
 /* ----------------------------------------------------------------------- */
 /*               Establish the Covariance Look up Table */
 /* The idea is to establish a 3-D network that contains the covariance */
@@ -49,43 +62,27 @@
  * krige_vars (passado ao cova3: krige_vars->rotmat & krige_vars->ccb)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "dss.h"
-#include "acorni.h"
-#include "profile.h"
 
 
-extern int cova3(float *, float *, float *, float *, float *,
-		float *, int *, int *, int *, float *, int *, float 
-		*, float *, int *, int *, double *, float *, float *);
-extern double sqdist(float *, float *, float *, float *, float *, float *, 
-	int *, int *, double *);
-extern int sortem(int *, int *, float *, int 
-		*, int *, float *, float *, float *, float *, float *, float *);
-extern int getPos(int, int, int, int, int);
 
-/* Table of constant values */
-
-static float c_b2 = 0.f;
-static int one = 1;
-static int four = 4;
-static int five = 5;
-
-int covtable(int *order, 
+int covtable(int *order, float * tmp,
 		general_vars_t * general, 
 		search_vars_t * search, 
 		covariance_vars_t * covariance, 
 		covtable_lookup_vars_t * covtable_lookup, 
 		krige_vars_t * krige_vars)
 {
+        /* Table of constant values */
+        float c_b2 = 0.f;
+        int one = 1;
+        int four = 4;
+        int five = 5;
+
 	/* System generated locals */
 	int i__1, i__2, i__3;
 
 	/* Local variables */
-	float * tmp;
-	float c__, d__, e, f, g, h__;
+	/*	float * tmp; */
 	int i__, j, k, ic, jc, kc, il, ix, iy, iz;
 	float xx, yy, zz;
 	int loc;
@@ -101,11 +98,11 @@ int covtable(int *order,
 
 	/* Function Body */
 	i__1 = (general->nx-1)/2;
-	covtable_lookup->nctx = i__1; /*min(i__1,i__2);*/
+	covtable_lookup->nctx = i__1; /* min(i__1,i__2);*/
 	i__1 = (general->ny-1)/2;
-	covtable_lookup->ncty = i__1; // min(i__1,i__2);
+	covtable_lookup->ncty = i__1; /* min(i__1,i__2); */
 	i__1 = (general->nz-1)/2;
-	covtable_lookup->nctz = i__1; //min(i__1,i__2);
+	covtable_lookup->nctz = i__1; /* min(i__1,i__2); */
 
 	/* NOTE: If dynamically allocating memory, and if there is no shortage */
 	/*       it would a good idea to go at least as far as the radius and */
@@ -113,16 +110,17 @@ int covtable(int *order,
 	/*       in the left hand covariance matrix are within the table look-up. */
 
 	/* Initialize the covariance subroutine and cbb at the same time: */
-	//    printf("Calling cova3\n");
+	/*    printf("Calling cova3\n"); */
 	cova3(&c_b2, &c_b2, &c_b2, &c_b2, &c_b2, &c_b2, &one, covariance->nst, &four,
 			covariance->c0, covariance->it, covariance->cc, covariance->aa, &one, 
 			&five, krige_vars->rotmat, &covariance->cmax, &krige_vars->cbb);
 	/* 		Now, set up the table and keep track of the node offsets that are */
 	/* 		within the search radius: */
-	//    printf("loop 1/3\n");
+	/*    printf("loop 1/3\n"); */
  
-	/* covtable needs a tmp array the size of aicube */
+	/* covtable needs a tmp array the size of aicube 
 	tmp = (float *) malloc(general->nxyz * sizeof(float));
+	*/
 
 	covtable_lookup->nlooku = 0;
 	i__1 = covtable_lookup->nctx;
@@ -149,11 +147,11 @@ int covtable(int *order,
 
 				if ((float) hsqd <= search->radsqd) {
 					++covtable_lookup->nlooku;
-					//		    printf("nlooku: %i\n", covtable_lookup->nlooku);
-					/* 						We want to search by closest variogram distance (and use the */
-					/* 						anisotropic Euclidean distance to break ties: */
+					/*		    printf("nlooku: %i\n", covtable_lookup->nlooku); 
+					 						We want to search by closest variogram distance (and use the 
+					 						anisotropic Euclidean distance to break ties: */
 					tmp[covtable_lookup->nlooku] = -(covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] - (float) hsqd * 1e-10f);
-					order[covtable_lookup->nlooku] = (float) getPos(ic,jc,kc, general->nx, general->nxy);
+					order[covtable_lookup->nlooku] = getPos(ic,jc,kc, general->nx, general->nxy);
 				}
 
 			}
@@ -164,14 +162,15 @@ int covtable(int *order,
 	/* 		that the closest ones, according to variogram distance, are searched */
 	/* 		first. Note: the "loc" array is used because I didn't want to make */
 	/* 		special allowance for 2 byte integers in the sorting subroutine: */
-	//    printf("calling sortem\n");
+	/*    printf("calling sortem\n"); */
 
-	sortem(&one, &covtable_lookup->nlooku, &tmp[1], &one, &order[1], &c__, &d__, 
-			&e, &f, &g, &h__);
-	//    printf("loop 2/3\n");
+  /*	sortemi(&one, &covtable_lookup->nlooku, &tmp[1], &one, &order[1], &c__, &d__, &e, &f, &g, &h__); */
+	sort_permute_int(one, covtable_lookup->nlooku, &tmp[1], &order[1]);
+	/*    printf("loop 2/3\n"); */
  	
- 	/* tmp array is no longer needed. */
+ 	/* tmp array is no longer needed. 
  	free(tmp);
+ 	*/
 
 	i__1 = covtable_lookup->nlooku;  
 	for (il = 1; il <= i__1; ++il) {
@@ -184,12 +183,12 @@ int covtable(int *order,
 		covtable_lookup->iznode[il - 1] = iz;
 		covtable_lookup->iynode[il - 1] = iy;
 		covtable_lookup->ixnode[il - 1] = ix;
-		//      printf("loop 2/3: %i %i %i\n", il, (int)covtable_lookup->nlooku, general->nxyz);
+		/*      printf("loop 2/3: %i %i %i\n", il, (int)covtable_lookup->nlooku, general->nxyz); */
 
 	}
 
 	if (covtable_lookup->nodmax > 64) {
-		fprintf(stderr, "covtable_lookup->nodmax above limit of 64, setting to 64!");
+		fprintf(stderr, "covtable(): covtable_lookup->nodmax above limit of 64, setting to 64!");
 		/* apagar */
 		/*            write(ldbg,*) */
 		/*            write(ldbg,*) 'The maximum number of close nodes = ',nodmax */
@@ -202,5 +201,6 @@ int covtable(int *order,
 	profEnd("ctable");
 #endif
 	return 0;
-} /* ctable_ */
+} /* ctable */
+
 

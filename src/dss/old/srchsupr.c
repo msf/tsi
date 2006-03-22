@@ -1,3 +1,13 @@
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
 /* ----------------------------------------------------------------------- */
 /*              Search Within Super Block Search Limits */
 /*              *************************************** */
@@ -53,29 +63,50 @@
 
 /** structs globais utilizadas:
  */
-#include "profile.h"
 
-extern double sqdist(float *, float *, float *, float *, float *, float *, int *, int *, double *);
-extern int sortem(int *, int *, float *, int *, float *, float *, float *, float *, float *, float *, float *); 
-extern int getindx(int *, float *, float *, float *, int *, int *);
-/* Table of constant values */
-
-static int one = 1;
-
-int srchsupr(float *xloc, float *yloc, float *zloc, float * radsqd,
-		int *irot, int *maxrot, double *rotmat, int * nsbtosr,
-		int *ixsbtosr,  int *iysbtosr, int *izsbtosr, int *noct,
-		int *nd, float *x, float *y, float *z__, float *tmp, int *nisb,
-		int *nxsup, float *xmnsup, float *xsizsup, int * nysup,
-		float *ymnsup, float *ysizsup,  int *nzsup, float *zmnsup,
-		float *zsizsup, int *nclose, float *close, int *infoct)
+int srchsupr(float *xloc,
+             float *yloc,
+             float *zloc,
+             float *radsqd,
+		     int *irot,
+	     
+             int *maxrot,
+             double *rotmat,
+             int *nsbtosr,
+             int *ixsbtosr,
+             int *iysbtosr,
+             
+             int *izsbtosr,
+             int *noct,
+             int *nd,
+             float *x,
+             float *y,
+             
+             float *z__,
+             float *tmp,
+             int *nisb,
+             int *nxsup,
+             float *xmnsup,
+             
+             float *xsizsup,
+             int *nysup,
+		     float *ymnsup,
+             float *ysizsup,
+             int *nzsup,
+             
+             float *zmnsup,
+             float *zsizsup,
+             int *nclose,
+             float *close,
+             int *infoct)
 {
+	/* Table of constant values */
+
 	/* System generated locals */
 	int rotmat_dim1, rotmat_offset, i__1, i__2;
 
 	/* Local variables */
-	float c__, d__, e, f, g, h__;
-	int i__, j, na, ii, iq;
+	int i__, j, na, ii, iq, h;
 	float dx, dy, dz;
 	int ix, iy, iz, nt;
 	double hsqd;
@@ -157,9 +188,9 @@ int srchsupr(float *xloc, float *yloc, float *zloc, float * radsqd,
 	}
 
 	/* Sort the nearby samples by distance to point being estimated: */
-
-	sortem(&one, nclose, &tmp[1], &one, &close[1], &c__, &d__, &e, &f, &g, 
-			&h__);
+	sort_permute_float(1, *nclose, &tmp[1], &close[1]);
+	/* sortem(&one, nclose, &tmp[1], &one, &close[1], &c__, &d__, &e, &f, &g, &h);
+	 */
 
 	/* If we aren't doing an octant search then just return: */
 
@@ -175,12 +206,13 @@ int srchsupr(float *xloc, float *yloc, float *zloc, float * radsqd,
 
 	/* Now pick up the closest samples in each octant: */
 
-	nt = *noct << 3;
+	/* nt = *noct << 3;  //LPL */
+	nt = *noct * 8;  /* LPL */
 	na = 0;
 	i__1 = *nclose;
 	for (j = 1; j <= i__1; ++j) {
 		i__ = (int) close[j];
-		h__ = tmp[j];
+		h = tmp[j];
 		dx = x[i__] - *xloc;
 		dy = y[i__] - *yloc;
 		dz = z__[i__] - *zloc;
@@ -213,7 +245,7 @@ int srchsupr(float *xloc, float *yloc, float *zloc, float * radsqd,
 		if (inoct[iq - 1] <= *noct) {
 			++na;
 			close[na] = (float) i__;
-			tmp[na] = h__;
+			tmp[na] = h;
 			if (na == nt) {
 				break;
 			}

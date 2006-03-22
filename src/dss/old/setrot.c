@@ -1,3 +1,15 @@
+#include <math.h>
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
 /* ----------------------------------------------------------------------- */
 /*              Sets up an Anisotropic Rotation Matrix */
 /*              ************************************** */
@@ -29,13 +41,6 @@
 /** structs globais utilizadas:
  */
 
-#include <stdio.h>
-#include <math.h>
-
-#include "profile.h"
-
-#define MIN(a,b) ((a) <= (b) ? (a) : (b))
-#define MAX(a,b) ((a) >= (b) ? (a) : (b))
 
 int setrot(float *ang1, float *ang2, float *ang3, float *anis1, float *anis2,
 		int *ind, int *maxrot, double *rotmat)
@@ -91,8 +96,8 @@ int setrot(float *ang1, float *ang2, float *ang3, float *anis1, float *anis2,
 
 	/* Construct the rotation matrix in the required memory: */
 
-	afac1 = 1.f / (double) MAX(*anis1, 1e-20f); // dmax(*anis1,1e-20f);
-	afac2 = 1.f / (double) MAX(*anis2, 1e-20f); // dmax(*anis2,1e-20f);
+	afac1 = 1.f / (double) MAX(*anis1, 1e-20f); /* dmax(*anis1,1e-20f); */
+	afac2 = 1.f / (double) MAX(*anis2, 1e-20f); /* dmax(*anis2,1e-20f); */
 	rotmat[*ind + (rotmat_dim1 << 2)] = cosb * cosa;
 	rotmat[*ind + rotmat_dim1 * 7] = cosb * sina;
 	rotmat[*ind + rotmat_dim1 * 10] = -sinb;
@@ -114,4 +119,5 @@ int setrot(float *ang1, float *ang2, float *ang3, float *anis1, float *anis2,
 	/* Return to calling program: */
 	return 0;
 } /* setrot_ */
+
 

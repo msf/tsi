@@ -1,3 +1,17 @@
+#include "dss.h"
+
+#undef PROFILE
+
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+
+
+
+
+
+
 /* ----------------------------------------------------------------------- */
 /*           Establish Super Block Search Limits and Sort Data */
 /*           ************************************************* */
@@ -59,18 +73,6 @@
 
 /** structs globais utilizadas:
  */
-#include "profile.h"
-
-#define MIN(a,b) ((a) <= (b) ? (a) : (b))
-#define MAX(a,b) ((a) >= (b) ? (a) : (b))
-
-extern int sortem(int *, int *, float *,
-			int *, float *, float *, float *, float *, float *,
-			float *, float *); 
-extern int getindx(int *, float  *, float *, float *, int *, int *);
-/* Table of constant values */
-
-static int one = 1;
 
 int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 		float *ysiz, int *nz, float *zmn, float *zsiz, int * nd,
@@ -80,6 +82,9 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 		float * xsizsup, int *nysup, float *ymnsup, float *ysizsup,
 		int *nzsup, float *zmnsup, float *zsizsup)
 {
+        /* Table of constant values */
+        int one = 1;
+
 	/* System generated locals */
 	int i__1;
 
@@ -105,9 +110,9 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	--x;
 
 	/* Function Body */
-	*nxsup = MIN(*nx, *maxsbx); // min(*nx,*maxsbx);
-	*nysup = MIN(*ny, *maxsby); // min(*ny,*maxsby);
-	*nzsup = MIN(*nz, *maxsbz); // min(*nz,*maxsbz);
+	*nxsup = MIN(*nx, *maxsbx); /* min(*nx,*maxsbx); */
+	*nysup = MIN(*ny, *maxsby); /* min(*ny,*maxsby); */
+	*nzsup = MIN(*nz, *maxsbz); /* min(*nz,*maxsbz); */
 	*xsizsup = (float) (*nx) * *xsiz / (float) (*nxsup);
 	*ysizsup = (float) (*ny) * *ysiz / (float) (*nysup);
 	*zsizsup = (float) (*nz) * *zsiz / (float) (*nzsup);
@@ -138,8 +143,10 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	/* Sort the data by ascending super block number: */
 
 	nsort = *nsec + 4;
-	sortem(&one, nd, &tmp[1], &nsort, &x[1], &y[1], &z__[1], &vr[1], &sec1[
-			1], &sec2[1], &sec3[1]);
+	sortem(&one, nd,
+               &tmp[1],
+               &nsort, &x[1],
+               &y[1], &z__[1], &vr[1], &sec1[1], &sec2[1], &sec3[1]);
 
 	/* Set up array nisb with the starting address of the block data: */
 

@@ -1,48 +1,35 @@
-/*                Sequential Gaussian Simulation */
-
-/* The program is executed with no command line arguments.  The user */
-/* will be prompted for the name of a parameter file.  The parameter */
-/* file is described in the documentation (see the example sgsim.par) */
-
-/* The output file will be a GEOEAS file containing the simulated values */
-/* The file is ordered by x,y,z, and then simulation (i.e., x cycles */
-/* fastest, then y, then z, then simulation number).  The values will be */
-/* backtransformed to the original data values if a normal scores */
-/* transform was performed. */
-/* ----------------------------------------------------------------------- */
-#include <stdlib.h>
 #include <stdio.h>
-
+#include <stdlib.h>
 #include "dss.h"
-#include "profile.h"
 
+#undef PROFILE
 
-extern int readdata(float *, double *, int *,
-		general_vars_t *, search_vars_t *, simulation_vars_t *);	
-extern int readparam(float *, float *, 
-		general_vars_t *, search_vars_t *, simulation_vars_t *,
-		covariance_vars_t *, covtable_lookup_vars_t *);
-extern int sdsim(float *, float *, float *, int *, int *,
-		general_vars_t *,
-		search_vars_t *,
-		simulation_vars_t *,
-		covariance_vars_t *,
-		covtable_lookup_vars_t *,
-		krige_vars_t *);
+#define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#define MAX(a,b) ((a) >= (b) ? (a) : (b))
+#define TRUE (1)
+#define FALSE (0)
+	
+/*
+int dss(float *params, float *models, double *hardData, int *hDataSize, float *output_data)
+{
+	return coDss(params, models, hardData, hDataSize, NULL, NULL, output_data);
+}
+*/
 
-int dssdll(float *params, float *models, double * hard_data, int *hard_data_size,
-		float *bcm_data, float *bai_data, int * mask_data, float *output_data)
+int dsslib(float *params,
+           float *models,
+           double * hard_data, int hard_data_size,
+		   float *bcm_data, float *bai_data,
+           float *output_data)
 {
 	/* Cubos:
 	 * bestCorrCube - BCM - copia do ponteiro de: bcm_data
 	 * sim - aiCube - copia do ponteiro de output_data
 	 * bestAICube - BAI
  	 * tmp - temporario, allocado e deallocado no covtable.
-	 * mask - mascara, nao esta a ser usado
 	 * order - ordem da simulacao
 	 */
 	float * bestCorrCube, * sim, * bestAICube;
-//	static float * mask;
 	int * order;
 	
 	general_vars_t general;
@@ -52,54 +39,58 @@ int dssdll(float *params, float *models, double * hard_data, int *hard_data_size
 	covtable_lookup_vars_t covtable_lookup;
 	krige_vars_t	krige_vars;
 
-	/* Parameter adjustments */
-	--output_data;
-	--mask_data;
-	--bai_data;
-	--bcm_data;
-	--hard_data;
-	--models;
-	--params;
-
-
 	/* Function Body */
 	general.lout = 2;
 
-
-	newProfile();
-
 #ifdef PROFILE
-	profile.dssdll++;
-	profBegin("dssdll");
+	newProfile();
+	profile.dsslib++;
+	profBegin("dsslib");
 #endif
 
-	//copy pointers of aiCube, BCM and BAI
-	sim = &output_data[1];
-	bestCorrCube = &bcm_data[1];
-	bestAICube = &bai_data[1];
+	/* copy pointers of aiCube, BCM and BAI */
+	sim = output_data;
+	bestCorrCube = bcm_data;
+	bestAICube = bai_data;
 
-	/*      !ldbg = 3 */
-	/*      !lbestAICube = 4 */
-
+	
+	
 	/* Read the parameters */
-	readparam(&params[1], &models[1], &general, &search, &simulation, &covariance, &covtable_lookup);
+	readparam(params, models, &general, &search, &simulation, &covariance, &covtable_lookup);
 
-	readdata(bestAICube, &hard_data[1], hard_data_size, &general, &search, &simulation);
+	printf("dsslib(); nxyz: %d\n",general.nxyz); 
 
+	/* read wells data */
+	readdata(bestAICube, hard_data, hard_data_size, &general, &search, &simulation);
+	readWellsData(&general, hard_data, hard_data_size);
+
+	covtable_lookup.covtab = covtable_lookup.ixnode = covtable_lookup.iynode = covtable_lookup.iznode = order = NULL;
+	
 	covtable_lookup.covtab = (float *) malloc(general.nxyz * sizeof(float));
 	covtable_lookup.ixnode = (int *) malloc(general.nxyz * sizeof(int));
 	covtable_lookup.iynode = (int *) malloc(general.nxyz * sizeof(int));
 	covtable_lookup.iznode = (int *) malloc(general.nxyz * sizeof(int));
-	//mask = (float *) malloc(general.nxyz * sizeof(float));
 	order = (int *) malloc(general.nxyz * sizeof(int));
+	if(!covtable_lookup.covtab ||
+			!covtable_lookup.ixnode ||
+			!covtable_lookup.iynode ||
+			!covtable_lookup.iznode ||
+			!order) {
+		printf("dsslib(): ERROR, unable to alocate grids\n");
+		return 1;
+	}
 
 	/* Call sdsim for the simulation */
-	sdsim(sim, bestAICube, bestCorrCube, order, &mask_data[1],
+	sdsim(sim, bestAICube, bestCorrCube, order, NULL,
 			&general, &search, &simulation, &covariance, 
 			&covtable_lookup, &krige_vars);
 
+
+	/* these are alocated on readWellsData */
+	free(general.wellsDataPos);
+	free(general.wellsDataVal);
+
 	free(order);
-	//free(mask);
 	free(covtable_lookup.covtab);
 	free(covtable_lookup.ixnode);
 	free(covtable_lookup.iynode);
@@ -107,10 +98,12 @@ int dssdll(float *params, float *models, double * hard_data, int *hard_data_size
 
 #ifdef PROFILE
 	showResults();
-	profEnd("dssdll");
+	profEnd("dsslib");
 #endif
 
 	/* !Finished: */
 	return 0;
 } /* dssdll_ */
+
+
 
