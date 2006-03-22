@@ -218,7 +218,7 @@ int  load_dss_configs(dss *d, registry *r )
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;
     varnum = d->covariance->nst[0] = get_int(k);
-    printf_dbg2("load_dss_configs(): varnum = %d\n", varnum);
+    printf_dbg("load_dss_configs(): varnum = %d\n", varnum);
 
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
     sill = d->covariance->c0[0] = get_float(k);
@@ -231,7 +231,6 @@ int  load_dss_configs(dss *d, registry *r )
     d->covariance->ang3 = (float *) malloc(varnum * sizeof(float));
     d->covariance->anis1 = (float *) malloc(varnum * sizeof(float));
     d->covariance->anis2 = (float *) malloc(varnum * sizeof(float));
-    d->covariance->aa = (float *) malloc(varnum * sizeof(float));
     if (!d->covariance->it ||
         !d->covariance->cc ||
         !d->covariance->aa ||
@@ -248,36 +247,47 @@ int  load_dss_configs(dss *d, registry *r )
         sprintf(variogram, "VARIOGRAM%d", i+1);
         if ((k = get_key(r, variogram, "TYPE")) == NULL) return 1;
         d->covariance->it[i] = get_int(k);
+		printf("%s - type: %d\n\t %d",variogram,get_int(k),d->covariance->it[i]);
         if (d->covariance->it[i] == 4) {
             printf("load_dss_configs(): ERROR - A power model is not allowed! Choose a different model and re-start.\n");
             return 1;
         }
 
         if ((k = get_key(r, variogram, "COV")) == NULL) return 1;
+		printf("%s - cov: %d\n",variogram,get_int(k));
         d->covariance->cc[i] = get_float(k);
         sill += d->covariance->cc[i];
 
         if ((k = get_key(r, variogram, "ANG1")) == NULL) return 1;
+		printf("%s - ang1: %d\n",variogram,get_int(k));
         d->covariance->ang1[i] = get_float(k);
 
         if ((k = get_key(r, variogram, "ANG2")) == NULL) return 1;
+		printf("%s - ang2: %d\n",variogram,get_int(k));
         d->covariance->ang2[i] = get_float(k);
 
         if ((k = get_key(r, variogram, "ANG3")) == NULL) return 1;
+		printf("%s - ang3: %d\n",variogram,get_int(k));
         d->covariance->ang3[i] = get_float(k);
 
         if ((k = get_key(r, variogram, "AA")) == NULL) return 1;
+		printf("%s - aa: %d\n",variogram,get_int(k));
         aa = d->covariance->aa[i] = get_float(k);
         if (aa < 1e-20)
 			aa = 1e-20;
 
         if ((k = get_key(r, variogram, "AA1")) == NULL) return 1;
+		printf("%s - aa1: %d\n",variogram,get_int(k));
         aa1 = get_float(k);
         d->covariance->anis1[i] = aa1 / aa; 
 
         if ((k = get_key(r, variogram, "AA2")) == NULL) return 1;
+		printf("%s - aa2: %d\n",variogram,get_int(k));
         aa2 = get_float(k);
         d->covariance->anis2[i] = aa2 / aa;
+		printf_dbg("load_dss_configs(): variogram %d\n \ttype:\t%d\n \tcov:\t%.2f\n \tang1:\t%.2f\n \tang2:\t%.2f\n \tang3:\t%.2f\n \taa:\t%.2f\n \taa1:\t%.2f\n \taa2:\t%.2f\n\n",
+				i,d->covariance->it[i],d->covariance->cc[i], 
+				d->covariance->ang1[i],d->covariance->ang2[i],d->covariance->ang3[i],aa,aa1,aa2);
     } /* for */
 
     if ((sill < 1) || (sill > 1)) {

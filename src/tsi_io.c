@@ -25,16 +25,16 @@ int close_grid_file(TSI_FILE *fp) {
 
 
 int write_grid_file(TSI_FILE *fp, float *address, unsigned int size) {
-    if (fseek(fp, 0, SEEK_SET)) return 0;
-    if (fwrite(address, sizeof(float), size, fp) < size) return 0;
+    if (fseek(fp, (long) 0, SEEK_SET)) return 0;
+    if (fwrite(address, sizeof(float), (size_t) size, fp) < size) return 0;
     return 1;
 } /* write_grid_file */
 
 
 
 int read_grid_file(TSI_FILE *fp, float *address, unsigned int size) {
-    if (fseek(fp, 0, SEEK_SET)) return 0;
-    if (fread(address, sizeof(float), size, fp) < size) return 0;
+    if (fseek(fp, (long) 0, SEEK_SET)) return 0;
+    if (fread(address, sizeof(float), (size_t) size, fp) < size) return 0;
     return 1;
 } /* load_grid_file */
 

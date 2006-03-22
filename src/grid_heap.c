@@ -40,7 +40,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
     h->max_grids = 0;
     
     /* initializes the grid records array */
-    h->g = (grid *) calloc(heap_size, sizeof(grid));
+    h->g = (grid *) calloc((size_t)heap_size, sizeof(grid));
     if (!h->g) {
         printf_dbg2("new_heap(): failed to allocate grid data array!\n");
         delete_heap(h);

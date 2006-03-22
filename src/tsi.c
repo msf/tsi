@@ -245,6 +245,7 @@ void delete_tsi(tsi *t) {
 
 int tsi_compare (float *AI, float *CM, float *nextBAI, float *BCM) {
     /* execute Compare */    
+	printf_dbg("tsi_compare(): ERROR - called but not implemented\n");
     return 1;
 } /* tsi_compare */
 
@@ -293,6 +294,7 @@ int run_tsi(tsi *t) {
     fp = create_file("test_grid.out");
     write_ascii_grid_file(fp, t->ai, t->grid_size);
     close_file(fp);
+	printf_dbg("run_tsi(%d): grid dumped\n",t->proc_id);
     return 1;
     //////////////////////////////////////////////////////////
 
