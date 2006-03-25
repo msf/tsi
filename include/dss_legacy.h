@@ -53,10 +53,9 @@ extern int covtable(int *, float *,
 	     krige_vars_t *);
 
 
-extern int dssdll(float *, float *, double *, int *, float *, float *, int *, float *);
 
 extern int dsslib(float *params, float *models, double *hard_data,
-	          int *hard_data_size, float *bcm_data, float *bai_data,
+	          int hard_data_size, float *bcm_data, float *bai_data,
 		  float *output_data);
 
 extern int getPos(int, int, int, int, int);
@@ -102,10 +101,12 @@ extern int picksup(int *, float *, int *, float *,
 
 extern int readdata(float *,
              double *,
-             int *,
+             int ,
              general_vars_t *,
              search_vars_t *,
              simulation_vars_t *);	
+
+extern int readWellsData(general_vars_t *, double *, unsigned int);
 
 extern int readparam(float *,
               float *, 
@@ -148,6 +149,9 @@ extern int sortemi(int *, int *,
            float *,
            int *, int *,
            float *, float *, float *, float *, float *, float *);
+
+extern int sort_permute_float(int , int , float *, float *);
+extern int sort_permute_int(int , int , float *, int *);
 
 extern double sqdist(float *,
               float *,

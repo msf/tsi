@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -87,10 +86,6 @@ int sortem(int *ib,  int *ie,
 	float xh, xe, xd, xc, xb;
 	int ut[64], iring;
 
-#ifdef PROFILE
-	profile.sortem++;
-	profBegin("sortem");
-#endif
 
 	/* The dimensions for lt and ut have to be at least log (base 2) n */
 
@@ -368,9 +363,6 @@ L100:
 	goto L10;
 L110:
 
-#ifdef PROFILE
-	profEnd("sortem");
-#endif
 
 	return 0;
 } /* sortem_ */
@@ -452,10 +444,6 @@ int sortemi(int *ib,  int *ie,
 	int xh, xe, xd, xc, xb;
 	int ut[64], iring;
 
-#ifdef PROFILE
-	profile.sortem++;
-	profBegin("sortem");
-#endif
 
 	/* The dimensions for lt and ut have to be at least log (base 2) n */
 
@@ -733,9 +721,6 @@ L100:
 	goto L10;
 L110:
 
-#ifdef PROFILE
-	profEnd("sortem");
-#endif
 
 	return 0;
 } /* sortem_ */

@@ -81,11 +81,11 @@ int covtable(int *order, float * tmp,
 	int i__1, i__2, i__3;
 
 	/* Local variables */
-	/*	float * tmp; */
 	int i__, j, k, ic, jc, kc, il, ix, iy, iz;
 	float xx, yy, zz;
 	int loc;
 	double hsqd;
+
 
 	/* Parameter adjustments */
 	--order;
@@ -112,9 +112,6 @@ int covtable(int *order, float * tmp,
 	/* 		within the search radius: */
 	/*    printf("loop 1/3\n"); */
  
-	/* covtable needs a tmp array the size of aicube 
-	tmp = (float *) malloc(general->nxyz * sizeof(float));
-	*/
 
 	covtable_lookup->nlooku = 0;
 	i__1 = covtable_lookup->nctx;
@@ -160,11 +157,6 @@ int covtable(int *order, float * tmp,
 
   /*	sortemi(&one, &covtable_lookup->nlooku, &tmp[1], &one, &order[1], &c__, &d__, &e, &f, &g, &h__); */
 	sort_permute_int(one, covtable_lookup->nlooku, &tmp[1], &order[1]);
-	/*    printf("loop 2/3\n"); */
- 	
- 	/* tmp array is no longer needed. 
- 	free(tmp);
- 	*/
 
 	i__1 = covtable_lookup->nlooku;  
 	for (il = 1; il <= i__1; ++il) {

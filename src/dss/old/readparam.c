@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -47,8 +46,8 @@ int readparam(float *params, float *models,
 		covtable_lookup_vars_t *covt_lookup)
 {
 	/* System generated locals */
-	int i__1, i__;
-	float r__1;
+	int i1, i;
+	float r1;
 
 
 	/* Local variables */
@@ -58,10 +57,6 @@ int readparam(float *params, float *models,
 	float radius1, radius2;
 
 
-#ifdef PROFILE
-	profile.readparm++;
-	profBegin("readparm");
-#endif
 
 	/* Parameter adjustments */
 	--models;
@@ -143,22 +138,22 @@ int readparam(float *params, float *models,
 	covariance->nst[0] = params[VARNUM+1];
 	covariance->c0[0] = params[NUGGET+1];
 	sill = covariance->c0[0];
-	i__1 = covariance->nst[0];
-	for (i__ = 1; i__ <= i__1; ++i__) {
-		covariance->it[i__ - 1] = models[(i__ << 3) - 7];
-		covariance->cc[i__ - 1] = models[(i__ << 3) - 6];
-		covariance->ang1[i__ - 1] = models[(i__ << 3) - 5];
-		covariance->ang2[i__ - 1] = models[(i__ << 3) - 4];
-		covariance->ang3[i__ - 1] = models[(i__ << 3) - 3];
-		covariance->aa[i__ - 1] = models[(i__ << 3) - 2];
-		aa1 = models[(i__ << 3) - 1];
-		aa2 = models[i__ * 8];
-		r__1 = covariance->aa[i__ - 1];
-		covariance->anis1[i__ - 1] = aa1 / ((double) MAX(r__1,1e-20f));  /*dmax(r__1,1e-20f)*/;
-		r__1 = covariance->aa[i__ - 1];
-		covariance->anis2[i__ - 1] = aa2 / ((double) MAX(r__1,1e-20f)); /*dmax(r__1,1e-20f) */;
-		sill += covariance->cc[i__ - 1];
-		if (covariance->it[i__ - 1] == 4) {
+	i1 = covariance->nst[0];
+	for (i = 1; i <= i1; ++i) {
+		covariance->it[i - 1] = models[(i << 3) - 7];
+		covariance->cc[i - 1] = models[(i << 3) - 6];
+		covariance->ang1[i - 1] = models[(i << 3) - 5];
+		covariance->ang2[i - 1] = models[(i << 3) - 4];
+		covariance->ang3[i - 1] = models[(i << 3) - 3];
+		covariance->aa[i - 1] = models[(i << 3) - 2];
+		aa1 = models[(i << 3) - 1];
+		aa2 = models[i * 8];
+		r1 = covariance->aa[i - 1];
+		covariance->anis1[i - 1] = aa1 / ((double) MAX(r1,1e-20f));  /*dmax(r1,1e-20f)*/;
+		r1 = covariance->aa[i - 1];
+		covariance->anis2[i - 1] = aa2 / ((double) MAX(r1,1e-20f)); /*dmax(r1,1e-20f) */;
+		sill += covariance->cc[i - 1];
+		if (covariance->it[i - 1] == 4) {
 			fprintf(stderr,"A power model is NOT allowedi\n");
 			fprintf(stderr,"Choose a diferente model and re-start\n");
 			return -1; /* ERROR */

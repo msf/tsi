@@ -15,66 +15,40 @@
  * accurate only to about 5 decimal places. 
  *
  * ----------------------------------------------------------------------- */
-float gcum(float z)
+double gcum(float z)
 {
 	/* System generated locals */
-	float ret_val;
+	/* float ret_val; */
+	double ret_val;
 
 
 
-	/* Local variables */
-	/*    static float t, z, e2; */
-	float t;
+	double t;
+    double zd;
+        
+        zd = z;
+        
 
-
-	/* LPL: old code */
-	/*    z = *x;
-
-		  if (z < 0.f) {    //ub
-		  z = -z;
-		  }
-
-		  t = 1.f / (z * .2316419f + 1.f);
-		  ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
-		  1.781477937f) - .356563782f) + .31938153f);
-		  e2 = 0.f;
-		  */
-	/*  6 standard deviations out gets treated as infinity: */
-
-	/*    if (z <= 6.f) {       //ub
-		  e2 = exp(-z * z / 2.f) * .3989422803f;
-		  }
-
-		  ret_val = 1.f - e2 * ret_val;
-
-		  if (*x >= 0.f) {          //ub
-		  return ret_val;
-		  }
-		  ret_val = 1.f - ret_val;
-		  return ret_val;
-		  */
-
-	/* LPL: new code */
-	if (z < 0.f) {   /* unpredictable branch */
-		if (z >= -6.f) {   /* unpredictable branch */
-			t = 1.f / (z * -.2316419f + 1.f);
-			ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
-							1.781477937f) - .356563782f) + .31938153f);
-			ret_val = exp(-z * z / 2.f) * .3989422803f * ret_val;
+	if (zd < 0) {   /* unpredictable branch */
+		if (zd >= -6) {   /* unpredictable branch */
+			t = 1 / (zd * -.2316419 + 1);
+			ret_val = t * (t * (t * (t * (t * 1.330274429 - 1.821255978) + 
+							1.781477937) - .356563782) + .31938153);
+			ret_val = exp(-zd * zd / 2) * .3989422803 * ret_val;
 		} else {
-			ret_val = 0.f;
+			ret_val = 0;
 		}
 	} else {
-		if (z <= 6.f) {   /* unpredictable branch */
-			t = 1.f / (z * .2316419f + 1.f);
-			ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
-							1.781477937f) - .356563782f) + .31938153f);
-			ret_val = 1.f - exp(-z * z / 2.f) * .3989422803f * ret_val;
+		if (zd <= 6) {   /* unpredictable branch */
+			t = 1 / (zd * .2316419 + 1);
+			ret_val = t * (t * (t * (t * (t * 1.330274429 - 1.821255978) + 
+							1.781477937) - .356563782) + .31938153);
+			ret_val = 1 - exp(-zd * zd / 2) * .3989422803 * ret_val;
 		} else {
-			ret_val = 1.f;
+			ret_val = 1;
 		}
 	}
-	return ret_val;
+	return ( ret_val);
 
 } /* gcum_ */
 
@@ -143,10 +117,8 @@ double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
 {
 	/* System generated locals */
 	float ret_val;
-	/* double d__1, d__2;*/
 
 	/* Builtin functions */
-
 
 	if (*xhigh - *xlow < 1e-20f) {
 		ret_val = (double) ((*yhigh + *ylow) / 2.f);
@@ -189,8 +161,8 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 		float *zmax, int *ltail, float *ltpar, int *utail, float *utpar)
 {
         /* Table of constant values */
-        float c_b2 = 0.f;
-        float c_b3 = 1.f;
+        float c_b2 = 0;
+        float c_b3 = 1;
         int one = 1;
 
 	/* System generated locals */
@@ -200,8 +172,10 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 
 	/* Local variables */
 	int j;
-	float cpow, cdfhi, cdfbt, cdflo, lambda;
+	float cpow, cdfhi, cdfbt, cdflo;
+	double lambda;
 
+	float a, b;
 	/* parameter(EPSLON=1.0e-20) */
 
 	/* Value in the lower tail?    1=linear, 2=power, (3 and 4 are invalid): */
@@ -211,15 +185,17 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 	--vrg;
 	--vr;
 
+	b = *vrgs;
 	/* Function Body */
 	if (*vrgs <= vrg[1]) {
 		ret_val = vr[1];
-		cdflo = gcum(vrg[1]);
-		cdfbt = gcum(*vrgs);
+		a = vrg[1];
+		cdflo = (float) gcum(a);
+		cdfbt = (float) gcum(b);
 		if (*ltail == 1) {
 			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &c_b3);
 		} else if (*ltail == 2) {
-			cpow = 1.f / *ltpar;
+			cpow = 1 / *ltpar;
 			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &cpow);
 		}
 
@@ -227,8 +203,9 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 
 	} else if (*vrgs >= vrg[*nt]) {
 		ret_val = vr[*nt];
-		cdfhi = gcum(vrg[*nt]);
-		cdfbt = gcum(*vrgs);
+		a = vrg[*nt];
+		cdfhi = (float) gcum(a);
+		cdfbt = (float) gcum(b);
 		if (*utail == 1) {
 			ret_val = powint(&cdfhi, &c_b3, &vr[*nt], zmax, &cdfbt, &c_b3);
 		} else if (*utail == 2) {
@@ -237,9 +214,9 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 		} else if (*utail == 4) {
 			d__1 = (double) vr[*nt];
 			d__2 = (double) (*utpar);
-			lambda = pow(d__1, d__2) * (1.f - gcum(vrg[*nt]));
-			d__1 = (double) (lambda / (1.f - gcum(*vrgs)));
-			d__2 = (double) (1.f / *utpar);
+			lambda =  pow(d__1, d__2) * (1 - gcum(a));
+			d__1 = (double) (lambda / (1 - gcum(b)));
+			d__2 = (double) (1 / *utpar);
 			ret_val = pow(d__1, d__2);
 		}
 	} else {

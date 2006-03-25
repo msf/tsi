@@ -68,7 +68,8 @@
 struct general_vars {
     int nx, ny, nz;
     float xsiz, ysiz, zsiz, xmn, ymn, zmn;
-    int nxy, nxyz, nd, itrans, ntr, idbg;
+	int nxy, nxyz;
+    int nd, itrans, ntr, idbg;
     float x[7000], y[7000], z__[7000], vr[7000], wt[7000], vrtr[7000];
     float vrgtr[7000];
     float close[7000], sec[7000];
@@ -89,7 +90,6 @@ struct general_vars {
 
 typedef struct general_vars general_vars_t;
 
-#define generl_1 generl_
 
 struct search_vars {
     float radius,
@@ -103,14 +103,13 @@ struct search_vars {
     int sstrat,
           noct,
           mults;
-    float nclose;     /* LPL SHOULD BE INT!!!!! */
+    int nclose;     /* LPL SHOULD BE INT!!!!! */
     int ndmin;
     int ndmax;
 } search_;
 
 typedef struct search_vars  search_vars_t;
 
-#define search_1 search_
 
 struct simulation_vars {
     int nsim;
@@ -119,7 +118,6 @@ struct simulation_vars {
 
 typedef struct simulation_vars  simulation_vars_t;
 
-#define simula_1 simula_
 
 struct covariance_vars {
     int nst[1], it[4];
@@ -130,7 +128,6 @@ struct covariance_vars {
 
 typedef struct covariance_vars covariance_vars_t;
 
-#define cova3d_1 cova3d_
 
 struct covtable_lookup_vars {
     int nctx, ncty, nctz;
@@ -144,7 +141,6 @@ struct covtable_lookup_vars {
 
 typedef struct covtable_lookup_vars covtable_lookup_vars_t;
 
-#define clooku_1 clooku_
 
 struct krige_vars {
     double rotmat[45]	/* was [5][3][3] */, r__[129], rr[129], s[129]
@@ -154,7 +150,6 @@ struct krige_vars {
 
 typedef struct krige_vars krige_vars_t;
 
-#define krigev_1 krigev_
 
 struct file_vars {
     char transfl[256],
@@ -170,14 +165,13 @@ struct file_vars {
 
 typedef struct file_vars file_vars_t;
 
-#define files_1 files_
 
 extern double acorni();
 
 extern void newAcorni(int );
 
 
-extern float gcum(float );
+extern double gcum(float );
 
 extern int locate(float *, int *, int *, int *, float *, int *);
 
@@ -258,7 +252,7 @@ extern int picksup(int *, float *, int *, float *,
 
 extern int readdata(float *,
              double *,
-             int ,
+             unsigned int ,
              general_vars_t *,
              search_vars_t *,
              simulation_vars_t *);	
@@ -326,17 +320,19 @@ extern int srchnod(int *, int *, int *, float *,
 		search_vars_t *, 
 		covtable_lookup_vars_t *);
 
-extern int srchsupr(float *, float *, float *, float *,
-             int *, int *,
-             double *,
-             int *, int *, int *, int *, int *, int *,
-             float *, float *, float *, float *, 
-             int *, int *,
-             float *, float *, int *,
-             float *, float *, int *,
-             float *, float *, int *,
-             float *,
-             int *);
+extern int srchsupr(float *xloc, float *yloc, float *zloc,
+             float *radsqd,
+		     int *irot, int *maxrot, double *rotmat,
+             int *nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
+             int *noct,
+             float *x, float *y, float *z,
+             float *tmp,
+             int *nisb,
+             int *nxsup, float *xmnsup, float *xsizsup,
+             int *nysup, float *ymnsup, float *ysizsup,
+             int *nzsup, float *zmnsup, float *zsizsup,
+             int *nclose, float *close,
+             int *infoct);
 
 
 #endif /* TSI_DSS */

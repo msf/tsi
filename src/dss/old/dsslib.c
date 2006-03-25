@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "dss.h"
+#include "memdebug.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -17,7 +17,7 @@ int dss(float *params, float *models, double *hardData, int *hDataSize, float *o
 
 int dsslib(float *params,
            float *models,
-           double * hard_data, int hard_data_size,
+           double * hard_data, unsigned int hard_data_size,
 		   float *bcm_data, float *bai_data,
            float *output_data)
 {
@@ -58,13 +58,14 @@ int dsslib(float *params,
 	readdata(bestAICube, hard_data, hard_data_size, &general, &search, &simulation);
 	readWellsData(&general, hard_data, hard_data_size);
 
-	covtable_lookup.covtab = covtable_lookup.ixnode = covtable_lookup.iynode = covtable_lookup.iznode = order = NULL;
+	covtable_lookup.covtab = NULL;
+	covtable_lookup.ixnode = covtable_lookup.iynode = covtable_lookup.iznode = order = NULL;
 	
-	covtable_lookup.covtab = (float *) malloc(general.nxyz * sizeof(float));
-	covtable_lookup.ixnode = (int *) malloc(general.nxyz * sizeof(int));
-	covtable_lookup.iynode = (int *) malloc(general.nxyz * sizeof(int));
-	covtable_lookup.iznode = (int *) malloc(general.nxyz * sizeof(int));
-	order = (int *) malloc(general.nxyz * sizeof(int));
+	covtable_lookup.covtab = (float *) my_malloc(general.nxyz * sizeof(float));
+	covtable_lookup.ixnode = (int *) my_malloc(general.nxyz * sizeof(int));
+	covtable_lookup.iynode = (int *) my_malloc(general.nxyz * sizeof(int));
+	covtable_lookup.iznode = (int *) my_malloc(general.nxyz * sizeof(int));
+	order = (int *) my_malloc(general.nxyz * sizeof(int));
 	if(!covtable_lookup.covtab ||
 			!covtable_lookup.ixnode ||
 			!covtable_lookup.iynode ||
@@ -80,16 +81,16 @@ int dsslib(float *params,
 			&covtable_lookup, &krige_vars);
 
 
+
+	my_free(order);
+	my_free(covtable_lookup.covtab);
+	my_free(covtable_lookup.ixnode);
+	my_free(covtable_lookup.iynode);
+	my_free(covtable_lookup.iznode);
+
 	/* these are alocated on readWellsData */
-	free(general.wellsDataPos);
-	free(general.wellsDataVal);
-
-	free(order);
-	free(covtable_lookup.covtab);
-	free(covtable_lookup.ixnode);
-	free(covtable_lookup.iynode);
-	free(covtable_lookup.iznode);
-
+	my_free(general.wellsDataPos);
+	my_free(general.wellsDataVal);
 
 	/* !Finished: */
 	return 0;

@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -47,7 +46,7 @@
 
 int readdata(float *lvm,
              double *hard_data,
-             int  hard_data_size,
+             unsigned int  hard_data_size,
 	     general_vars_t * general, 
 	     search_vars_t * search,
 	     simulation_vars_t * simulation)
@@ -56,18 +55,19 @@ int readdata(float *lvm,
 
 
 	/* System generated locals */
-	int i__1;
+	int i1;
 	float r__1;
 
 
 	/* Local variables */
-	int i__, j;
+	int i, j;
 	double w, cp, av;
 	int ix, nt, iy, iz;
 	double ss;
 	int ind;
 	float var[4], vrg, twt;
-	int iend, ierr, nelem;
+	int iend, ierr;
+	unsigned int nelem;
 	double oldcp;
 	float vmedg;
 	int index, inull;
@@ -76,10 +76,6 @@ int readdata(float *lvm,
 	/* float testind; */
 	int testind;    /* LPL */
 
-#ifdef PROFILE
-    profile.readdata++;
-    profBegin("readdata");
-#endif
 
 
 	/* Parameter adjustments */
@@ -125,8 +121,8 @@ L3:
 		if (nelem == hard_data_size) {
 			goto L4;
 		}
-		i__1 = general->nvari;
-		for (j = 1; j <= i__1; ++j) {
+		i1 = general->nvari;
+		for (j = 1; j <= i1; ++j) {
 			var[j - 1] = hard_data[nelem + j];
 		}
 		nelem += general->nvari;
@@ -180,8 +176,8 @@ L4:
 		cp = 0;
 		vmedg = 0;
 		vvarg = 0;
-		i__1 = iend;
-		for (j = istart; j <= i__1; ++j) {
+		i1 = iend;
+		for (j = istart; j <= i1; ++j) {
 			cp += (double) (general->vrgtr[j - 1] / twt);
 			w = (cp + oldcp) * .5f;
 			gauinv(&w, &vrg, &ierr);
@@ -193,13 +189,13 @@ L4:
 			general->vrgtr[j - 1] = vrg;
 		}
 		/* !Basic statistics calculation - mean and variance (DSSIM) */
-		i__1 = iend;
-		for (j = istart; j <= i__1; ++j) {
+		i1 = iend;
+		for (j = istart; j <= i1; ++j) {
 			vmedg += general->vrgtr[j - 1];
 		}
 		vmedg /= iend - istart;
-		i__1 = iend;
-		for (j = istart; j <= i__1; ++j) {
+		i1 = iend;
+		for (j = istart; j <= i1; ++j) {
 			/* Computing 2nd power */
 			r__1 = general->vrgtr[j - 1] - vmedg;
 			vvarg += r__1 * r__1;
@@ -232,8 +228,8 @@ L5:
 		if (nelem == hard_data_size) {
 			goto L6;
 		}
-		i__1 = general->nvari;
-		for (j = 1; j <= i__1; ++j) {
+		i1 = general->nvari;
+		for (j = 1; j <= i1; ++j) {
 			var[j - 1] = hard_data[nelem + j];
 		}
 		nelem += general->nvari;
@@ -296,15 +292,15 @@ L6:
 			/* !end do */
 		simulation->vmedexp = 0;
 		simulation->vvarexp = 0;
-		i__1 = general->nd;
-		for (i__ = 1; i__ <= i__1; ++i__) {
-			simulation->vmedexp += general->vr[i__ - 1];
+		i1 = general->nd;
+		for (i = 1; i <= i1; ++i) {
+			simulation->vmedexp += general->vr[i - 1];
 		}
 		simulation->vmedexp /= general->nd;
-		i__1 = general->nd;
-		for (i__ = 1; i__ <= i__1; ++i__) {
+		i1 = general->nd;
+		for (i = 1; i <= i1; ++i) {
 			/* Computing 2nd power */
-			r__1 = general->vr[i__ - 1] - simulation->vmedexp;
+			r__1 = general->vr[i - 1] - simulation->vmedexp;
 			simulation->vvarexp += r__1 * r__1;
 		}
 		simulation->vvarexp /= general->nd;
@@ -334,10 +330,10 @@ L6:
 		/* lvm is allready set to a pointer of BAI on dssdll */
 		/* !BAI_DATA_SIZE = nx*ny*nz */
 		/*
-		i__1 = *bai_data_size__;
-		for (index = 1; index <= i__1; ++index) {
-			i__2 = general->nvaril;
-			for (j = 1; j <= i__2; ++j) {
+		i1 = *bai_data_size__;
+		for (index = 1; index <= i1; ++index) {
+			i2 = general->nvaril;
+			for (j = 1; j <= i2; ++j) {
 				var[j - 1] = bai_data[nelem + j];
 			}
 			nelem += general->nvaril;
@@ -360,33 +356,33 @@ L6:
 		}
 		/* !Do we need to work with data residuals? (Locally Varying Mean) */
 		else if (general->ktype == 2) {
-			i__1 = general->nd;
-			for (i__ = 1; i__ <= i__1; ++i__) {
+			i1 = general->nd;
+			for (i = 1; i <= i1; ++i) {
 				getindx(&general->nx, &general->xmn, &general->xsiz,
-					   	&general->x[i__ - 1], &ix, &testind);
+					   	&general->x[i - 1], &ix, &testind);
 				getindx(&general->ny, &general->ymn, &general->ysiz,
-					   	&general->y[i__ - 1], &iy, &testind);
+					   	&general->y[i - 1], &iy, &testind);
 				getindx(&general->nz, &general->zmn, &general->zsiz,
-					   	&general->z__[i__ - 1], &iz, &testind);
+					   	&general->z__[i - 1], &iz, &testind);
 				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
-				general->sec[i__ - 1] = lvm[index];
+				general->sec[i - 1] = lvm[index];
 				/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
 			}
 		}
 		/* !Do we need to get an external drift attribute for the data? */
 		else if (general->ktype == 3) {
-			i__1 = general->nd;
-			for (i__ = 1; i__ <= i__1; ++i__) {
-				if (general->sec[i__ - 1] == general->nosvalue) {
+			i1 = general->nd;
+			for (i = 1; i <= i1; ++i) {
+				if (general->sec[i - 1] == general->nosvalue) {
 					getindx(&general->nx, &general->xmn, &general->xsiz,
-						   	&general->x[i__ - 1], &ix, &testind);
+						   	&general->x[i - 1], &ix, &testind);
 					getindx(&general->ny, &general->ymn, &general->ysiz,
-						   	&general->y[i__ - 1], &iy, &testind);
+						   	&general->y[i - 1], &iy, &testind);
 					getindx(&general->nz, &general->zmn, &general->zsiz,
-						   	&general->z__[i__ - 1], &iz, &testind);
+						   	&general->z__[i - 1], &iz, &testind);
 					index = ix + (iy - 1) * general->nx + (iz - 1) * 
 						general->nxy;
-					general->sec[i__ - 1] = lvm[index];
+					general->sec[i - 1] = lvm[index];
 				}
 			}
 		}
@@ -398,8 +394,8 @@ L6:
 		simulation->vmedsec = 0;
 		simulation->vvarsec = 0;
 		inull = 0;
-		i__1 = general->nxyz;
-		for (ind = 1; ind <= i__1; ++ind) {
+		i1 = general->nxyz;
+		for (ind = 1; ind <= i1; ++ind) {
 			if (lvm[ind] != -999.25f) {
 				simulation->vmedsec += lvm[ind];
 			} else {
@@ -407,8 +403,8 @@ L6:
 			}
 		}
 		simulation->vmedsec /= general->nxyz - inull;
-		i__1 = general->nxyz;
-		for (ind = 1; ind <= i__1; ++ind) {
+		i1 = general->nxyz;
+		for (ind = 1; ind <= i1; ++ind) {
 			if (lvm[ind] != -999.25f) {
 				/* Computing 2nd power */
 				r__1 = lvm[ind] - simulation->vmedsec;
@@ -416,8 +412,8 @@ L6:
 			}
 		}
 		simulation->vvarsec /= general->nxyz - inull;
-		i__1 = general->nxyz;
-		for (ind = 1; ind <= i__1; ++ind) {
+		i1 = general->nxyz;
+		for (ind = 1; ind <= i1; ++ind) {
 			if (lvm[ind] != -999.25f) {
 				lvm[ind] = (lvm[ind] - simulation->vmedsec) / sqrt(
 						simulation->vvarsec) * sqrt(simulation->vvarexp) + 

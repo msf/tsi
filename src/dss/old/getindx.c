@@ -1,6 +1,5 @@
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -39,9 +38,6 @@
 
 int getindx(int *n, float *min__, float *siz, float *loc, int *index, int *inflag)
 {
-#ifdef PROFILE
-	profile.getindx++;
-#endif
 
 	/* Compute the index of "loc": */
 

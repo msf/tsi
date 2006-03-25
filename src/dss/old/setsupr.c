@@ -1,6 +1,5 @@
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -92,9 +91,6 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	int i__, ii, ix, iy, iz, nsort;
 	int inflag;
 
-#ifdef PROFILE
-	profile.setsupr++;
-#endif
 
 	/* Establish the number and size of the super blocks: */
 

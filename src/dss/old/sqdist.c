@@ -1,6 +1,5 @@
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -69,12 +68,9 @@ double sqdist(float *x1, float *y1, float *z1, float *x2, float *y2,
 	double ret_val;
 
 	/* Local variables */
-	int i__;
+	int i;
 	double dx, dy, dz, cont;
 
-#ifdef PROFILE
-	profile.sqdist++;
-#endif
 
 	/* Compute component distance vectors and the squared distance: */
 
@@ -88,9 +84,9 @@ double sqdist(float *x1, float *y1, float *z1, float *x2, float *y2,
 	dy = (double) (*y1 - *y2);
 	dz = (double) (*z1 - *z2);
 	ret_val = 0.f;
-	for (i__ = 1; i__ <= 3; ++i__) {
-		cont = rotmat[*ind + (i__ + 3) * rotmat_dim1] * dx + rotmat[*ind + (
-				i__ + 6) * rotmat_dim1] * dy + rotmat[*ind + (i__ + 9) * 
+	for (i = 1; i <= 3; ++i) {
+		cont = rotmat[*ind + (i + 3) * rotmat_dim1] * dx + rotmat[*ind + (
+				i + 6) * rotmat_dim1] * dy + rotmat[*ind + (i + 9) * 
 			rotmat_dim1] * dz;
 		ret_val += cont * cont;
 	}

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "debug.h"
+#include "memdebug.h"
 #include "tsi_io.h"
 #ifdef TSI_MPI
 
@@ -27,11 +28,11 @@ TSI_FILE *open_grid_file(char *filename) {
     int amode;
     MPI_Info info;
     
-    fp = malloc(sizeof(MPI_File));
+    fp = my_malloc(sizeof(MPI_File));
     info = MPI_INFO_NULL;
     amode = MPI_MODE_RDWR | MPI_MODE_CREATE;
     if (MPI_File_open(MPI_COMM_WORLD, filename, amode, info, fp) != MPI_SUCCESS) {  /* MPI-2 */
-        free(fp);
+        my_free(fp);
         return NULL;
     }
     return fp;
@@ -41,10 +42,10 @@ TSI_FILE *open_grid_file(char *filename) {
 
 int close_grid_file(TSI_FILE *fp) {
     if (MPI_File_close(fp) != MPI_SUCCESS) {  /* MPI-2 */
-        free(fp);
+        my_free(fp);
         return 0;
     }
-    free(fp);
+    my_free(fp);
     return 1;
 } /* close_grid_file */
 
@@ -77,11 +78,11 @@ TSI_FILE *open_file(char *filename) {
     int amode;
     MPI_Info info;
     
-    fp = malloc(sizeof(MPI_File));
+    fp = my_malloc(sizeof(MPI_File));
     info = MPI_INFO_NULL;
     amode = MPI_MODE_RDWR;
     if (MPI_File_open(MPI_COMM_WORLD, filename, amode, info, fp) != MPI_SUCCESS) {  /* MPI-2 */
-        free(fp);
+        my_free(fp);
         return NULL;
     }
     return fp;

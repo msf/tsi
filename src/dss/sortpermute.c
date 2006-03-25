@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "dss.h"
 
+#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -36,7 +37,7 @@
 /* is completely sorted. */
 
 /* INPUT PARAMETERS: */
-/*   start,end        start and end index of the array to be sorted */
+/*   ib,ie        start and end index of the array to be sorted */
 /*   a            array, a portion of which has to be sorted. */
 /*   iperm        0 no other array is permuted. */
 /*                1 array b is permuted according to array a */
@@ -47,7 +48,7 @@
 
 
 
-int sort_permute_float(int start,  int end, float *a, float *b)
+int sort_permute_float(int ib,  int ie, float *a, float *b)
            
 {
 	/* System generated locals */
@@ -61,6 +62,10 @@ int sort_permute_float(int start,  int end, float *a, float *b)
 	float xb;
 	int ut[64], iring;
 
+#ifdef PROFILE
+	profile.sortem++;
+	profBegin("sortem");
+#endif
 
 	/* The dimensions for lt and ut have to be at least log (base 2) n */
 
@@ -72,9 +77,9 @@ int sort_permute_float(int start,  int end, float *a, float *b)
 	--a;
 
 	/* Function Body */
-	j = end;
+	j = ie;
 	m = 1;
-	i = start;
+	i = ib;
 	iring = 2;
 
 	/* If this segment has more than two elements  we split it */
@@ -200,6 +205,9 @@ L100:
 	goto L10;
 L110:
 
+#ifdef PROFILE
+	profEnd("sortem");
+#endif
 
 	return 0;
 } /* sortpermute */
@@ -229,7 +237,7 @@ L110:
 /* is completely sorted. */
 
 /* INPUT PARAMETERS: */
-/*   start,end        start and end index of the array to be sorted */
+/*   ib,ie        start and end index of the array to be sorted */
 /*   a            array, a portion of which has to be sorted. */
 /*   iperm        0 no other array is permuted. */
 /*                1 array b is permuted according to array a */
@@ -238,7 +246,7 @@ L110:
 
 
 
-int sort_permute_int(int start,  int end,
+int sort_permute_int(int ib,  int ie,
            float *a, int *b)
 {
 	/* System generated locals */
@@ -251,6 +259,10 @@ int sort_permute_int(int start,  int end,
 	int xb;
 	int ut[64], iring;
 
+#ifdef PROFILE
+	profile.sortem++;
+	profBegin("sortem");
+#endif
 
 	/* The dimensions for lt and ut have to be at least log (base 2) n */
 
@@ -262,9 +274,9 @@ int sort_permute_int(int start,  int end,
 	--a;
 
 	/* Function Body */
-	j = end;
+	j = ie;
 	m = 1;
-	i = start;
+	i = ib;
 	iring = 2;
 
 	/* If this segment has more than two elements  we split it */
@@ -274,12 +286,15 @@ L10:
 		goto L100;
 	} else if (i1 == 0) {
 		goto L90;
+	} else {
+		goto L15;
 	}
 
 	/* p is the position of an arbitrary element in the segment we choose the */
 	/* middle element. Under certain circumstances it may be advantageous */
 	/* to choose p at random. */
 
+L15:
 	p = (j + i) / 2;
 	ta = a[p];
 	a[p] = a[i];
@@ -408,6 +423,9 @@ L100:
 	goto L10;
 L110:
 
+#ifdef PROFILE
+	profEnd("sortem");
+#endif
 
 	return 0;
 } /* sortem_ */

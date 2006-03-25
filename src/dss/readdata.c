@@ -47,13 +47,12 @@
 
 int readdata(float *lvm,
              double *hard_data,
-             int * hard_data_size,
+             int  hard_data_size,
 	     general_vars_t * general, 
 	     search_vars_t * search,
 	     simulation_vars_t * simulation)
 {
 	/* Table of constant values */
-	int one = 1;
 
 
 	/* System generated locals */
@@ -62,7 +61,6 @@ int readdata(float *lvm,
 
 
 	/* Local variables */
-	float c__, d__, e, f, g, h__;
 	int i__, j;
 	double w, cp, av;
 	int ix, nt, iy, iz;
@@ -85,7 +83,7 @@ int readdata(float *lvm,
 
         printf_dbg2("readdata(): begin\n");
 	/* Function Body */
-	if (*hard_data_size == 0) {
+	if (hard_data_size == 0) {
 		/* !it means that there is no Hard Data file! */
 		fprintf(stderr,"WARNING data file does not exist!");
 		fprintf(stderr,"\t- creating an *unconditional simulation*\n");
@@ -119,9 +117,9 @@ int readdata(float *lvm,
 		general->ntr = 0;
 		twt = 0;
 		nelem = 0;
-        printf_dbg2("readdata(): L3 %d\n", *hard_data_size);
+        printf_dbg2("readdata(): L3 %d\n", hard_data_size);
 L3:
-		if (nelem == *hard_data_size) {
+		if (nelem == hard_data_size) {
 			goto L4;
 		}
 		i__1 = general->nvari;
@@ -172,8 +170,8 @@ L4:
 		/* !Sort data by value: */
 		istart = 1;
 		iend = general->ntr;
-		sortem(&istart, &iend, general->vrtr, &one, general->vrgtr,
-                       &c__, &d__, &e, &f, &g, &h__);
+		/* sortem(&istart, &iend, general->vrtr, &one, general->vrgtr, &c__, &d__, &e, &f, &g, &h__); */
+		sort_permute_float(istart, iend, general->vrtr, general->vrgtr);
 		/* !Compute the cumulative probabilities and write transformation table */
 		twt = (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
 		oldcp = 0;
@@ -211,7 +209,7 @@ L4:
 		/* !end do */
 		/* !close(lout) */
 	}
-	if (*hard_data_size != 0) {
+	if (hard_data_size != 0) {
 		/* !it means that there is no Hard Data file! */
 		if ((general->ixl > general->nvari) ||
                     (general->iyl > general->nvari) || 
@@ -230,7 +228,7 @@ L4:
 		nelem = 0;
         printf_dbg2("readdata(): L5\n");
 L5:
-		if (nelem == *hard_data_size) {
+		if (nelem == hard_data_size) {
 			goto L6;
 		}
 		i__1 = general->nvari;
@@ -366,10 +364,7 @@ L6:
 				getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix, &testind);
 				getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy, &testind);
 				getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz, &testind);
-/*				GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix);
-				GETINDX(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy);
-				GETINDX(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz);
-*/				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
 				general->sec[i__ - 1] = lvm[index];
 				/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
 			}
@@ -382,10 +377,7 @@ L6:
 					getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix, &testind);
 					getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy, &testind);
 					getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz, &testind);
-/*					GETINDX(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix);
-					GETINDX(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy);
-					GETINDX(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz);
-*/					index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+					index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
 					general->sec[i__ - 1] = lvm[index];
 				}
 			}

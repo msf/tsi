@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "dss.h"
 
-#undef PROFILE
 
 
 int getPos(int x, int y, int z, int xlen, int xylen)

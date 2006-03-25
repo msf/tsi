@@ -1,6 +1,5 @@
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -27,7 +26,6 @@
 /*   iysbtosr         Y offsets for super blocks to search */
 /*   izsbtosr         Z offsets for super blocks to search */
 /*   noct             If >0 then data will be partitioned into octants */
-/*   nd               Number of data */
 /*   x(nd)            X coordinates of the data */
 /*   y(nd)            Y coordinates of the data */
 /*   z(nd)            Z coordinates of the data */
@@ -64,58 +62,33 @@
 /** structs globais utilizadas:
  */
 
-int srchsupr(float *xloc,
-             float *yloc,
-             float *zloc,
+int srchsupr(float *xloc, float *yloc, float *zloc,
              float *radsqd,
-		     int *irot,
-	     
-             int *maxrot,
-             double *rotmat,
-             int *nsbtosr,
-             int *ixsbtosr,
-             int *iysbtosr,
-             
-             int *izsbtosr,
+		     int *irot, int *maxrot, double *rotmat,
+             int *nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
              int *noct,
-             int *nd,
-             float *x,
-             float *y,
-             
-             float *z__,
+             float *x, float *y, float *z,
              float *tmp,
              int *nisb,
-             int *nxsup,
-             float *xmnsup,
-             
-             float *xsizsup,
-             int *nysup,
-		     float *ymnsup,
-             float *ysizsup,
-             int *nzsup,
-             
-             float *zmnsup,
-             float *zsizsup,
-             int *nclose,
-             float *close,
+             int *nxsup, float *xmnsup, float *xsizsup,
+             int *nysup, float *ymnsup, float *ysizsup,
+             int *nzsup, float *zmnsup, float *zsizsup,
+             int *nclose, float *close,
              int *infoct)
 {
 	/* Table of constant values */
 
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset, i__1, i__2;
+	int rotmat_dim1, rotmat_offset, i1, i2;
 
 	/* Local variables */
-	int i__, j, na, ii, iq, h;
+	int i, j, na, ii, iq, h;
 	float dx, dy, dz;
 	int ix, iy, iz, nt;
 	double hsqd;
 	int isup, nums, inoct[8], ixsup, iysup, izsup;
 	int inflag;
 
-#ifdef PROFILE
-	profile.srchsupr++;
-#endif
 
 	/* Determine the super block location of point being estimated: */
 
@@ -128,7 +101,7 @@ int srchsupr(float *xloc,
 	--izsbtosr;
 	--x;
 	--y;
-	--z__;
+	--z;
 	--tmp;
 	--nisb;
 	--close;
@@ -141,8 +114,8 @@ int srchsupr(float *xloc,
 	/* Loop over all the possible Super Blocks: */
 
 	*nclose = 0;
-	i__1 = *nsbtosr;
-	for (isup = 1; isup <= i__1; ++isup) {
+	i1 = *nsbtosr;
+	for (isup = 1; isup <= i1; ++isup) {
 
 		/* Is this super block within the grid system: */
 
@@ -159,21 +132,21 @@ int srchsupr(float *xloc,
 		ii = ixsup + (iysup - 1) * *nxsup + (izsup - 1) * *nxsup * *nysup;
 		if (ii == 1) {
 			nums = nisb[ii];
-			i__ = 0;
+			i = 0;
 		} else {
 			nums = nisb[ii] - nisb[ii - 1];
-			i__ = nisb[ii - 1];
+			i = nisb[ii - 1];
 		}
 
 		/* Loop over all the data in this super block: */
 
-		i__2 = nums;
-		for (ii = 1; ii <= i__2; ++ii) {
-			++i__;
+		i2 = nums;
+		for (ii = 1; ii <= i2; ++ii) {
+			++i;
 
 			/* Check squared distance: */
 
-			hsqd = sqdist(xloc, yloc, zloc, &x[i__], &y[i__], &z__[i__], 
+			hsqd = sqdist(xloc, yloc, zloc, &x[i], &y[i], &z[i], 
 					irot, maxrot, &rotmat[rotmat_offset]);
 			if ((float) hsqd > *radsqd) {
 				continue;
@@ -182,7 +155,7 @@ int srchsupr(float *xloc,
 			/* Accept this sample: */
 
 			++(*nclose);
-			close[*nclose] = (float) i__;
+			close[*nclose] = (float) i;
 			tmp[*nclose] = (float) hsqd;
 		}
 	}
@@ -200,8 +173,8 @@ int srchsupr(float *xloc,
 
 	/* PARTITION THE DATA INTO OCTANTS: */
 
-	for (i__ = 1; i__ <= 8; ++i__) {
-		inoct[i__ - 1] = 0;
+	for (i = 1; i <= 8; ++i) {
+		inoct[i - 1] = 0;
 	}
 
 	/* Now pick up the closest samples in each octant: */
@@ -209,13 +182,13 @@ int srchsupr(float *xloc,
 	/* nt = *noct << 3;  //LPL */
 	nt = *noct * 8;  /* LPL */
 	na = 0;
-	i__1 = *nclose;
-	for (j = 1; j <= i__1; ++j) {
-		i__ = (int) close[j];
+	i1 = *nclose;
+	for (j = 1; j <= i1; ++j) {
+		i = (int) close[j];
 		h = tmp[j];
-		dx = x[i__] - *xloc;
-		dy = y[i__] - *yloc;
-		dz = z__[i__] - *zloc;
+		dx = x[i] - *xloc;
+		dy = y[i] - *yloc;
+		dz = z[i] - *zloc;
 		if (dz < 0.f) {
 			iq = 8;
 			if (dx <= 0.f && dy > 0.f) {
@@ -244,7 +217,7 @@ int srchsupr(float *xloc,
 
 		if (inoct[iq - 1] <= *noct) {
 			++na;
-			close[na] = (float) i__;
+			close[na] = (float) i;
 			tmp[na] = h;
 			if (na == nt) {
 				break;
@@ -256,8 +229,8 @@ int srchsupr(float *xloc,
 
 	*nclose = na;
 	*infoct = 0;
-	for (i__ = 1; i__ <= 8; ++i__) {
-		if (inoct[i__ - 1] > 0) {
+	for (i = 1; i <= 8; ++i) {
+		if (inoct[i - 1] > 0) {
 			++(*infoct);
 		}
 	}

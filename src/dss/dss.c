@@ -1,5 +1,7 @@
 #include <stdlib.h>
+
 #include "debug.h"
+#include "memdebug.h"
 #include "grid_heap.h"
 #include "registry.h"
 #include "dss.h"
@@ -19,14 +21,14 @@ dss *new_dss(registry *r, grid_heap *h) {
 
 
     /* object space allocation */
-    d = (dss *) malloc(sizeof(dss));
-    d->general    = (general_vars_t *) malloc(sizeof(general_vars_t));
-    d->search     = (search_vars_t *) malloc(sizeof(search_vars_t));
-    d->simulation = (simulation_vars_t *) malloc(sizeof(simulation_vars_t));
-    d->covariance = (covariance_vars_t *) malloc(sizeof(covariance_vars_t));
-    d->clookup    = (covtable_lookup_vars_t *) malloc(sizeof(covtable_lookup_vars_t));
-    d->krige      = (krige_vars_t *) malloc(sizeof(krige_vars_t));
-    d->files      = (file_vars_t *) malloc(sizeof(file_vars_t));
+    d = (dss *) my_malloc(sizeof(dss));
+    d->general    = (general_vars_t *) my_malloc(sizeof(general_vars_t));
+    d->search     = (search_vars_t *) my_malloc(sizeof(search_vars_t));
+    d->simulation = (simulation_vars_t *) my_malloc(sizeof(simulation_vars_t));
+    d->covariance = (covariance_vars_t *) my_malloc(sizeof(covariance_vars_t));
+    d->clookup    = (covtable_lookup_vars_t *) my_malloc(sizeof(covtable_lookup_vars_t));
+    d->krige      = (krige_vars_t *) my_malloc(sizeof(krige_vars_t));
+    d->files      = (file_vars_t *) my_malloc(sizeof(file_vars_t));
     if (!d ||
         !d->general ||
         !d->search ||
@@ -64,14 +66,14 @@ dss *new_dss(registry *r, grid_heap *h) {
 
     /* ugly hack for "readdata" */
     d->general->maxdat = d->harddata_size / 4;
-    d->general->x = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->y = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->z__ = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->vr = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->wt = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->vrtr = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->vrgtr = (float *) malloc(d->general->maxdat * sizeof(float));
-    d->general->sec = (float *) malloc(d->general->maxdat * sizeof(float));
+    d->general->x = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->y = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->z__ = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->vr = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->wt = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->vrtr = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->vrgtr = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->sec = (float *) my_malloc(d->general->maxdat * sizeof(float));
     if (!d->general->x ||
         !d->general->y ||
         !d->general->z__ ||
@@ -92,7 +94,8 @@ int setup_dss(dss *d, float *currBAI) {
     d->general->ktype = 1;
     if (currBAI) 
 		d->general->ktype = 5;
-    return readdata(currBAI, d->harddata, &d->harddata_size, d->general, d->search, d->simulation);
+    readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
+	return readWellsData(d->general, d->harddata, d->harddata_size);
 } /* setup_dss */
 
 
@@ -168,34 +171,33 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
 void delete_dss(dss *d) {
     if (d) {
         if (d->general) {
-            if (d->general->x) free(d->general->x);
-            if (d->general->y) free(d->general->y);
-            if (d->general->z__) free(d->general->z__);
-            if (d->general->vr) free(d->general->vr);
-            if (d->general->wt) free(d->general->wt);
-            if (d->general->vrtr) free(d->general->vrtr);
-            if (d->general->vrgtr) free(d->general->vrgtr);
-            if (d->general->sec) free(d->general->sec);
-            free(d->general);
+            if (d->general->x) my_free(d->general->x);
+            if (d->general->y) my_free(d->general->y);
+            if (d->general->z__) my_free(d->general->z__);
+            if (d->general->vr) my_free(d->general->vr);
+            if (d->general->wt) my_free(d->general->wt);
+            if (d->general->vrtr) my_free(d->general->vrtr);
+            if (d->general->vrgtr) my_free(d->general->vrgtr);
+            if (d->general->sec) my_free(d->general->sec);
+            my_free(d->general);
         }
-        if (d->search) free(d->search);
-        if (d->simulation) free(d->simulation);
+        if (d->search) my_free(d->search);
+        if (d->simulation) my_free(d->simulation);
         if (d->covariance) {
-            if (d->covariance->it) free(d->covariance->it);
-            if (d->covariance->cc) free(d->covariance->cc);
-            if (d->covariance->aa) free(d->covariance->aa);
-            if (d->covariance->ang1) free(d->covariance->ang1);
-            if (d->covariance->ang2) free(d->covariance->ang2);
-            if (d->covariance->ang3) free(d->covariance->ang3);
-            if (d->covariance->anis1) free(d->covariance->anis1);
-            if (d->covariance->anis2) free(d->covariance->anis2);
-            if (d->covariance->aa) free(d->covariance->aa);
-            free(d->covariance);
+            if (d->covariance->it) my_free(d->covariance->it);
+            if (d->covariance->cc) my_free(d->covariance->cc);
+            if (d->covariance->aa) my_free(d->covariance->aa);
+            if (d->covariance->ang1) my_free(d->covariance->ang1);
+            if (d->covariance->ang2) my_free(d->covariance->ang2);
+            if (d->covariance->ang3) my_free(d->covariance->ang3);
+            if (d->covariance->anis1) my_free(d->covariance->anis1);
+            if (d->covariance->anis2) my_free(d->covariance->anis2);
+            my_free(d->covariance);
         }
-        if (d->clookup) free(d->clookup);
-        if (d->krige) free(d->krige);
-        if (d->files) free(d->files);
-        free(d);
+        if (d->clookup) my_free(d->clookup);
+        if (d->krige) my_free(d->krige);
+        if (d->files) my_free(d->files);
+        my_free(d);
     }
 } /* delete_dss */
 
@@ -220,6 +222,6 @@ double *load_harddata_file(TSI_FILE *fp, char *buf, int *size) {
             return NULL;
     }
     *size *= 4;
-    return (double *) malloc(*size * sizeof(double));
+    return (double *) my_malloc(*size * sizeof(double));
 } /* load_harddata_file */
 

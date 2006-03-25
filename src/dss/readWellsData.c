@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "dss.h"
-#include "memdebug.h"
 
 double getPosd(double x, double y, double z, int xlen, int xylen)
 {
@@ -26,8 +26,8 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 
 	t = wellsDataSize / general->nvari;
 	
-	temp = (unsigned int *) my_malloc(sizeof(unsigned int) * t);
-	vals = (double *) my_malloc(sizeof(double) * t);		
+	temp = (unsigned int *) malloc(sizeof(unsigned int) * t);
+	vals = (double *) malloc(sizeof(double) * t);		
 
 	if( wellsDataSize % general->nvari ) {
 		printf("readWellsData: ERROR: incorrect number of values\n");
@@ -47,7 +47,7 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 		}
 		
 		t = (unsigned int) getPosd(x,y,y,general->nx,general->nxy);
-		if(t >= (unsigned int) general->nxyz) {
+		if(t >= general->nxyz) {
 			continue;
 		}
 		temp[j] = t;
@@ -57,12 +57,12 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 
 	/* j is the size of the WellsData */
 	general->wellsNPoints = j;
-	general->wellsDataVal = (double *) my_malloc(sizeof(double) * j);
-	general->wellsDataPos = (unsigned int *) my_malloc(sizeof(unsigned int) * j); 
+	general->wellsDataVal = (double *) malloc(sizeof(double) * j);
+	general->wellsDataPos = (unsigned int *) malloc(sizeof(unsigned int) * j); 
 	memcpy(general->wellsDataVal, vals, sizeof(double) * j);
 	memcpy(general->wellsDataPos, temp, sizeof(unsigned int) * j);
-	my_free(vals);
-	my_free(temp);
+	free(vals);
+	free(temp);
 			
 	return 0;
 }

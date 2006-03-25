@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "debug.h"
+#include "memdebug.h"
 #include "registry.h"
 
 /* macros that identify the registry parser states */
@@ -91,7 +92,7 @@ int merge_registry(registry **r, char *filename)
                                break;
                         /* if not found, add new section */
                         if (!section) {
-                            section = (registry *) malloc(sizeof(registry));
+                            section = (registry *) my_malloc(sizeof(registry));
                             section->next = reg;
                             reg = section;
                             section->name = strdup(buf);
@@ -128,14 +129,14 @@ int merge_registry(registry **r, char *filename)
                                 break;
                         /* if not found, add new key to section */
                         if (!key) {
-                            key = (reg_key *) malloc(sizeof(reg_key));
+                            key = (reg_key *) my_malloc(sizeof(reg_key));
                             key->next = section->klist;
                             section->klist = key;
                             key->name = strdup(buf);
                             key->value = NULL;
                             key->type = key->kval.lli = 0;
                         } else {
-                            free(key->value);
+                            my_free(key->value);
                         }
                         state = BEGIN_VALUE;
                         i = 0;
@@ -187,9 +188,9 @@ int merge_registry(registry **r, char *filename)
 void delete_keylist(reg_key *k) {
     if (k) {
         delete_keylist(k->next);
-        if (k->name) free(k->name);
-        if (k->value) free(k->value);
-        free(k);
+        if (k->name) my_free(k->name);
+        if (k->value) my_free(k->value);
+        my_free(k);
     }
 } /* delete_keylist */
 
@@ -200,8 +201,8 @@ void delete_registry(registry *r) {
     if (r) {
         delete_registry(r->next);
         delete_keylist(r->klist);
-        if (r->name) free(r->name);
-        free(r);
+        if (r->name) my_free(r->name);
+        my_free(r);
     }
 } /* delete_registry */
 

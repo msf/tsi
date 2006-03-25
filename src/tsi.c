@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "debug.h"
+#include "memdebug.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "dss.h"
@@ -24,7 +26,7 @@ tsi *new_tsi(registry *reg) {
     int usefs, heap_size, swap_thr, new_sims, over_sims, over_procs;
     TSI_FILE *fp;
 
-    t = (tsi *) malloc(sizeof(tsi));
+    t = (tsi *) my_malloc(sizeof(tsi));
     if (!t) return NULL;
     t->reg = reg;
     t->heap = NULL;
@@ -236,7 +238,7 @@ void delete_tsi(tsi *t) {
         if (t->dss_eng) delete_dss(t->dss_eng);
         if (t->heap) delete_heap(t->heap);
         if (t->reg) delete_registry(t->reg);
-        free(t);
+        my_free(t);
     }
     delete_tsi_parallel();
 } /* delete_tsi */

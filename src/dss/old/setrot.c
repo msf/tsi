@@ -1,7 +1,6 @@
 #include <math.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -53,10 +52,6 @@ int setrot(float *ang1, float *ang2, float *ang3, float *anis1, float *anis2,
 	double cosa, cosb, sina, sinb, cost, afac1, afac2, sint;
 	float alpha, theta;
 
-#ifdef PROFILE
-	profile.setrot++;
-	profBegin("setrot");
-#endif
 
 	/* Converts the input angles to three angles which make more */
 	/*  mathematical sense: */
@@ -112,9 +107,6 @@ int setrot(float *ang1, float *ang2, float *ang3, float *anis1, float *anis2,
 			sina);
 	rotmat[*ind + rotmat_dim1 * 12] = afac2 * (cost * cosb);
 
-#ifdef PROFILE
-	profEnd("setrot");
-#endif
 
 	/* Return to calling program: */
 	return 0;

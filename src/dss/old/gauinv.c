@@ -1,7 +1,6 @@
 #include <math.h>
 #include "dss.h"
 
-#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -52,6 +51,7 @@ int gauinv(double *p, float *xp, int *ierr)
 
 	/* Local variables */
 	double y, pp;
+
 
 	/* Coefficients of approximation: */
 
