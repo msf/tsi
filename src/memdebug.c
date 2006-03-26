@@ -26,7 +26,7 @@ LIST_HEAD(tsi_mem_list);
 
 void *my_malloc(unsigned int size) 
 {
-#ifdef DEBUG
+#ifdef TSI_DEBUG1
 	return debug_malloc(size);
 #else
 	return malloc(size);
@@ -35,7 +35,7 @@ void *my_malloc(unsigned int size)
 
 void my_free(void * ptr) 
 {
-#ifdef DEBUG
+#ifdef TSI_DEBUG1
 	debug_free(ptr);
 #else
 	free(ptr);

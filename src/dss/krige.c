@@ -40,8 +40,7 @@
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
-#define FALSE_ (0)
-#define TRUE_ (1)
+#define FALSE (0)
 
 extern int ksol(int *, int *, int *, double *, double *, double *, int *);
 extern int cova3(float *, float *, float *, float *, float *, float *, int *, int *, 
@@ -78,15 +77,15 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 	int first;
 	float sumwts;
 
-#ifdef PROFILE
-	profile.krige++;
-#endif
 
 	/* Parameter adjustments */
 	--bestAICube;
 
+	/* init vars */
+	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
+	
 	/* Function Body */
-	first = FALSE_;
+	first = FALSE;
 	na = search->nclose + covtable_lookup->ncnode;
 	neq = na;
 	if (*lktype == 1) {
@@ -104,7 +103,7 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 	/* Set up kriging matrices: */
 	in = 0;
 	i1 = na;
-	for (j = 1; j <= i1; ++j) {
+	for (j = 1; j <= na; ++j) {
 		/* Sort out the actual location of point "j" */
 		if ((float) j <= search->nclose) {
 			index = (int) general->close[j - 1];

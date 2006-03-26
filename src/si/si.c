@@ -66,6 +66,7 @@ si *new_si(registry *r, grid_heap *h) {
 
 
 int setup_si(si *s) {
+	printf_dbg("setup_si(): called but not implemented\n");
     /* generate new set of layers */
     return 1;
 }

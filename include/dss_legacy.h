@@ -18,7 +18,7 @@ extern double acorni(int *);
 extern int *new_acorni(int );
 
 
-extern float gcum(float );
+extern double gcum(float );
 
 extern int locate(float *, int *, int *, int *, float *, int *);
 
@@ -31,7 +31,7 @@ extern int cova3(float *,
           float *,
           float *,
           float *,
-	  float *,
+		  float *,
           int *,
           int *,
           int *,
@@ -51,7 +51,6 @@ extern int covtable(int *, float *,
 	     covariance_vars_t *,
 	     covtable_lookup_vars_t *,
 	     krige_vars_t *);
-
 
 
 extern int dsslib(float *params, float *models, double *hard_data,
@@ -101,7 +100,7 @@ extern int picksup(int *, float *, int *, float *,
 
 extern int readdata(float *,
              double *,
-             int ,
+             unsigned int ,
              general_vars_t *,
              search_vars_t *,
              simulation_vars_t *);	
@@ -118,7 +117,7 @@ extern int readparam(float *,
 
 
 
-extern int sdsim(float *,
+extern int dssim(float *,
           float *,
           float *,
           int *,
@@ -169,17 +168,19 @@ extern int srchnod(int *, int *, int *, float *,
 		search_vars_t *, 
 		covtable_lookup_vars_t *);
 
-extern int srchsupr(float *, float *, float *, float *,
-             int *, int *,
-             double *,
-             int *, int *, int *, int *, int *, int *,
-             float *, float *, float *, float *, 
-             int *, int *,
-             float *, float *, int *,
-             float *, float *, int *,
-             float *, float *, int *,
-             float *,
-             int *);
+extern int srchsupr(float *xloc, float *yloc, float *zloc,
+             float *radsqd,
+		     int *irot, int *maxrot, double *rotmat,
+             int *nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
+             int *noct,
+             float *x, float *y, float *z,
+             float *tmp,
+             int *nisb,
+             int *nxsup, float *xmnsup, float *xsizsup,
+             int *nysup, float *ymnsup, float *ysizsup,
+             int *nzsup, float *zmnsup, float *zsizsup,
+             int *nclose, float *close,
+             int *infoct);
 
 
 #endif /* _DSS_LEGACY_H */

@@ -1,6 +1,6 @@
 #include "dss.h"
-#include "dss_legacy.h"
 
+#undef PROFILE
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -58,11 +58,11 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
         float c_b2 = 0.f;
 
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset, i__1, i__2, i__3;
+	int rotmat_dim1, rotmat_offset, t1, t2, t3;
 
 	/* Local variables */
 	double shortest;
-	int i__, j, k, i1, j1, k1, i2, j2, k2;
+	int t, j, k, i1, j1, k1, i2, j2, k2;
 	float xo, yo, zo;
 	double hsqd;
 	float xdis, ydis, zdis;
@@ -83,13 +83,13 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 
 	/* Function Body */
 	*nsbtosr = 0;
-	i__1 = *nxsup - 1;
-	for (i__ = -(*nxsup - 1); i__ <= i__1; ++i__) {
-		i__2 = *nysup - 1;
-		for (j = -(*nysup - 1); j <= i__2; ++j) {
-			i__3 = *nzsup - 1;
-			for (k = -(*nzsup - 1); k <= i__3; ++k) {
-				xo = (float) i__ * *xsizsup;
+	t1 = *nxsup - 1;
+	for (t = -(*nxsup - 1); t <= t1; ++t) {
+		t2 = *nysup - 1;
+		for (j = -(*nysup - 1); j <= t2; ++j) {
+			t3 = *nzsup - 1;
+			for (k = -(*nzsup - 1); k <= t3; ++k) {
+				xo = (float) t * *xsizsup;
 				yo = (float) j * *ysizsup;
 				zo = (float) k * *zsizsup;
 
@@ -130,7 +130,7 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 
 				if ((float) shortest <= *radsqd) {
 					++(*nsbtosr);
-					ixsbtosr[*nsbtosr] = i__;
+					ixsbtosr[*nsbtosr] = t;
 					iysbtosr[*nsbtosr] = j;
 					izsbtosr[*nsbtosr] = k;
 				}

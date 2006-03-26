@@ -1,6 +1,5 @@
 #include <math.h>
 #include "dss.h"
-#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -53,9 +52,6 @@ int gauinv(double *p, float *xp, int *ierr)
 	/* Local variables */
 	double y, pp;
 
-#ifdef PROFILE
-	profile.gauinv++;
-#endif
 
 	/* Coefficients of approximation: */
 
@@ -80,13 +76,13 @@ int gauinv(double *p, float *xp, int *ierr)
 		pp = 1 - pp;
 	}
 	*xp = 0.f;
-	if (*p == .5f) {            /* fuck up */
+	if (*p == .5f) {
 		return 0;
 	}
 
 	/* Approximate the function: */
 
-	y = sqrt(log(1 / (pp * pp)));
+	y = sqrt(log(1.f / (pp * pp)));
 	*xp = (float) (y + ((((y * p4 + p3) * y + p2) * y + p1) * y + p0) / ((((y *
 							q4 + q3) * y + q2) * y + q1) * y + q0));
 	if ((*p) ==  pp) {

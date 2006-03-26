@@ -1,13 +1,13 @@
-#include <stdlib.h>
 #include "dss.h"
-#include "dss_legacy.h"
+
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 #define TRUE (1)
 #define FALSE (0)
 
-#define ACORNI_SIZE 17
+
+int ixv[17];    /* acorni */
 
 /* ----------------------------------------------------------------------- 
  * Fortran implementation of ACORN random number generator of order less 
@@ -40,28 +40,27 @@
  * Author: R.S.Wikramaratna,                           Date: October 1990 
  * ----------------------------------------------------------------------- 
  */
-int * new_acorni(int seed)
-{
-	int i, *ixv;
-
-	/* we must guarantee that seed*2 < MAX_INT */
-	--seed;
-	seed /= 2;
-        ixv = (int *) malloc(ACORNI_SIZE*sizeof(int));
-	for(i = 1; i < ACORNI_SIZE; i++) ixv[i] = 0;
-	ixv[0] = seed;
-
-        for (i = 0; i < 1000; i++) acorni(ixv);
-	return ixv;
-} /* new_acorni */
-
-
-
-double acorni(int *ixv)
+void newAcorni(int seed)
 {
 	int i;
 
-	for (i = 1; i < ACORNI_SIZE; ++i) {
+	/* we must guarantee that seed*2 < MAX_INT */
+	--seed;
+	seed /= 2; 
+
+
+	for(i = 1; i <= 16; ++i) ixv[i] = 0;
+	ixv[0] = seed;
+} /* newAcorni_ */
+
+
+
+double acorni()
+{
+	int i;
+
+
+	for (i = 1; i <= 16; ++i) {
 		ixv[i] += ixv[i - 1];
 		/* LPL: old code */
 			if (ixv[i] >= 1073741824) {
@@ -71,6 +70,7 @@ double acorni(int *ixv)
 		/* ixv[i] &= 1073741823; */
 	}
 
-	return (double) ((double)ixv[ACORNI_SIZE-1] / 1073741824.f);
-} /* acorni */
+	return (double) ((double)ixv[16] / 1073741824.f);
+} /* acorni_ */
+
 

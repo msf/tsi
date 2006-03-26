@@ -1,6 +1,5 @@
 #include <math.h>
 #include "dss.h"
-#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -65,7 +64,7 @@
 
 
 
-int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
+int ksol(int *nright, int *neq, int *nsb, double *a, double *r, double *s,
 		int *ising)
 {
 	/* System generated locals */
@@ -79,15 +78,12 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 			   ijm;
 	double tol, piv;
 
-#ifdef PROFILE
-	profile.ksol++;
-#endif
 
 	/* If there is only one equation then set ising and return: */
 
 	/* Parameter adjustments */
 	--s;
-	--r__;
+	--r;
 	--a;
 
 	/* Function Body */
@@ -137,7 +133,7 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 				for (llb = k; llb <= nm; llb += *neq) {
 					in = llb + i__1;
 					ll1 = llb + nm1;
-					r__[in] -= ap * r__[ll1];
+					r[in] -= ap * r[ll1];
 				}
 			}
 		}
@@ -159,7 +155,7 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 		piv = 1.f / a[ij];
 		for (llb = *neq; llb <= nm; llb += *neq) {
 			ll1 = llb + nm1;
-			s[ll1] = r__[ll1] * piv;
+			s[ll1] = r[ll1] * piv;
 		}
 		i__ = *neq;
 		kk = ij;
@@ -170,7 +166,7 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r__, double *s,
 			for (llb = i__; llb <= nm; llb += *neq) {
 				ll1 = llb + nm1;
 				in = ll1;
-				ap = r__[in];
+				ap = r[in];
 				ij = kk;
 				for (j = i__; j <= m1; ++j) {
 					ij += j;

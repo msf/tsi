@@ -87,7 +87,7 @@ int read_line_file(TSI_FILE *fp, char *buf) {
 
 
 
-int read_block_file(TSI_FILE *fp, int offset, void *address, int block_size) {
+int read_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size) {
     if (fseek(fp, offset, SEEK_SET)) return 0;
     if (fread(address, 1, block_size, fp) < (unsigned int) block_size) return 0;
     return offset;
@@ -115,7 +115,7 @@ int write_line_file(TSI_FILE *fp, char *buf) { /* TEST */
 
 
 
-int write_block_file(TSI_FILE *fp, int offset, void *address, int block_size) {
+int write_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size) {
     if (fseek(fp, offset, SEEK_SET)) return 0;
     if (fwrite(address, 1, block_size, fp) < (unsigned int) block_size) return 0;
     return offset;

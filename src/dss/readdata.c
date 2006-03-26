@@ -47,7 +47,7 @@
 
 int readdata(float *lvm,
              double *hard_data,
-             int  hard_data_size,
+             unsigned int  hard_data_size,
 	     general_vars_t * general, 
 	     search_vars_t * search,
 	     simulation_vars_t * simulation)
@@ -56,18 +56,19 @@ int readdata(float *lvm,
 
 
 	/* System generated locals */
-	int i__1;
-	float r__1;
+	int i1;
+	float r1;
 
 
 	/* Local variables */
-	int i__, j;
+	int i, j;
 	double w, cp, av;
 	int ix, nt, iy, iz;
 	double ss;
 	int ind;
 	float var[4], vrg, twt;
-	int iend, ierr, nelem;
+	int iend, ierr;
+	unsigned int nelem;
 	double oldcp;
 	float vmedg;
 	int index, inull;
@@ -81,7 +82,7 @@ int readdata(float *lvm,
 	--hard_data;
 	--lvm;
 
-        printf_dbg2("readdata(): begin\n");
+    printf_dbg2("readdata(): begin\n");
 	/* Function Body */
 	if (hard_data_size == 0) {
 		/* !it means that there is no Hard Data file! */
@@ -122,8 +123,8 @@ L3:
 		if (nelem == hard_data_size) {
 			goto L4;
 		}
-		i__1 = general->nvari;
-		for (j = 1; j <= i__1; ++j) {
+		i1 = general->nvari;
+		for (j = 1; j <= i1; ++j) {
 			var[j - 1] = hard_data[nelem + j];
 		}
 		nelem += general->nvari;
@@ -178,9 +179,8 @@ L4:
 		cp = 0;
 		vmedg = 0;
 		vvarg = 0;
-		i__1 = iend;
-		for (j = istart; j <= i__1; ++j) {
-			cp += (double) (general->vrgtr[j - 1] / twt);
+		for (j = 0; j < iend; ++j) {
+			cp += (double) (general->vrgtr[j] / twt);
 			w = (cp + oldcp) * .5f;
 			gauinv(&w, &vrg, &ierr);
 			if (ierr == 1) {
@@ -188,19 +188,17 @@ L4:
 			}
 			oldcp = cp;
 			/* !Now, reset the weight to the normal scores value: */
-			general->vrgtr[j - 1] = vrg;
+			general->vrgtr[j] = vrg;
 		}
 		/* !Basic statistics calculation - mean and variance (DSSIM) */
-		i__1 = iend;
-		for (j = istart; j <= i__1; ++j) {
-			vmedg += general->vrgtr[j - 1];
+		for (j = 0; j < iend; ++j) {
+			vmedg += general->vrgtr[j];
 		}
 		vmedg /= iend - istart;
-		i__1 = iend;
-		for (j = istart; j <= i__1; ++j) {
+		for (j = 0; j < iend; ++j) {
 			/* Computing 2nd power */
-			r__1 = general->vrgtr[j - 1] - vmedg;
-			vvarg += r__1 * r__1;
+			r1 = general->vrgtr[j] - vmedg;
+			vvarg += r1 * r1;
 		}
 		vvarg /= iend - istart;
 		/* !do j=istart,iend */
@@ -231,8 +229,7 @@ L5:
 		if (nelem == hard_data_size) {
 			goto L6;
 		}
-		i__1 = general->nvari;
-		for (j = 1; j <= i__1; ++j) {
+		for (j = 1; j <= general->nvari; ++j) {
 			var[j - 1] = hard_data[nelem + j];
 		}
 		nelem += general->nvari;
@@ -279,7 +276,7 @@ L5:
 			general->nd - 1];
 		goto L5;
 L6:
-                printf_dbg2("readdata(): L6\n");
+        printf_dbg2("readdata(): L6\n");
 		if (general->imask == 1) {
 			fprintf(stderr,"imaks = 1\n");
 		}
@@ -296,16 +293,15 @@ L6:
 			/* !end do */
 		simulation->vmedexp = 0;
 		simulation->vvarexp = 0;
-		i__1 = general->nd;
-		for (i__ = 1; i__ <= i__1; ++i__) {
-			simulation->vmedexp += general->vr[i__ - 1];
+		for (i = 0; i < general->nd; ++i) {
+			simulation->vmedexp += general->vr[i];
 		}
 		simulation->vmedexp /= general->nd;
-		i__1 = general->nd;
-		for (i__ = 1; i__ <= i__1; ++i__) {
+		i1 = general->nd;
+		for (i = 0; i < general->nd; ++i) {
 			/* Computing 2nd power */
-			r__1 = general->vr[i__ - 1] - simulation->vmedexp;
-			simulation->vvarexp += r__1 * r__1;
+			r1 = general->vr[i] - simulation->vmedexp;
+			simulation->vvarexp += r1 * r1;
 		}
 		simulation->vvarexp /= general->nd;
 		/* !Compute the averages and variances as an error check for the user: */
@@ -333,10 +329,10 @@ L6:
 		/* lvm is allready set to a pointer of BAI on dssdll */
 		/* !BAI_DATA_SIZE = nx*ny*nz */
 		/*
-		i__1 = *bai_data_size__;
-		for (index = 1; index <= i__1; ++index) {
-			i__2 = general->nvaril;
-			for (j = 1; j <= i__2; ++j) {
+		i1 = *bai_data_size__;
+		for (index = 1; index <= i1; ++index) {
+			i2 = general->nvaril;
+			for (j = 1; j <= i2; ++j) {
 				var[j - 1] = bai_data[nelem + j];
 			}
 			nelem += general->nvaril;
@@ -346,10 +342,10 @@ L6:
 			ss += var[general->icollvm - 1] * var[general->icollvm - 1];
 		}
 		*/
-		r__1 = (float) general->nxyz;
-		av /= ((double) MAX(r__1,1)); /*dmax(r__1,1.f); */
-		r__1 = (float) general->nxyz;
-		ss = ss / ((double) MAX(r__1,1)) - av * av;
+		r1 = (float) general->nxyz;
+		av /= ((double) MAX(r1,1)); /*dmax(r1,1.f); */
+		r1 = (float) general->nxyz;
+		ss = ss / ((double) MAX(r1,1)) - av * av;
 		if (general->ktype == 5) {
 			/* do nothing, dssdll allready sets clc acordingly to BCM.
 			 *  older method was to make a linear iteration
@@ -358,28 +354,15 @@ L6:
 			 */
 		}
 		/* !Do we need to work with data residuals? (Locally Varying Mean) */
-		else if (general->ktype == 2) {
-			i__1 = general->nd;
-			for (i__ = 1; i__ <= i__1; ++i__) {
-				getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix, &testind);
-				getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy, &testind);
-				getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz, &testind);
+		else if (general->ktype == 2 ||
+				 general->ktype == 3) {
+			for (i = 0; i < general->nd; ++i) {
+				getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i], &ix, &testind);
+				getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i], &iy, &testind);
+				getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i], &iz, &testind);
 				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
-				general->sec[i__ - 1] = lvm[index];
+				general->sec[i] = lvm[index];
 				/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
-			}
-		}
-		/* !Do we need to get an external drift attribute for the data? */
-		else if (general->ktype == 3) {
-			i__1 = general->nd;
-			for (i__ = 1; i__ <= i__1; ++i__) {
-				if (general->sec[i__ - 1] == general->nosvalue) {
-					getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i__ - 1], &ix, &testind);
-					getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i__ - 1], &iy, &testind);
-					getindx(&general->nz, &general->zmn, &general->zsiz, &general->z__[i__ - 1], &iz, &testind);
-					index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
-					general->sec[i__ - 1] = lvm[index];
-				}
 			}
 		}
 	}
@@ -389,28 +372,25 @@ L6:
 		simulation->vmedsec = 0;
 		simulation->vvarsec = 0;
 		inull = 0;
-		i__1 = general->nxyz;
-		for (ind = 1; ind <= i__1; ++ind) {
-			if (lvm[ind] != -999.25f) {   /* > -999.25? */ 
-				simulation->vmedsec += lvm[ind];
+		for (i = 1; i <= general->nxyz; ++i) {
+			if (lvm[i] != -999.25f) {   /* > -999.25? */ 
+				simulation->vmedsec += lvm[i];
 			} else {
 				++inull;
 			}
 		}
 		simulation->vmedsec /= general->nxyz - inull;
-		i__1 = general->nxyz;
-		for (ind = 1; ind <= i__1; ++ind) {
-			if (lvm[ind] != -999.25f) {
+		for (i = 1; i <= general->nxyz; ++i) {
+			if (lvm[i] != -999.25f) {
 				/* Computing 2nd power */
-				r__1 = lvm[ind] - simulation->vmedsec;
-				simulation->vvarsec += r__1 * r__1;
+				r1 = lvm[i] - simulation->vmedsec;
+				simulation->vvarsec += r1 * r1;
 			}
 		}
 		simulation->vvarsec /= general->nxyz - inull;
-		i__1 = general->nxyz;
-		for (ind = 1; ind <= i__1; ++ind) {
-			if (lvm[ind] != -999.25f) {
-				lvm[ind] = (lvm[ind] - simulation->vmedsec) / sqrt(   /* fuck-up */
+		for (i = 1; i <= general->nxyz; ++i) {
+			if (lvm[i] != -999.25f) {
+				lvm[i] = (lvm[i] - simulation->vmedsec) / sqrt(   /* fuck-up */
 						simulation->vvarsec) * sqrt(simulation->vvarexp) + 
 					simulation->vmedexp;
 			}
@@ -418,16 +398,6 @@ L6:
 	}
 
 	return 0;
-	/* Error in an Input File Somewhere: */
-	/* L97: */
-	//fprintf(stderr,"ERROR in secondary data file!\n");
-	//return -1; /* ERROR */
-	/* L98: */
-	//fprintf(stderr,"ERROR in correlation coef. data file!\n");
-	//return -1; /* ERROR */
-	/* L99: */
-	//fprintf(stderr,"ERROR in data file!\n");
-	//return -1; /* ERROR */
 } /* readdata_ */
 
 

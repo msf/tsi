@@ -31,13 +31,13 @@ int read_file(TSI_FILE *fp);
 
 int read_line_file(TSI_FILE *fp, char *buf);
 
-int read_block_file(TSI_FILE *fp, int offset, void *address, int block_size);
+int read_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size);
 
 int write_file(TSI_FILE *fp, char c);
 
 int write_line_file(TSI_FILE *fp, char *buf);
 
-int write_block_file(TSI_FILE *fp, int offset, void *address, int block_size);
+int write_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size);
 
 int write_ascii_grid_file(TSI_FILE *fp, float *address, unsigned int size);
 

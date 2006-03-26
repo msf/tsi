@@ -1,6 +1,5 @@
 #include <math.h>
 #include "dss.h"
-#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -16,7 +15,7 @@
  * accurate only to about 5 decimal places. 
  *
  * ----------------------------------------------------------------------- */
-float gcum(float z)
+double gcum(float z)
 {
 	/* System generated locals */
 	/* float ret_val; */
@@ -24,46 +23,12 @@ float gcum(float z)
 
 
 
-	/* Local variables */
-	/*    static float t, z, e2; */
-	/* float t; */
-	double t;    /* LPL */
-        double zd;   /* LPL */
+	double t;
+    double zd;
         
-        zd = (double) z;
+        zd = z;
         
-#ifdef PROFILE
-	profile.gcum++;
-#endif
 
-	/* LPL: old code */
-	/*    z = *x;
-
-		  if (z < 0.f) {    //ub
-		  z = -z;
-		  }
-
-		  t = 1.f / (z * .2316419f + 1.f);
-		  ret_val = t * (t * (t * (t * (t * 1.330274429f - 1.821255978f) + 
-		  1.781477937f) - .356563782f) + .31938153f);
-		  e2 = 0.f;
-		  */
-	/*  6 standard deviations out gets treated as infinity: */
-
-	/*    if (z <= 6.f) {       //ub
-		  e2 = exp(-z * z / 2.f) * .3989422803f;
-		  }
-
-		  ret_val = 1.f - e2 * ret_val;
-
-		  if (*x >= 0.f) {          //ub
-		  return ret_val;
-		  }
-		  ret_val = 1.f - ret_val;
-		  return ret_val;
-		  */
-
-	/* LPL: new code */
 	if (zd < 0) {   /* unpredictable branch */
 		if (zd >= -6) {   /* unpredictable branch */
 			t = 1 / (zd * -.2316419 + 1);
@@ -83,7 +48,7 @@ float gcum(float z)
 			ret_val = 1;
 		}
 	}
-	return ((float) ret_val);
+	return ( ret_val);
 
 } /* gcum_ */
 
@@ -103,47 +68,6 @@ int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
 {
 	int jl, jm, ju;
 
-#ifdef PROFILE
-	profile.locate++;
-#endif
-
-	/* Initialize lower and upper methods: */
-
-	/* Parameter adjustments */
-	/*    --xx;
-	*/
-	/* Function Body */
-	/*    if (*is <= 0) {
-	 *is = 1;
-	 }
-	 jl = *is - 1;
-	 ju = *ie;
-	 if (xx[*n] <= *x) {
-	 *j = *ie;
-	 return 0;
-	 }
-	 */
-	/* If we are not done then compute a midpoint: */
-
-	/*L10:
-	  if (ju - jl > 1) {
-	  jm = (ju + jl) / 2;
-	  */
-	/* Replace the lower or upper limit with the midpoint: */
-
-	/*	if (xx[*ie] > xx[*is] == *x > xx[jm]) {
-		jl = jm;
-		} else {
-		ju = jm;
-		}
-		goto L10;
-		}
-		*/
-	/* Return with the array index: */
-
-	/*    *j = jl;
-		  return 0;
-		  */
 
 	/* Initialize lower and upper methods: */
 
@@ -193,26 +117,8 @@ double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
 {
 	/* System generated locals */
 	float ret_val;
-	/* double d__1, d__2;*/
 
 	/* Builtin functions */
-
-#ifdef PROFILE
-	profile.powint++;
-#endif
-
-	/* LPL: old code */
-	/*    if (*xhigh - *xlow < 1e-20f) {
-		  ret_val = (*yhigh + *ylow) / 2.f;
-		  } else {
-		  d__1 = (double) ((*xval - *xlow) / (*xhigh - *xlow));
-		  d__2 = (double) (*power);
-		  ret_val = *ylow + (*yhigh - *ylow) * pow(d__1, d__2);
-		  }
-		  return ret_val;
-		  */
-
-	/* LPL: new code */
 
 	if (*xhigh - *xlow < 1e-20f) {
 		ret_val = (double) ((*yhigh + *ylow) / 2.f);
@@ -266,26 +172,26 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 
 	/* Local variables */
 	int j;
-	float cpow, cdfhi, cdfbt, cdflo, lambda;
+	float cpow, cdfhi, cdfbt, cdflo;
+	double lambda;
 
+	float a, b;
 	/* parameter(EPSLON=1.0e-20) */
 
 	/* Value in the lower tail?    1=linear, 2=power, (3 and 4 are invalid): */
-
-#ifdef PROFILE
-	profile.backtr++;
-#endif
 
 
 	/* Parameter adjustments */
 	--vrg;
 	--vr;
 
+	b = *vrgs;
 	/* Function Body */
 	if (*vrgs <= vrg[1]) {
 		ret_val = vr[1];
-		cdflo = gcum(vrg[1]);
-		cdfbt = gcum(*vrgs);
+		a = vrg[1];
+		cdflo = (float) gcum(a);
+		cdfbt = (float) gcum(b);
 		if (*ltail == 1) {
 			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &c_b3);
 		} else if (*ltail == 2) {
@@ -297,8 +203,9 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 
 	} else if (*vrgs >= vrg[*nt]) {
 		ret_val = vr[*nt];
-		cdfhi = gcum(vrg[*nt]);
-		cdfbt = gcum(*vrgs);
+		a = vrg[*nt];
+		cdfhi = (float) gcum(a);
+		cdfbt = (float) gcum(b);
 		if (*utail == 1) {
 			ret_val = powint(&cdfhi, &c_b3, &vr[*nt], zmax, &cdfbt, &c_b3);
 		} else if (*utail == 2) {
@@ -307,8 +214,8 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 		} else if (*utail == 4) {
 			d__1 = (double) vr[*nt];
 			d__2 = (double) (*utpar);
-			lambda = pow(d__1, d__2) * (1 - gcum(vrg[*nt]));
-			d__1 = (double) (lambda / (1 - gcum(*vrgs)));
+			lambda =  pow(d__1, d__2) * (1 - gcum(a));
+			d__1 = (double) (lambda / (1 - gcum(b)));
 			d__2 = (double) (1 / *utpar);
 			ret_val = pow(d__1, d__2);
 		}

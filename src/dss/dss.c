@@ -61,9 +61,6 @@ dss *new_dss(registry *r, grid_heap *h) {
     }
     close_file(fp);
     
-    /* start acorni */
-    d->general->ixv = new_acorni(random());
-
     /* ugly hack for "readdata" */
     d->general->maxdat = d->harddata_size / 4;
     d->general->x = (float *) my_malloc(d->general->maxdat * sizeof(float));
@@ -116,7 +113,8 @@ int run_dss(dss *d, float *AI) {
     mask = NULL;
 
     /* SIMULATION */
-    sdsim(AI, NULL, NULL, order, mask,
+	printf_dbg2("run_dss(): grids allocated, calling dssim()\n");
+    dssim(AI, NULL, NULL, order, mask,
           d->general,
           d->search,
           d->simulation,
@@ -150,7 +148,7 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     mask = NULL;
 
     /* CO-SIMULATION */
-    sdsim(AI, currBAI, currBCM, order, mask,
+    dssim(AI, currBAI, currBCM, order, mask,
           d->general,
           d->search,
           d->simulation,

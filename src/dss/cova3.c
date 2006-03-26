@@ -87,14 +87,11 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 
 
 	/* Local variables */
-	float h__, hr;
+	float h, hr;
 	int ir, is, ist;
 	double hsqd;
 	int istart;
 
-#ifdef PROFILE
-	profile.cova3++;
-#endif
 
 	/* Parameter adjustments */
 	--nst;
@@ -113,7 +110,7 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 	for (is = 1; is <= i__1; ++is) {
 		ist = istart + is - 1;
 		if (it[ist] == 4) {
-			*cmax += 999;
+			*cmax += 999.f;
 		} else {
 			*cmax += cc[ist];
 		}
@@ -144,32 +141,32 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 			hsqd = sqdist(x1, y1, z1, x2, y2, z2, &ir, maxrot, &rotmat[
 					rotmat_offset]);
 		}
-		h__ = (float) sqrt(hsqd);
+		h = (float) sqrt(hsqd);
 
 		/* Spherical Variogram Model? */
 
 		if (it[ist] == 1) {
-			hr = h__ / aa[ist];
-			if (hr < 1) {
-				*cova += cc[ist] * (1 - hr * (1.5 - hr * .5 * hr));
+			hr = h / aa[ist];
+			if (hr < 1.f) {
+				*cova += cc[ist] * (1.f - hr * (1.5f - hr * .5f * hr));
 			}
 
 			/* Exponential Variogram Model? */
 
 		} else if (it[ist] == 2) {
-			*cova += cc[ist] * exp(h__ * -3 / aa[ist]);
+			*cova += cc[ist] * exp(h * -3.f / aa[ist]);
 
 			/* Gaussian Variogram Model? */
 
 		} else if (it[ist] == 3) {
 			/* Computing 2nd power */
-			r__1 = h__ / aa[ist];
-			*cova += cc[ist] * exp(r__1 * r__1 * -3);
+			r__1 = h / aa[ist];
+			*cova += cc[ist] * exp(r__1 * r__1 * -3.f);
 
 			/* Power Variogram Model? */
 
 		} else if (it[ist] == 4) {
-			d__1 = (double) h__;
+			d__1 = (double) h;
 			d__2 = (double) aa[ist];
 			*cova = *cova + *cmax - cc[ist] * pow(d__1, d__2);
 
@@ -178,7 +175,7 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 		} else if (it[ist] == 5) {
 			/*                 d = 10.0 * aa(ist) */
 			/*                 cova = cova + cc(ist)*exp(-3.0*h/d)*cos(h/aa(ist)*PI) */
-			*cova += cc[ist] * cos(h__ / aa[ist] * 3.14159265);
+			*cova += cc[ist] * cos(h / aa[ist] * 3.14159265f);
 		}
 	}
 

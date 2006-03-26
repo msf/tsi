@@ -201,7 +201,7 @@ typedef struct dss_type {
 
     /* harddata */
     double *harddata;
-    int    harddata_size;
+    unsigned int    harddata_size;
 } dss;
 
 

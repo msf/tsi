@@ -1,5 +1,4 @@
 #include "dss.h"
-#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -92,6 +91,7 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	int i__, ii, ix, iy, iz, nsort;
 	int inflag;
 
+
 	/* Establish the number and size of the super blocks: */
 
 	/* Parameter adjustments */
@@ -131,10 +131,7 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 		getindx(nxsup, xmnsup, xsizsup, &x[i__], &ix, &inflag);
 		getindx(nysup, ymnsup, ysizsup, &y[i__], &iy, &inflag);
 		getindx(nzsup, zmnsup, zsizsup, &z__[i__], &iz, &inflag);
-/*		GETINDX(nxsup, xmnsup, xsizsup, &x[i__], &ix);
-		GETINDX(nysup, ymnsup, ysizsup, &y[i__], &iy);
-		GETINDX(nzsup, zmnsup, zsizsup, &z__[i__], &iz);
-*/		ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
+		ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
 		tmp[i__] = (float) ii;
 		++nisb[ii];
 	}

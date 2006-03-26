@@ -1,5 +1,4 @@
 #include "dss.h"
-#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -64,14 +63,11 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 		covtable_lookup_vars_t * covtable_lookup)
 {
 	/* System generated locals */
-	int i__1;
+	int i1;
 
 	/* Local variables */
-	int i__, j, k, il, iq, ind, idx, idy, idz, ninoct[8];
+	int i, j, k, il, iq, ind, idx, idy, idz, ninoct[8];
 
-#ifdef PROFILE
-	profile.srchnd++;
-#endif
 
 	/* Consider all the nearby nodes until enough have been found: */
 	/* Parameter adjustments */
@@ -80,29 +76,29 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 	/* Function Body */
 	covtable_lookup->ncnode = 0;
 	if (search->noct > 0) {
-		for (i__ = 1; i__ <= 8; ++i__) {
-			ninoct[i__ - 1] = 0;
+		for (i = 1; i <= 8; ++i) {
+			ninoct[i - 1] = 0;
 		}
 	}
-	i__1 = covtable_lookup->nlooku;
-	for (il = 2; il <= i__1; ++il) {
+	i1 = covtable_lookup->nlooku;
+	for (il = 2; il <= i1; ++il) {
 		if (covtable_lookup->ncnode == covtable_lookup->nodmax) {
 			return 0;
 		}
-		i__ = *ix + (covtable_lookup->ixnode[il - 1] - covtable_lookup->nctx - 1);
+		i = *ix + (covtable_lookup->ixnode[il - 1] - covtable_lookup->nctx - 1);
 		j = *iy + (covtable_lookup->iynode[il - 1] - covtable_lookup->ncty - 1);
 		k = *iz + (covtable_lookup->iznode[il - 1] - covtable_lookup->nctz - 1);
-		if (i__ < 1 || j < 1 || k < 1) {
+		if (i < 1 || j < 1 || k < 1) {
 			continue;
 		}
-		if (i__ > general->nx || j > general->ny || k > general->nz) {
+		if (i > general->nx || j > general->ny || k > general->nz) {
 			continue;
 		}
-		ind = i__ + (j - 1) * general->nx + (k - 1) * general->nxy;
+		ind = i + (j - 1) * general->nx + (k - 1) * general->nxy;
 		if (sim[ind] > general->nosvalue) {
 			/* Check the number of data already taken from this octant: */
 			if (search->noct > 0) {
-				idx = *ix - i__;
+				idx = *ix - i;
 				idy = *iy - j;
 				idz = *iz - k;
 				if (idz > 0) {
@@ -135,7 +131,7 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 			}
 			++covtable_lookup->ncnode;
 			covtable_lookup->icnode[covtable_lookup->ncnode - 1] = il;
-			covtable_lookup->cnodex[covtable_lookup->ncnode - 1] = general->xmn + (float) (i__ 
+			covtable_lookup->cnodex[covtable_lookup->ncnode - 1] = general->xmn + (float) (i 
 					- 1) * general->xsiz;
 			covtable_lookup->cnodey[covtable_lookup->ncnode - 1] = general->ymn + (float) (j - 
 					1) * general->ysiz;

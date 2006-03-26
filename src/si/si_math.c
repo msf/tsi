@@ -14,24 +14,28 @@ float index_value(si *s, int index);
 
 
 int make_reflections_grid(si *s, float *AI, float *RG) {
+	printf_dbg("make_reflections_grid(): called but not implemented\n");
     return 1;
 } /* make_reflections_grid */
 
 
 
 int make_synthetic_grid(si *s, float *RG, float *SY) {
+	printf_dbg("make_syntethic_grid(): called but not implemented\n");
     return 1;
 } /* make_synthetic_grid */
 
 
 
 int make_correlations_grid(si *s, float *seismic, float *SY) {
+	printf_dbg("make_correlations_grid(): called but not implemented\n");
     return 1;
 } /* make_correlations_grid */
 
 
 
 int expand_correlations_grid(cm_grid *cmg, float *CM) {
+	printf_dbg("expand_correlations_grid(): called but not implemented\n");
     return 1;
 } /* expand_correlations_grid */
 

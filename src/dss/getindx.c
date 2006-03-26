@@ -1,5 +1,6 @@
 #include "dss.h"
 
+
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 #define TRUE (1)
@@ -37,6 +38,7 @@
 
 int getindx(int *n, float *min__, float *siz, float *loc, int *index, int *inflag)
 {
+
 	/* Compute the index of "loc": */
 
 	*index = (int) ((*loc - *min__) / *siz + 1.5f);
