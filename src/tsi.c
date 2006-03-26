@@ -297,7 +297,6 @@ int run_tsi(tsi *t) {
     write_ascii_grid_file(fp, t->ai, t->grid_size);
     close_file(fp);
 	printf_dbg("run_tsi(%d): grid dumped\n",t->proc_id);
-    return 1;
     //////////////////////////////////////////////////////////
 
     
