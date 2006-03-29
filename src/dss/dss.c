@@ -21,14 +21,14 @@ dss *new_dss(registry *r, grid_heap *h) {
 
 
     /* object space allocation */
-    d = (dss *) my_malloc(sizeof(dss));
-    d->general    = (general_vars_t *) my_malloc(sizeof(general_vars_t));
-    d->search     = (search_vars_t *) my_malloc(sizeof(search_vars_t));
-    d->simulation = (simulation_vars_t *) my_malloc(sizeof(simulation_vars_t));
-    d->covariance = (covariance_vars_t *) my_malloc(sizeof(covariance_vars_t));
-    d->clookup    = (covtable_lookup_vars_t *) my_malloc(sizeof(covtable_lookup_vars_t));
-    d->krige      = (krige_vars_t *) my_malloc(sizeof(krige_vars_t));
-    d->files      = (file_vars_t *) my_malloc(sizeof(file_vars_t));
+    d = (dss *) tsi_malloc(sizeof(dss));
+    d->general    = (general_vars_t *) tsi_malloc(sizeof(general_vars_t));
+    d->search     = (search_vars_t *) tsi_malloc(sizeof(search_vars_t));
+    d->simulation = (simulation_vars_t *) tsi_malloc(sizeof(simulation_vars_t));
+    d->covariance = (covariance_vars_t *) tsi_malloc(sizeof(covariance_vars_t));
+    d->clookup    = (covtable_lookup_vars_t *) tsi_malloc(sizeof(covtable_lookup_vars_t));
+    d->krige      = (krige_vars_t *) tsi_malloc(sizeof(krige_vars_t));
+    d->files      = (file_vars_t *) tsi_malloc(sizeof(file_vars_t));
     if (!d ||
         !d->general ||
         !d->search ||
@@ -63,14 +63,14 @@ dss *new_dss(registry *r, grid_heap *h) {
     
     /* ugly hack for "readdata" */
     d->general->maxdat = d->harddata_size / 4;
-    d->general->x = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->y = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->z__ = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->vr = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->wt = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->vrtr = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->vrgtr = (float *) my_malloc(d->general->maxdat * sizeof(float));
-    d->general->sec = (float *) my_malloc(d->general->maxdat * sizeof(float));
+    d->general->x = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->y = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->z__ = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->vr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->wt = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->vrtr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->vrgtr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->sec = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     if (!d->general->x ||
         !d->general->y ||
         !d->general->z__ ||
@@ -169,33 +169,33 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
 void delete_dss(dss *d) {
     if (d) {
         if (d->general) {
-            if (d->general->x) my_free(d->general->x);
-            if (d->general->y) my_free(d->general->y);
-            if (d->general->z__) my_free(d->general->z__);
-            if (d->general->vr) my_free(d->general->vr);
-            if (d->general->wt) my_free(d->general->wt);
-            if (d->general->vrtr) my_free(d->general->vrtr);
-            if (d->general->vrgtr) my_free(d->general->vrgtr);
-            if (d->general->sec) my_free(d->general->sec);
-            my_free(d->general);
+            if (d->general->x) tsi_free(d->general->x);
+            if (d->general->y) tsi_free(d->general->y);
+            if (d->general->z__) tsi_free(d->general->z__);
+            if (d->general->vr) tsi_free(d->general->vr);
+            if (d->general->wt) tsi_free(d->general->wt);
+            if (d->general->vrtr) tsi_free(d->general->vrtr);
+            if (d->general->vrgtr) tsi_free(d->general->vrgtr);
+            if (d->general->sec) tsi_free(d->general->sec);
+            tsi_free(d->general);
         }
-        if (d->search) my_free(d->search);
-        if (d->simulation) my_free(d->simulation);
+        if (d->search) tsi_free(d->search);
+        if (d->simulation) tsi_free(d->simulation);
         if (d->covariance) {
-            if (d->covariance->it) my_free(d->covariance->it);
-            if (d->covariance->cc) my_free(d->covariance->cc);
-            if (d->covariance->aa) my_free(d->covariance->aa);
-            if (d->covariance->ang1) my_free(d->covariance->ang1);
-            if (d->covariance->ang2) my_free(d->covariance->ang2);
-            if (d->covariance->ang3) my_free(d->covariance->ang3);
-            if (d->covariance->anis1) my_free(d->covariance->anis1);
-            if (d->covariance->anis2) my_free(d->covariance->anis2);
-            my_free(d->covariance);
+            if (d->covariance->it) tsi_free(d->covariance->it);
+            if (d->covariance->cc) tsi_free(d->covariance->cc);
+            if (d->covariance->aa) tsi_free(d->covariance->aa);
+            if (d->covariance->ang1) tsi_free(d->covariance->ang1);
+            if (d->covariance->ang2) tsi_free(d->covariance->ang2);
+            if (d->covariance->ang3) tsi_free(d->covariance->ang3);
+            if (d->covariance->anis1) tsi_free(d->covariance->anis1);
+            if (d->covariance->anis2) tsi_free(d->covariance->anis2);
+            tsi_free(d->covariance);
         }
-        if (d->clookup) my_free(d->clookup);
-        if (d->krige) my_free(d->krige);
-        if (d->files) my_free(d->files);
-        my_free(d);
+        if (d->clookup) tsi_free(d->clookup);
+        if (d->krige) tsi_free(d->krige);
+        if (d->files) tsi_free(d->files);
+        tsi_free(d);
     }
 } /* delete_dss */
 
@@ -220,6 +220,6 @@ double *load_harddata_file(TSI_FILE *fp, char *buf, int *size) {
             return NULL;
     }
     *size *= 4;
-    return (double *) my_malloc(*size * sizeof(double));
+    return (double *) tsi_malloc(*size * sizeof(double));
 } /* load_harddata_file */
 

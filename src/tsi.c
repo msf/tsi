@@ -26,7 +26,7 @@ tsi *new_tsi(registry *reg) {
     int usefs, heap_size, swap_thr, new_sims, over_sims, over_procs;
     TSI_FILE *fp;
 
-    t = (tsi *) my_malloc(sizeof(tsi));
+    t = (tsi *) tsi_malloc(sizeof(tsi));
     if (!t) return NULL;
     t->reg = reg;
     t->heap = NULL;
@@ -238,7 +238,7 @@ void delete_tsi(tsi *t) {
         if (t->dss_eng) delete_dss(t->dss_eng);
         if (t->heap) delete_heap(t->heap);
         if (t->reg) delete_registry(t->reg);
-        my_free(t);
+        tsi_free(t);
     }
     delete_tsi_parallel();
 } /* delete_tsi */

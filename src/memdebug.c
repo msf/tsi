@@ -24,27 +24,7 @@ LIST_HEAD(tsi_mem_list);
 
 
 
-void *my_malloc(unsigned int size) 
-{
-#ifdef TSI_DEBUG1
-	return debug_malloc(size);
-#else
-	return malloc(size);
-#endif
-}
-
-void my_free(void * ptr) 
-{
-#ifdef TSI_DEBUG1
-	debug_free(ptr);
-#else
-	free(ptr);
-#endif
-}
-
-
-void *
-debug_malloc(unsigned int size)
+void *debug_malloc(unsigned int size)
 {
 	struct tsi_mem *m;
 
@@ -63,8 +43,7 @@ debug_malloc(unsigned int size)
 }
 
 
-void
-debug_free(void *p)
+void debug_free(void *p)
 {
 	struct tsi_mem *m;
 	unsigned int *magictail;
@@ -102,8 +81,7 @@ debug_free(void *p)
 	free(m);
 }
 
-void
-debug_check(void)
+void debug_check(void)
 {
 	struct tsi_mem *m, *mtmp;
 

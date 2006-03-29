@@ -13,7 +13,7 @@ LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
 #OPTS     := -O3 -ffast-math -fomit-frame-pointer 
 #OPTS	+= -march=pentium2 
 OPTS	+= -m32
-OPTS	+= -DTSI_DEBUG1
+OPTS	+= -DTSI_DEBUG
 #OPTS     += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS     += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS     += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop

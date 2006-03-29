@@ -4,7 +4,6 @@
 
 #include "grid_heap.h"
 #include "debug.h"
-#include "memdebug.h"
 #include "tsi_io.h"
 
 #define ALLIGNMENT 16          /* byte allignment */
@@ -15,7 +14,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
     char filename[32];
     
     /* initializes the heap record */
-    h = (grid_heap *) my_malloc(sizeof(grid_heap));
+    h = (grid_heap *) tsi_malloc(sizeof(grid_heap));
     if (!h) {
         printf_dbg2("new_heap(): failed to allocate heap!\n");
         return NULL;
@@ -113,7 +112,7 @@ float *load_grid(grid_heap *h, int idx) {
         } else if (h->curr_grids < h->threshold) {  /* if #grids is bellow threshold */
             h->curr_grids++;
             printf("Number of grids raised to %d\n", h->curr_grids);
-            h->g[idx].grid = (float *) my_malloc(h->grid_size*sizeof(float));
+            h->g[idx].grid = (float *) tsi_malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
             return h->g[idx].grid;
@@ -145,7 +144,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* no grid available, allocate more ram */
             h->curr_grids++;
             printf("Number of grids raised to %d\n", h->curr_grids);
-            h->g[idx].grid = (float *) my_malloc(h->grid_size*sizeof(float));
+            h->g[idx].grid = (float *) tsi_malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
         } else {
@@ -221,11 +220,11 @@ void delete_heap(grid_heap *h) {
         if (h->g) {
             for (i = 0; i < h->heap_size; i++) {
                 if (h->g[i].fp) close_file(h->g[i].fp);
-                if (h->g[i].grid) my_free(h->g[i].grid);
+                if (h->g[i].grid) tsi_free(h->g[i].grid);
             }
-            my_free(h->g);
+            free(h->g);
         }
-        my_free(h);
+        tsi_free(h);
     }
 } /* delete_heap */
 

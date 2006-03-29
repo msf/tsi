@@ -26,8 +26,8 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 
 	t = wellsDataSize / general->nvari;
 	
-	temp = (unsigned int *) my_malloc(sizeof(unsigned int) * t);
-	vals = (double *) my_malloc(sizeof(double) * t);		
+	temp = (unsigned int *) tsi_malloc(sizeof(unsigned int) * t);
+	vals = (double *) tsi_malloc(sizeof(double) * t);		
 
 	if( wellsDataSize % general->nvari ) {
 		printf("readWellsData: ERROR: incorrect number of values\n");
@@ -57,12 +57,12 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 
 	/* j is the size of the WellsData */
 	general->wellsNPoints = j;
-	general->wellsDataVal = (double *) my_malloc(sizeof(double) * j);
-	general->wellsDataPos = (unsigned int *) my_malloc(sizeof(unsigned int) * j); 
+	general->wellsDataVal = (double *) tsi_malloc(sizeof(double) * j);
+	general->wellsDataPos = (unsigned int *) tsi_malloc(sizeof(unsigned int) * j); 
 	memcpy(general->wellsDataVal, vals, sizeof(double) * j);
 	memcpy(general->wellsDataPos, temp, sizeof(unsigned int) * j);
-	my_free(vals);
-	my_free(temp);
+	tsi_free(vals);
+	tsi_free(temp);
 			
 	return 0;
 }

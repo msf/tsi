@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include "debug.h"
-#include "memdebug.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "si.h"
@@ -16,7 +15,7 @@ si *new_si(registry *r, grid_heap *h) {
     int i;
     char buf[64];
 
-    s = (si *) my_malloc(sizeof(si));
+    s = (si *) tsi_malloc(sizeof(si));
     if (!s) {
         return NULL;
     }
@@ -30,8 +29,8 @@ si *new_si(registry *r, grid_heap *h) {
     }
 
     s->wavelet_used_values = get_int(k);
-    s->points = (int *) my_malloc((1 + s->wavelet_used_values) * sizeof(int));
-    s->values = (float *) my_malloc((1 + s->wavelet_used_values) * sizeof(float));
+    s->points = (int *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(int));
+    s->values = (float *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(float));
     if (!s->points || !s->values) {
         printf_dbg("new_si(): failed to allocate space for wavelet!\n");
         return NULL;
@@ -91,9 +90,9 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
 
 void delete_si(si *s) {
     if (s) {
-       if (s->points) my_free(s->points);
-       if (s->values) my_free(s->values);
-       my_free(s);
+       if (s->points) tsi_free(s->points);
+       if (s->values) tsi_free(s->values);
+       tsi_free(s);
     }
 } /* delete_si */
 

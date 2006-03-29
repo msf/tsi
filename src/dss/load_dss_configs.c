@@ -224,14 +224,14 @@ int  load_dss_configs(dss *d, registry *r )
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
     sill = d->covariance->c0[0] = get_float(k);
 
-    d->covariance->it = (int *) my_malloc(varnum * sizeof(int));
-    d->covariance->cc = (float *) my_malloc(varnum * sizeof(float));
-    d->covariance->aa = (float *) my_malloc(varnum * sizeof(float));
-    d->covariance->ang1 = (float *) my_malloc(varnum * sizeof(float));
-    d->covariance->ang2 = (float *) my_malloc(varnum * sizeof(float));
-    d->covariance->ang3 = (float *) my_malloc(varnum * sizeof(float));
-    d->covariance->anis1 = (float *) my_malloc(varnum * sizeof(float));
-    d->covariance->anis2 = (float *) my_malloc(varnum * sizeof(float));
+    d->covariance->it = (int *) tsi_malloc(varnum * sizeof(int));
+    d->covariance->cc = (float *) tsi_malloc(varnum * sizeof(float));
+    d->covariance->aa = (float *) tsi_malloc(varnum * sizeof(float));
+    d->covariance->ang1 = (float *) tsi_malloc(varnum * sizeof(float));
+    d->covariance->ang2 = (float *) tsi_malloc(varnum * sizeof(float));
+    d->covariance->ang3 = (float *) tsi_malloc(varnum * sizeof(float));
+    d->covariance->anis1 = (float *) tsi_malloc(varnum * sizeof(float));
+    d->covariance->anis2 = (float *) tsi_malloc(varnum * sizeof(float));
     if (!d->covariance->it ||
         !d->covariance->cc ||
         !d->covariance->aa ||
