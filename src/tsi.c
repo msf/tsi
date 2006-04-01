@@ -9,13 +9,13 @@
 #include "dss.h"
 #include "si.h"
 #include "tsi.h"
-#include "tsi_parallel.h"
 #include "tsi_math.h"
+#include "tsi_parallel.h"
 #include "timer.h"
 
 
 /* additional prototypes to TSI */
-int   tsi_compare(float *AI, float *CM, float *nextBAI, float *BCM);
+int   tsi_compare(unsigned int size, float *AI, float *CM, float *nextBAI, float *BCM);
 void  grid_copy(float *a, float *b, unsigned int grid_size);
 
 
@@ -61,6 +61,7 @@ tsi *new_tsi(registry *reg) {
         return NULL;
     }
 
+	printf_dbg("TSI: %d Simulations x %d Iterations\n",t->simulations, t->iterations);
     k = get_key(reg, "GLOBAL", "OPTIMIZE");
     if (k) {
        t->optimize = get_int(k);
@@ -99,29 +100,6 @@ tsi *new_tsi(registry *reg) {
     }
     printf_dbg("new_tsi(%d): number of simulations=%d\n", t->proc_id, t->simulations);
 
-    /* get grid parameters */
-    k = get_key(reg, "GRID", "XNUMBER");
-    if (k)
-       t->xsize = get_int(k);
-    else {
-       delete_tsi(t);
-       return NULL;
-    }
-    k = get_key(reg, "GRID", "YNUMBER");
-    if (k)
-       t->ysize = get_int(k);
-    else {
-       delete_tsi(t);
-       return NULL;
-    }
-    k = get_key(reg, "GRID", "ZNUMBER");
-    if (k)
-       t->zsize = get_int(k);
-    else {
-       delete_tsi(t);
-       return NULL;
-    }
-    t->grid_size = (unsigned int)t->zsize * (unsigned int)t->ysize * (unsigned int)t->xsize;
 
     /* get heap data */
     k = get_key(reg, "HEAP", "USEFS");
@@ -154,23 +132,32 @@ tsi *new_tsi(registry *reg) {
        printf_dbg("new_tsi(%d): failed to get BCM root from the registry! Using defaults...\n", t->proc_id);
        t->root = 1;
     }
-    k = get_key(reg, "CORR", "LAYERS_MIN");
-    if (k)
-       t->layers_min = get_int(k);
-    else {
-       printf_dbg("new_tsi(%d): failed to get number of layers setting from the registry!\n", t->proc_id);
-       delete_tsi(t);
-       return NULL;
-    }
-    k = get_key(reg, "CORR", "LAYER_SIZE_MIN");
-    if (k)
-       t->layers_size_min = get_int(k);
-    else {
-       printf_dbg("new_tsi(%d): failed to get size of layers setting from the registry!\n", t->proc_id);
-       delete_tsi(t);
-       return NULL;
-    }
 
+    /* get grid parameters */
+    k = get_key(reg, "GRID", "XNUMBER");
+    if (k)
+       t->xsize = get_int(k);
+    else {
+       delete_tsi(t);
+       return NULL;
+    }
+    k = get_key(reg, "GRID", "YNUMBER");
+    if (k)
+       t->ysize = get_int(k);
+    else {
+       delete_tsi(t);
+       return NULL;
+    }
+    k = get_key(reg, "GRID", "ZNUMBER");
+    if (k)
+       t->zsize = get_int(k);
+    else {
+       delete_tsi(t);
+       return NULL;
+    }
+    t->grid_size = (unsigned int)t->zsize * (unsigned int)t->ysize * (unsigned int)t->xsize;
+
+	printf_dbg("TSI: grid size is %d\n",t->grid_size);
 
     /* start grid heap */
     printf_dbg("new_tsi(%d): starting heap\n", t->proc_id);
@@ -245,9 +232,9 @@ void delete_tsi(tsi *t) {
 
 
 
-int tsi_compare (float *AI, float *CM, float *nextBAI, float *BCM) {
+int tsi_compare (unsigned int size, float *AI, float *CM, float *nextBAI, float *BCM) {
     /* execute Compare */    
-	printf_dbg("tsi_compare(): ERROR - called but not implemented\n");
+	update_best_grids(size, BCM, nextBAI, CM, AI);
     return 1;
 } /* tsi_compare */
 
@@ -303,6 +290,9 @@ int run_tsi(tsi *t) {
 
     /* SI 1/1 */
     if (result) {
+		setup_si(t->si_eng);
+
+		/* load data and grids */
         printf_dbg("run_tsi(%d): loading seismic 1/1\n", t->proc_id);
         t->seismic = load_grid(t->heap, t->seismic_idx);
         if ((t->cm_idx = new_grid(t->heap)) < 0) {
@@ -319,6 +309,8 @@ int run_tsi(tsi *t) {
         t->cm = load_grid(t->heap, t->cm_idx);
         printf_dbg("run_tsi(%d): loading SY 1/1\n", t->proc_id);
         t->sy = load_grid(t->heap, t->sy_idx);
+
+		/* run Seismic Inversion if all went well */
         if (t->cm && t->seismic && t->sy) {
             printf_dbg("run_tsi(%d): running SI 1/1\n", t->proc_id);
             result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);  /* 4 grids */
@@ -369,6 +361,8 @@ int run_tsi(tsi *t) {
 
         /* SI 1/n */
         if (result) {
+
+			/* load data and grids */
             if ((t->cm_idx = new_grid(t->heap)) < 0) {
                 printf_dbg("run_tsi(%d): failed to allocate CM grid 1/n\n", t->proc_id);
                 delete_tsi(t);
@@ -385,6 +379,8 @@ int run_tsi(tsi *t) {
             t->seismic = load_grid(t->heap, t->seismic_idx);
             printf_dbg("run_tsi(): loading SY\n");
             t->sy = load_grid(t->heap, t->sy_idx);
+
+			/* run Seismic Inversion if all went well */
             if (t->cm && t->seismic && t->sy) {
                 printf_dbg("run_tsi(): running SI \n");
                 result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
@@ -417,7 +413,7 @@ int run_tsi(tsi *t) {
         t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
         t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
         if (t->nextBAI && t->nextBCM)
-            result = tsi_compare(t->ai, t->cm, t->nextBAI, t->nextBCM);   /* builds nextBAI and nextBCM */
+            result = tsi_compare(t->grid_size, t->ai, t->cm, t->nextBAI, t->nextBCM);   /* builds nextBAI and nextBCM */
         else {
             printf_dbg("run_tsi(%d): failed to load nextBAI or nextBCM! 1/n", t->proc_id);
         }
@@ -534,7 +530,7 @@ int run_tsi(tsi *t) {
             /* Compare n/n */
             t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
             t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
-            result = tsi_compare(t->ai, t->cm, t->nextBAI, t->nextBCM);   /* builds nextBAI and nextBCM */
+            result = tsi_compare(t->grid_size, t->ai, t->cm, t->nextBAI, t->nextBCM);   /* builds nextBAI and nextBCM */
             if (result) {
                 if (t->ai_idx == t->bestAI_idx) {
                     dirty_grid(t->heap, t->bestAI_idx);

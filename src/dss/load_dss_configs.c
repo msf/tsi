@@ -137,6 +137,9 @@ int  load_dss_configs(dss *d, registry *r )
     if ((k = get_key(r, "GRID", "YSIZE")) == NULL) return 1;
     d->general->ysiz = get_float(k);
 
+    if ((k = get_key(r, "GRID", "ZSIZE")) == NULL) return 1;
+    d->general->zsiz = get_float(k);
+
     d->general->nxy = d->general->nx * d->general->ny;
     d->general->nxyz = d->general->nxy * d->general->nz;
 

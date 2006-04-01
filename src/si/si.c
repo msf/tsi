@@ -22,6 +22,30 @@ si *new_si(registry *r, grid_heap *h) {
     s->reg = r;
     s->heap = h;
 
+    /* get grid parameters */
+    k = get_key(r, "GRID", "XNUMBER");
+    if (k)
+       s->xsize = get_int(k);
+    else {
+       delete_si(s);
+       return NULL;
+    }
+    k = get_key(r, "GRID", "YNUMBER");
+    if (k)
+       s->ysize = get_int(k);
+    else {
+       delete_si(s);
+       return NULL;
+    }
+    k = get_key(r, "GRID", "ZNUMBER");
+    if (k)
+       s->zsize = get_int(k);
+    else {
+       delete_si(s);
+       return NULL;
+    }
+    s->grid_size = (unsigned int)s->zsize * (unsigned int)s->ysize * (unsigned int)s->xsize;
+		
     /* load wavelet */
     if ((k = get_key(r, "WAVELET", "USED_VALUES")) == NULL) {
         printf_dbg("new_si(): failed to get WAVELET:USED_VALUES from registry!\n");
@@ -46,6 +70,35 @@ si *new_si(registry *r, grid_heap *h) {
         return NULL;
     }
     
+	/* layers data */
+	s->layers = tsi_malloc(sizeof(struct layers_t));
+	s->layers->number = 0;
+	k = get_key(r, "GRID", "ZNUMBER");
+	if (k)
+		s->layers->total_size = get_int(k);
+	else {
+		printf_dbg("new_si: failed to get ZNUMBER from registry, aborting...\n");
+		delete_si(s);
+		return NULL;
+	}
+    k = get_key(r, "CORR", "LAYERS_MIN");
+    if (k)
+       s->layers->minimum_number = get_int(k);
+    else {
+       printf_dbg("new_si: failed to get number of layers setting from the registry!\n");
+       delete_si(s);
+       return NULL;
+    }
+    k = get_key(r, "CORR", "LAYER_SIZE_MIN");
+    if (k)
+       s->layers->minimum_size = get_int(k);
+    else {
+       printf_dbg("new_si: failed to get size of layers setting from the registry!\n");
+       delete_si(s);
+       return NULL;
+    }
+	generateRandomLayers(s->layers);
+
     i = 0;
     while (read_line_file(fp, buf) != EOF) {
         sscanf(buf, "%d %f\n", &(s->points[i]), &(s->values[i]));
@@ -80,9 +133,9 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
 
     /* build synthetic grid */
     result = make_synthetic_grid(s, CM, SY);   /* CM has reflections grid */
-
-    /* build correlations cube */
-    result = make_correlations_grid(s, seismic, SY);
+	
+    /* build correlations cube, use CM has resulting correlations Grid */
+    result = make_correlations_grid(s, seismic, SY, CM);
     return 1;
 } /* si */
 

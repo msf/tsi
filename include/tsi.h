@@ -19,18 +19,13 @@ typedef struct tsi_type {
     int iterations,           /* number of iterations */
         simulations;          /* number of simulations for each iteration */
 
-    /* grid dimensions */
+	/* grid size */
     int xsize,
         ysize,
         zsize;
     unsigned int grid_size;   /* = xsize * ysize * zsize */
 
-    /* correlation data */
-    int layers_min,           /* SI/Compare? */
-        layers_size_min,
-        nlayers,
-        *layer_size,
-        root;
+    int root;
     float best_corr;
 
     /* grid heap references */

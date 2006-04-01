@@ -16,10 +16,13 @@ int make_reflections_grid(si *s, float *AI, float *RG);
 int make_synthetic_grid(si *s, float *RG, float *SY);
 
 /* builds a correlations grid based on layers configuration */
-int make_correlations_grid(si *s, float *seismic, float *SY);
+int make_correlations_grid(si *s, float *seismic, float *SY, float *CM);
 
 /* expands the correlations grid to a regular grid for DSS */
 int expand_correlations_grid(cm_grid *cmg, float *CM);
+
+/* generate layers for correlations calculation */
+int generateRandomLayers(struct layers_t * l);
 
 #endif /* _SI_MATH_H */
 
