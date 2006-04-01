@@ -50,8 +50,16 @@ int delete_tsi_parallel() {
 
 
 
-int tsi_is_best_parallel(tsi *t) {
+int tsi_is_best_parallel(best *corr) {
 #ifdef TSI_MPI
+    best result;
+
+    if (MPI_Reduce(corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->n_procs/2, MPI_COMM_WORLD) != MPI_SUCCESS) {
+        printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
+	return 1;
+    }
+    corr->value = result.value;
+    corr->proc_id = result.proc_id;
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_is_best_parallel */
@@ -72,7 +80,7 @@ int tsi_generate_layers_parallel(tsi *t, int *nlayers, int **layer_size) {
 #ifdef TSI
        /* broadcast layers configuration */
     } else {
-       /* wait for layer configurations form master */
+       /* wait for layer configurations from master node */
 #endif /* TSI_MPI */
     }
     return 1;

@@ -6,6 +6,13 @@
 #include "dss.h"
 #include "si.h"
 
+
+typedef struct best_type {
+    float value;
+    int   proc_id;
+} best;
+
+
 typedef struct tsi_type {
     /* auxiliar objects */
     registry *reg;            /* reference to the registry */
@@ -26,7 +33,7 @@ typedef struct tsi_type {
     unsigned int grid_size;   /* = xsize * ysize * zsize */
 
     int root;
-    float best_corr;
+    best global_corr;
 
     /* grid heap references */
     int seismic_idx,

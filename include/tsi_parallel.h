@@ -8,7 +8,7 @@ int new_tsi_parallel(int *n_procs, int *proc_id);
 int delete_tsi_parallel();
 
 /* TSI functions */
-int tsi_is_best_parallel(tsi *t);
+int tsi_is_best_parallel(best *corr);
 
 int tsi_compare_parallel(tsi *t);
 

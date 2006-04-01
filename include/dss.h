@@ -215,5 +215,6 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI);
 
 void delete_dss(dss *d);
 
+int dss_parameters(dss *d, registry *r);
 
 #endif /* _DSS_H */

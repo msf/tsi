@@ -8,8 +8,6 @@
 #include "dss_legacy.h"
 #include "tsi_io.h"
 
-int load_dss_configs(dss *, registry *);
-
 double * load_harddata_file(TSI_FILE *, char *, int *);
 
 dss *new_dss(registry *r, grid_heap *h) {
@@ -42,7 +40,7 @@ dss *new_dss(registry *r, grid_heap *h) {
     d->heap = h;
 
     printf_dbg("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
-	if(load_dss_configs( d, r)){
+	if(dss_parameters(d, r)){
 		printf("new_dss(): ERROR loaging dss configs\n");
 		return NULL;
 	}

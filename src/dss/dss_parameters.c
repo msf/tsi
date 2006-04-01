@@ -7,7 +7,7 @@
 #include "dss_legacy.h"
 #include "tsi_io.h"
 
-int  load_dss_configs(dss *d, registry *r )
+int  dss_parameters(dss *d, registry *r )
 {
     int i, varnum;
     char variogram[16];
