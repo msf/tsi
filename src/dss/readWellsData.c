@@ -15,7 +15,7 @@ double getPosd(double x, double y, double z, int xlen, int xylen)
  * all this should be done outside the dss, since its constant throughout the whole execution
  * 
  */
-int readWellsData(general_vars_t * general, double * wellsData, unsigned int wellsDataSize) 
+int readWellsData(general_vars_t *general, double *wellsData, unsigned int wellsDataSize) 
 {
 
 	double x, y, z;
@@ -46,7 +46,7 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 			continue;
 		}
 		
-		t = (unsigned int) getPosd(x,y,y,general->nx,general->nxy);
+		t = (unsigned int) getPosd(x,y,z,general->nx,general->nxy);
 		if(t >= (unsigned int) general->nxyz) {
 			continue;
 		}

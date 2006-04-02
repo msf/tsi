@@ -129,7 +129,6 @@
 
 /* Table of constant values */
 
-static int five = 5;
 
 int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *mask_data,
 		general_vars_t			*	general,
@@ -169,6 +168,7 @@ int sdsim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	float xmnsup, ymnsup, zmnsup, clcorr;
 	float simval = 0;
 	int nsbtosr;
+	int five = 5;
 
 
 	/* Parameter adjustments */

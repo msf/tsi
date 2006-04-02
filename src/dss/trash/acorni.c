@@ -1,5 +1,5 @@
 #include "dss.h"
-
+#include "debug.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -7,7 +7,8 @@
 #define FALSE (0)
 
 
-int ixv[17];    /* acorni */
+//int ixv[17];    /* acorni */
+#define ACORNI_ARRAY_SIZE 17
 
 /* ----------------------------------------------------------------------- 
  * Fortran implementation of ACORN random number generator of order less 
@@ -40,25 +41,26 @@ int ixv[17];    /* acorni */
  * Author: R.S.Wikramaratna,                           Date: October 1990 
  * ----------------------------------------------------------------------- 
  */
-void newAcorni(int seed)
+int *newAcorni(int seed)
 {
-	int i;
+	int i, *iv;
 
 	/* we must guarantee that seed*2 < MAX_INT */
 	--seed;
 	seed /= 2; 
 
+	iv = (int *) tsi_malloc(ACORNI_ARRAY_SIZE * sizeof(int));
+	for(i = 1; i < ACORNI_ARRAY_SIZE; i++) iv[i] = 0;
+	iv[0] = seed;
 
-	for(i = 1; i <= 16; ++i) ixv[i] = 0;
-	ixv[0] = seed;
+	return iv;
 } /* newAcorni_ */
 
 
 
-double acorni()
+double acorni(int *ixv)
 {
 	int i;
-
 
 	for (i = 1; i <= 16; ++i) {
 		ixv[i] += ixv[i - 1];

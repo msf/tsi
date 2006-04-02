@@ -7,6 +7,7 @@
 #include "dss.h"
 #include "dss_legacy.h"
 #include "tsi_io.h"
+#include "acorni.h"
 
 double * load_harddata_file(TSI_FILE *, char *, int *);
 
@@ -78,7 +79,7 @@ dss *new_dss(registry *r, grid_heap *h) {
         !d->general->vrgtr ||
         !d->general->sec)
         return NULL;
-
+        
     printf_dbg("new_dss(): DSS engine started sucessfully.\n");
     return d;
 } /* new_dss */
@@ -87,8 +88,7 @@ dss *new_dss(registry *r, grid_heap *h) {
 
 int setup_dss(dss *d, float *currBAI) {
     d->general->ktype = 1;
-    if (currBAI) 
-		d->general->ktype = 5;
+    if (currBAI) d->general->ktype = 5;
     readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
 	return readWellsData(d->general, d->harddata, d->harddata_size);
 } /* setup_dss */

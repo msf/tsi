@@ -26,6 +26,7 @@ typedef struct general_vars_type {
            *vrtr,   /* same size as harddata */
            *vrgtr,  /* same size as harddata */
            *sec;    /* same size as harddata */
+	
 	/* new wells hard data containers */
 	unsigned int wellsNPoints, *wellsDataPos; 
 	double *wellsDataVal;

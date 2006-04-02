@@ -8,8 +8,8 @@
 
 
 typedef struct best_type {
-    float value;
-    int   proc_id;
+    float value;         /* current best global correlation value */
+    int   proc_id;       /* process that holds best AI data */
 } best;
 
 
@@ -25,15 +25,20 @@ typedef struct tsi_type {
     /* TSI execution parameters*/
     int iterations,           /* number of iterations */
         simulations;          /* number of simulations for each iteration */
+    int root;
+
+    /* parallel execution related data */
+    unsigned int grid_segsize;   /* grid segment size = (int)grid_size/n_procs */
+    best global_corr;            /* data to be exchanged during parallel isBestAI? */
+    int n_procs,                 /* number of processes running */
+        proc_id,                 /* process ID */
+        optimize;                /* runtime optimization flag */
 
 	/* grid size */
     int xsize,
         ysize,
         zsize;
-    unsigned int grid_size;   /* = xsize * ysize * zsize */
-
-    int root;
-    best global_corr;
+    unsigned int grid_size;   /* = xsize * ysize * zsize < 2^32 */
 
     /* grid heap references */
     int seismic_idx,
@@ -56,13 +61,6 @@ typedef struct tsi_type {
           *ai,
           *cm,
           *sy;
-
-    /* parallel execution related data */
-    unsigned int grid_segsize;   /* grid segment size = (int)grid_size/n_procs */
-    int haveBestAI,              /* current bestAI holder flag */
-        n_procs,                 /* number of processes running */
-        proc_id,                 /* process ID */
-        optimize;                /* runtime optimization flag */
 } tsi;
 
 tsi *new_tsi(registry *reg);

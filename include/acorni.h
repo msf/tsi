@@ -33,12 +33,9 @@
 #ifndef __ACORNI_H
 #define __ACORNI_H
  
-int ixv[17];
+int *newAcorni(int seed);
 
-
-void newAcorni(int seed);
-
-double acorni(void);
+double acorni(int *ixv);
 
 #endif
 

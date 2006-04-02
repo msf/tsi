@@ -240,6 +240,7 @@ int tsi_compare (unsigned int size, float *AI, float *CM, float *nextBAI, float 
 } /* tsi_compare */
 
 
+
 void grid_copy(float *a, float *b, unsigned int grid_size)
 {
     memcpy(a, b, grid_size*sizeof(float));
@@ -259,7 +260,7 @@ int run_tsi(tsi *t) {
     printf_dbg("run_tsi(%d): first iteration\n", t->proc_id);
 
     /* DSS 1/1 */
-    setup_dss(t->dss_eng, NULL);   /* <----------------------------------- TODO: remove */
+    setup_dss(t->dss_eng, NULL);
     printf_dbg("run_tsi(%d): loading AI grid 1/1\n", t->proc_id);
     if ((t->ai_idx = new_grid(t->heap)) < 0) {
         printf_dbg("new_tsi(%d): failed to allocate AI grid 1/1\n", t->proc_id);
@@ -283,7 +284,7 @@ int run_tsi(tsi *t) {
 
     /* SI 1/1 */
     if (result) {
-		setup_si(t->si_eng);  /* <------------------------------------------- TODO */
+		setup_si(t->si_eng);
 
 		/* load data and grids */
         printf_dbg("run_tsi(%d): loading seismic 1/1\n", t->proc_id);
@@ -354,7 +355,6 @@ int run_tsi(tsi *t) {
 
         /* SI 1/n */
         if (result) {
-
 			/* load data and grids */
             if ((t->cm_idx = new_grid(t->heap)) < 0) {
                 printf_dbg("run_tsi(%d): failed to allocate CM grid 1/n\n", t->proc_id);
@@ -459,6 +459,7 @@ int run_tsi(tsi *t) {
                 clear_grid(t->heap, t->nextBAI_idx);
                 clear_grid(t->heap, t->nextBCM_idx);
                 setup_dss(t->dss_eng, t->currBAI);
+                setup_si(t->si_eng);
             } /* if */
             
             /* CODSS n/n */
@@ -484,7 +485,6 @@ int run_tsi(tsi *t) {
 
 
             /* SI */
-			/* setup_si() */
             if (result) {
                 t->seismic = load_grid(t->heap, t->seismic_idx);
                 printf_dbg("run_tsi(%d): loading SY n/n\n", t->proc_id);

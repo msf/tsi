@@ -21,29 +21,27 @@ si *new_si(registry *r, grid_heap *h) {
     }
     s->reg = r;
     s->heap = h;
+    s->cmg = NULL;
 
     /* get grid parameters */
-    k = get_key(r, "GRID", "XNUMBER");
-    if (k)
-       s->xsize = get_int(k);
-    else {
+    if ((k = get_key(r, "GRID", "XNUMBER")) == NULL) {
        delete_si(s);
        return NULL;
     }
-    k = get_key(r, "GRID", "YNUMBER");
-    if (k)
-       s->ysize = get_int(k);
-    else {
+    s->xsize = get_int(k);
+
+    if ((k = get_key(r, "GRID", "YNUMBER")) == NULL) {
        delete_si(s);
        return NULL;
     }
-    k = get_key(r, "GRID", "ZNUMBER");
-    if (k)
-       s->zsize = get_int(k);
-    else {
+    s->ysize = get_int(k);
+
+    if ((k = get_key(r, "GRID", "ZNUMBER")) == NULL) {
        delete_si(s);
        return NULL;
     }
+    s->zsize = get_int(k);
+
     s->grid_size = (unsigned int)s->zsize * (unsigned int)s->ysize * (unsigned int)s->xsize;
 		
     /* load wavelet */
@@ -69,35 +67,6 @@ si *new_si(registry *r, grid_heap *h) {
         printf_dbg("new_si(): failed to open wavelet file!\n");
         return NULL;
     }
-    
-	/* layers data */
-	s->layers = tsi_malloc(sizeof(struct layers_t));
-	s->layers->number = 0;
-	k = get_key(r, "GRID", "ZNUMBER");
-	if (k)
-		s->layers->total_size = get_int(k);
-	else {
-		printf_dbg("new_si: failed to get ZNUMBER from registry, aborting...\n");
-		delete_si(s);
-		return NULL;
-	}
-    k = get_key(r, "CORR", "LAYERS_MIN");
-    if (k)
-       s->layers->minimum_number = get_int(k);
-    else {
-       printf_dbg("new_si: failed to get number of layers setting from the registry!\n");
-       delete_si(s);
-       return NULL;
-    }
-    k = get_key(r, "CORR", "LAYER_SIZE_MIN");
-    if (k)
-       s->layers->minimum_size = get_int(k);
-    else {
-       printf_dbg("new_si: failed to get size of layers setting from the registry!\n");
-       delete_si(s);
-       return NULL;
-    }
-	generateRandomLayers(s->layers);
 
     i = 0;
     while (read_line_file(fp, buf) != EOF) {
@@ -111,6 +80,21 @@ si *new_si(registry *r, grid_heap *h) {
         printf_dbg("new_si(): EOF found. Uncomplete wavelet.\nThis wavelet must have %d values.\n", s->wavelet_used_values);
         return NULL;
     }
+    
+	/* layers data */
+    if ((k = get_key(r, "CORR", "LAYERS_MIN")) == NULL) {
+       printf_dbg("new_si: failed to get number of layers setting from the registry!\n");
+       delete_si(s);
+       return NULL;
+    }
+       s->min_number = get_int(k);
+
+    if ((k = get_key(r, "CORR", "LAYER_SIZE_MIN")) == NULL) {
+       printf_dbg("new_si: failed to get size of layers setting from the registry!\n");
+       delete_si(s);
+       return NULL;
+    }
+       s->min_size = get_int(k);
 
     return s;
 } /* new_si */
