@@ -21,9 +21,6 @@ int make_correlations_grid(si *s, float *seismic, float *SY, float *CM);
 /* expands the correlations grid to a regular grid for DSS */
 int expand_correlations_grid(cm_grid *cmg, float *CM);
 
-/* builds new CM grid with a new set layers */
-cm_grid *new_cmgrid(si *s);
-
 #endif /* _SI_MATH_H */
 
 /* end of file si_math.h */

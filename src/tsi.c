@@ -36,6 +36,7 @@ tsi *new_tsi(registry *reg) {
         printf("Machine failed to start!\n");
         return NULL;
     }
+    t->root_id = t->proc_id;
 
     t->global_corr.value = -999;
     t->global_corr.proc_id = t->proc_id;
@@ -98,6 +99,16 @@ tsi *new_tsi(registry *reg) {
         /* correct the number of simulations to be executed */
         t->simulations = new_sims;
         if (t->proc_id < over_sims) t->simulations--;
+
+        /* set root node */
+        k = get_key(reg, "GLOBAL", "MIDDLEZERO");
+        if (k) {
+            t->root_id = get_int(k);
+        } else {
+            printf_dbg("new_tsi(%d): failed to get optimize flag from the registry! Using defaults...\n", t->proc_id);
+            t->root_id = 1;
+        }
+        if (t->root_id) t->root_id = t->n_procs / 2;
     }
     printf_dbg("new_tsi(%d): number of simulations=%d\n", t->proc_id, t->simulations);
 
@@ -254,6 +265,7 @@ int run_tsi(tsi *t) {
     float ai_corr;
 	struct timeval t1,t2;
     TSI_FILE *fp;
+    cm_grid *cmg;
 
     ai_corr = -1;
 
@@ -284,9 +296,22 @@ int run_tsi(tsi *t) {
 
     /* SI 1/1 */
     if (result) {
-		setup_si(t->si_eng);
+        /* random layers */
+        if (t->proc_id == t->root_id) {
+            cmg = new_cmgrid(t->si_eng, 0);    /* generate new set of layers */
+            printf("New set of layers:\n");
+            print_layers(cmg);
+        } else {
+            cmg = new_cmgrid(t->si_eng, 1);    /* return an empty cm_grid */
+        }
+        if (tsi_set_layers_parallel(t, cmg)) {
+            printf_dbg("run_tsi(%d): failed to set layers\n", t->proc_id);
+            delete_tsi(t);
+            return 0;
+        }
+        store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
 
-		/* load data and grids */
+        /* load data and grids */
         printf_dbg("run_tsi(%d): loading seismic 1/1\n", t->proc_id);
         t->seismic = load_grid(t->heap, t->seismic_idx);
         if ((t->cm_idx = new_grid(t->heap)) < 0) {
@@ -304,10 +329,10 @@ int run_tsi(tsi *t) {
         printf_dbg("run_tsi(%d): loading SY 1/1\n", t->proc_id);
         t->sy = load_grid(t->heap, t->sy_idx);
 
-		/* run Seismic Inversion if all went well */
+        /* run Seismic Inversion if all went well */
         if (t->cm && t->seismic && t->sy) {
             printf_dbg("run_tsi(%d): running SI 1/1\n", t->proc_id);
-            result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);  /* 4 grids */
+            //result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);  /* 4 grids */
         } else {
             printf_dbg("run_tsi(%d): failed to load CM, Seismic or SY for SI! 1/1\n", t->proc_id);
             return 0;
@@ -431,7 +456,7 @@ int run_tsi(tsi *t) {
     
     if (t->n_procs > 1) {
 	/* find which node got best correlation */
-        if (tsi_is_best_parallel(&t->global_corr)) return 0;
+        if (tsi_is_best_parallel(t)) return 0;
 	
 		if (t->global_corr.proc_id != t->proc_id) {
 		    /* delete local best AI grid */
@@ -444,6 +469,22 @@ int run_tsi(tsi *t) {
 
     /* NEXT ITERATIONS */
     for (j = 1; j < t->iterations; j++) {
+
+        /* random layers */
+        delete_cmgrid(cmg);
+        if (t->proc_id == t->root_id) {
+            cmg = new_cmgrid(t->si_eng, 0);    /* generate new set of layers */
+            printf("New set of layers:\n");
+            print_layers(cmg);
+        } else {
+            cmg = new_cmgrid(t->si_eng, 1);    /* return an empty cm_grid */
+        }
+        if (tsi_set_layers_parallel(t, cmg)) {
+            printf_dbg("run_tsi(%d): failed to set layers\n", t->proc_id);
+            delete_tsi(t);
+            return 0;
+        }
+        store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
 
         for (i = 0; i < t->simulations; i++) {
 
@@ -459,7 +500,6 @@ int run_tsi(tsi *t) {
                 clear_grid(t->heap, t->nextBAI_idx);
                 clear_grid(t->heap, t->nextBCM_idx);
                 setup_dss(t->dss_eng, t->currBAI);
-                setup_si(t->si_eng);
             } /* if */
             
             /* CODSS n/n */
@@ -552,7 +592,7 @@ int run_tsi(tsi *t) {
         } /* for (simulations) */
 
         if (t->n_procs > 1) {
-            if (tsi_is_best_parallel(&t->global_corr)) return 0;
+            if (tsi_is_best_parallel(t)) return 0;
 			
 			if (t->global_corr.proc_id != t->proc_id) {
 				/* delete local best AI grid */

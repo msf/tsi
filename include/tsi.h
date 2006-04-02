@@ -32,6 +32,7 @@ typedef struct tsi_type {
     best global_corr;            /* data to be exchanged during parallel isBestAI? */
     int n_procs,                 /* number of processes running */
         proc_id,                 /* process ID */
+        root_id,                 /* root process ID */
         optimize;                /* runtime optimization flag */
 
 	/* grid size */

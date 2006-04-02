@@ -75,7 +75,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
  * 	
  * 	calculates correlations by layers between two cubes.
  */
-int make_correlations_grid(si *s, float *seismic, float *syntetic, float *corr_grid) 
+int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM) 
 {
 	printf_dbg2("make_correlations_grid(): called\n");
 
@@ -83,38 +83,40 @@ int make_correlations_grid(si *s, float *seismic, float *syntetic, float *corr_g
 	int i, z1, z2;
 	int temp;
 	
-	struct layers_t *layers = s->layers;
-
 	double sum_xy;
 	double sum_x,sum_x_2,sum_x2;
 	double sum_y,sum_y2,sum_y_2;
 	double denom;
 
-	float r;
+	float r, *corr_grid;
 
-	int n;
+	int n, nlayers, *layer_size;
 
+        corr_grid = s->cmg->cg;   /* compressed grid */
+        nlayers = s->cmg->nlayers;
+        layer_size = s->cmg->layer_size;
+        
 	for(x = 0; x < s->xsize; x++)
 		for(y = 0; y < s->ysize; y++) {
 			z1 = 0;
-			for(i = 0; i < layers->number; i++) {
-				z2 = z1+layers->layer[i];
+			for(i = 0; i < nlayers; i++) {
+				z2 = z1+layer_size[i];
 
 				sum_x = 0;
 				sum_x_2 = 0;
 				sum_xy = 0;
 				sum_y = 0;
 				sum_y2 = 0;
-				n = layers->layer[i];
+				n = layer_size[i];
 
 				for(z = z1; z < z2; z++) {
 					temp = getPoint(s,x,y,z);
 					
 					sum_x += seismic[temp];
 					sum_x2 += seismic[temp] * seismic[temp];
-					sum_xy += seismic[temp] * syntetic[temp];
-					sum_y += syntetic[temp];
-					sum_y2 += syntetic[temp] * syntetic[temp];
+					sum_xy += seismic[temp] * synthetic[temp];
+					sum_y += synthetic[temp];
+					sum_y2 += synthetic[temp] * synthetic[temp];
 
 				}
 
@@ -126,19 +128,18 @@ int make_correlations_grid(si *s, float *seismic, float *syntetic, float *corr_g
 						((n * sum_y2 ) - sum_y_2)
 						);
 
-				if(denom == 0)
-					r = 0; 
-				else 
+				if(denom > 0)
 					r = ((n * sum_xy) - ( sum_x *sum_y ))/denom;
+				else 
+					r = 0; 
 
-				for(z = z1; z < z2; z++) {
-					corr_grid[getPoint(s,x,y,z)] = r; 
-				}
+                                corr_grid[getPoint(s,x,y,i)] = r; 
 				
 				// reposition Z pointer
 				z1=z2;
 			}
 		}
+
 	/* divide corrAvg for number of points to give the average. */
 
 	
@@ -168,130 +169,5 @@ float index_value(si *s, int index)
 } /* index_value */
 
 
-/**
- * Generator of randomLayers, randomizes:
- * - number of layers
- * - size of each layer
- * also assures minimum_size, minimum_number, and total size
- */
-int generateRandomLayers(struct layers_t * l)
-{
-
-	unsigned short int min_size = l->minimum_size;
-	unsigned short int number = l->minimum_number;
-	unsigned short int max_size = l->total_size;
-
-	/*
-	printf("generateRandomLayers: min_size: %d, min_number: %d, total_size: %d\n",min_size, number, max_size);
-	*/
-	int delta = max_size - (min_size * number);
-	unsigned short int *lays, *temp;
-	unsigned int i, x, sum;
-	
-	if(delta < 0) { 
-		/* too many layers, or layers too big */
-		fprintf(stderr,"randomLayers: ERROR, too many layers, or layers too big\n");
-		return -1;
-	} else if(delta == 0) {
-		/* all layers must be of min_size */
-		lays = (unsigned short int *) tsi_malloc(sizeof(unsigned short int) * number);
-		for(i = 0; i < number; i++)
-			lays[i] = min_size;
-		l->number = number;
-		l->layer = lays;
-		return 0;
-	}
-	/* proper random Layers above...
-	 * number of layers: number < N < max_size / min_size
-	 */
-	
-	unsigned int n = max_size / min_size;
-	temp = (unsigned short int *) tsi_malloc(n*sizeof(unsigned short int));
-	for(i = 0; i < n; i++)
-		temp[i] = 0;
-
-	/* first, we warrantee the minimum number of layers */
-	do {
-		x = random() % (min_size * 2);
-		x += min_size;
-		i = (unsigned int) random() % n;
-
-		temp[i] = x;
-
-		x = 0;
-		for(i = 0; i < n; i++) {
-			if(temp[i] != 0) {
-				x++;
-			}
-		}
-
-	} while(  x < number); 
-
-	/* now we assure the max_size */
-	do {
-		x = random() % (min_size);
-		i = random() % n;
-		if(temp[i] == 0)
-			temp[i] += min_size;
-		temp[i] += x;
-
-		sum = 0;
-		for(i = 0; i < n; i++)
-			sum += temp[i];
-	} while( sum < max_size );
-
-	while(sum > max_size) {
-		/* lets find the biggest layer */
-		sum = 0;
-		for(i = 0; i < n; i++) {
-			if(temp[i] > sum) {
-				sum = temp[i];
-				x = i;
-			}
-		}
-		/* now we reduce its size */
-		temp[x] -= min_size;
-		temp[x] /= 2;
-		temp[x] += min_size;
-		/* lets see if its good now */
-		sum = 0;
-		for(i = 0; i < n; i++)
-			sum += temp[i];
-	}
-	if( sum != max_size) {
-		/* add the diference to max_size */
-		i = max_size - sum;
-		temp[x] += i;
-	}
-	/* now lets count the layers != 0 */
-	sum = 0;
-	for(i = 0; i < n; i++) {
-		if(temp[i] != 0)
-			sum++;
-	}
-
-	/* this is the number of layers we are going to return */
-	lays = (unsigned short int *) tsi_malloc(sizeof(unsigned short int) * sum);
-
-	x = 0;
-	for(i = 0; i < n; i++) {
-		if(temp[i] != 0)
-			lays[x++] = temp[i];
-	}
-	tsi_free(temp);
-
-	l->number = sum;
-	l->layer = lays;
-
-	return 0;
-}
-
-
-void printLayers(struct layers_t *lay)
-{
-	int i;
-	for(i = 0; i < lay->number; i++)
-		printf("layer[%d] = %d\n",i,lay->layer[i]);
-}
 
 /* end of file si_math.c */

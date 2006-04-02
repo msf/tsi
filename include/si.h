@@ -30,6 +30,7 @@ typedef struct si_type {
           max_values;  /* max number of wavelet values (for point > 0) */
           
 	/* layers data */
+	int random;
 	int min_size;
 	int min_number;
 
@@ -47,13 +48,21 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY);
 void delete_si(si *s);
 
 
-cm_grid *new_cmgrid(si *s);
+cm_grid *new_cmgrid(si *s, int empty);
+
+int build_cmgrid(cm_grid *g, int nlayers, int *layer_size);
 
 cm_grid *load_cmgrid(si *s);
 
-void store_cmgrid(si *s, cm_grid *g);
+int get_nlayers(cm_grid *g);
+
+int *get_layers(cm_grid *g);
+
+int store_cmgrid(si *s, cm_grid *g);
 
 void delete_cmgrid(cm_grid *g);
+
+void print_layers(cm_grid *g);
 
 #endif /* _SI_H */
 

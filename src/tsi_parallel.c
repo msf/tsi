@@ -50,11 +50,45 @@ int delete_tsi_parallel() {
 
 
 
-int tsi_is_best_parallel(best *corr) {
+int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
+#ifdef TSI_MPI
+    int n_layers, *layers_size;
+
+    nlayers = get_nlayers(g);
+    layers_size = get_layers(g);
+
+    if (MPI_Bcast(&nlayers, 1, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+        printf_dbg2("tsi_set_layers_parallel: failed to broadcast nlayers\n");
+        return 1;
+    }
+
+    if (t->proc_id == t->root_id) {
+        if (MPI_Bcast(layers_size, nlayers, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+            printf_dbg2("tsi_set_layers_parallel: failed to broadcast layers array\n");
+            return 1;
+        }
+    } else {
+        if ((layers_size = (int *) tsi_malloc(sizeof(int) * nlayers)) == NULL) {
+            printf_dbg2("tsi_set_layers_parallel: failed to allocate layers array\n");
+            return 1;
+        }
+        if (MPI_Bcast(layers_size, nlayers, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+            printf_dbg2("tsi_set_layers_parallel: failed to receive layers array\n");
+            return 1;
+        }
+        build_cmgrid(g, nlayers, layers_size);
+    }
+#endif /* TSI_MPI */
+    return 0;
+} /* tsi_set_layers_parallel */
+
+
+
+int tsi_is_best_parallel(tsi *t) {
 #ifdef TSI_MPI
     best result;
 
-    if (MPI_Reduce(corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->n_procs/2, MPI_COMM_WORLD) != MPI_SUCCESS) {
+    if (MPI_Reduce(&t->corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
 	return 1;
     }
@@ -68,23 +102,9 @@ int tsi_is_best_parallel(best *corr) {
 
 int tsi_compare_parallel(tsi *t) {
 #ifdef TSI_MPI
+    return 1;
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel */
-
-
-
-int tsi_generate_layers_parallel(tsi *t, int *nlayers, int **layer_size) {
-    if (t->proc_id == 0) {
-       /* standard code */
-#ifdef TSI
-       /* broadcast layers configuration */
-    } else {
-       /* wait for layer configurations from master node */
-#endif /* TSI_MPI */
-    }
-    return 1;
-} /* tsi_generate_layers_parallel */
-
 
 /* end of tsi_parallel.c */
