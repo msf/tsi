@@ -134,7 +134,7 @@ int read_line_file(TSI_FILE *fp, char *buf) {
 
 
 
-int read_block_file(TSI_FILE *fp, int offset, void *address, int block_size) {
+int read_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size) {
     MPI_Status status;
     if (MPI_File_read_at(*fp, offset, address, block_size, MPI_BYTE, &status) != MPI_SUCCESS) return 0;  /* MPI-2 */
     return offset;
@@ -168,7 +168,7 @@ int write_line_file(TSI_FILE *fp, char *buf) { /* TEST */
 
 
 
-int write_block_file(TSI_FILE *fp, int offset, void *address, int block_size) {
+int write_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size) {
     MPI_Status status;
     if (MPI_File_write_at(*fp, offset, address, block_size, MPI_BYTE, &status) != MPI_SUCCESS) return 0;  /* MPI-2 */
     return offset;

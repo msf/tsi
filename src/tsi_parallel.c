@@ -52,7 +52,7 @@ int delete_tsi_parallel() {
 
 int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
 #ifdef TSI_MPI
-    int n_layers, *layers_size;
+    int nlayers, *layers_size;
 
     nlayers = get_nlayers(g);
     layers_size = get_layers(g);
@@ -88,12 +88,12 @@ int tsi_is_best_parallel(tsi *t) {
 #ifdef TSI_MPI
     best result;
 
-    if (MPI_Reduce(&t->corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+    if (MPI_Reduce(&t->global_corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
 	return 1;
     }
-    corr->value = result.value;
-    corr->proc_id = result.proc_id;
+    t->global_corr.value = result.value;
+    t->global_corr.proc_id = result.proc_id;
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_is_best_parallel */

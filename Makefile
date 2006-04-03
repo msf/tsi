@@ -51,10 +51,8 @@ ifeq ($(COMPILER), mpicc)
 CC       := mpicc
 CPP      := mpiCC
 # use gcc settings
-#CFLAGS   := -pipe -march=pentium2
-#LDFLAGS  :=  -lm -lc -lpthread -lstdc++ -lgcc
-#OPTS     := -DTSI_MPI -DTSI_DEBUG2 -pipe -O3 -ffast-math -m32 -fomit-frame-pointer
-#DEBUG    := -DTSI_MPI -g -pg -ggdb -DTSI_DEBUG2
+OPTS     += -DTSI_MPI
+DEBUG    += -DTSI_MPI
 endif
 
 
