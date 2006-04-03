@@ -140,8 +140,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 			}
 		}
 
-	/* divide corrAvg for number of points to give the average. */
-
+    expand_correlations_grid(s->cmg, CM);
 	
     return 1;
 } /* make_correlations_grid */
@@ -149,8 +148,23 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 
 
 int expand_correlations_grid(cm_grid *cmg, float *CM) {
-	printf_dbg("expand_correlations_grid(): called but not implemented\n");
-    return 1;
+    int z, i, j, n, nxy;
+    float *cg;
+
+    printf_dbg("expand_correlations_grid(): called\n");
+
+    nxy = cmg->nxy;
+    cg = cmg->cg;
+    z = 0;
+    for (i = 0; i < cmg->nlayers; i++) {
+        cg += nxy*i;
+        n = cmg->layer_size[i];
+        for (j = 0; j < n; j++) {
+            memcpy(CM+(nxy*z)+(nxy*j), cg, nxy);
+        }
+        z += n;
+    }
+    return 0;
 } /* expand_correlations_grid */
 
 
