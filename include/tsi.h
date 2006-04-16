@@ -5,18 +5,19 @@
 #include "grid_heap.h"
 #include "dss.h"
 #include "si.h"
+#include "log.h"
 
-
-typedef struct best_type {
+typedef struct corr_type {
     float value;         /* current best global correlation value */
     int   proc_id;       /* process that holds best AI data */
-} best;
+} corr;
 
 
 typedef struct tsi_type {
     /* auxiliar objects */
     registry *reg;            /* reference to the registry */
     grid_heap *heap;          /* reference to the grid heap */
+    log_t *l;                   /* reference to the log */
 
     /* geostats engines */
     dss *dss_eng;             /* reference to the DSS and CoDSS engines */
@@ -29,7 +30,7 @@ typedef struct tsi_type {
 
     /* parallel execution related data */
     unsigned int grid_segsize;   /* grid segment size = (int)grid_size/n_procs */
-    best global_corr;            /* data to be exchanged during parallel isBestAI? */
+    corr global_best;            /* data to be exchanged during parallel isBestAI? */
     int n_procs,                 /* number of processes running */
         proc_id,                 /* process ID */
         root_id,                 /* root process ID */
@@ -40,6 +41,7 @@ typedef struct tsi_type {
         ysize,
         zsize;
     unsigned int grid_size;   /* = xsize * ysize * zsize < 2^32 */
+    unsigned int even_size;
 
     /* grid heap references */
     int seismic_idx,

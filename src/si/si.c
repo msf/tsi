@@ -15,6 +15,7 @@ si *new_si(registry *r, grid_heap *h) {
     int i;
     char buf[64];
 
+    printf_dbg("new_si(): called\n");
     s = (si *) tsi_malloc(sizeof(si));
     if (!s) {
         return NULL;
@@ -119,6 +120,8 @@ int setup_si(si *s) {
 int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
     int result;
 
+    printf_dbg("run_si(): called\n");
+
     /* build reflections grid (use CM as aux grid) */
     result = make_reflections_grid(s, AI, CM);
 
@@ -133,6 +136,7 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
 
 
 void delete_si(si *s) {
+    printf_dbg("delete_si(): called\n");
     if (s) {
        if (s->points) tsi_free(s->points);
        if (s->values) tsi_free(s->values);
@@ -147,6 +151,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
     cm_grid *g;
     int delta, i, x, n, sum, *temp;
     
+    printf_dbg("new_cmgrid(): called\n");
     if ((g = tsi_malloc(sizeof(cm_grid))) == NULL) {
         printf_dbg2("new_cmgrid: failed to allocate space for cm_grid\n");
         return NULL;
@@ -291,6 +296,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
 
 
 int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
+    printf_dbg("build_cmgrid(): called\n");
     if (g == NULL) {
         printf_dbg2("build_cmgrid: unexpected NULL for cm_grid\n");
         return 0;
@@ -307,12 +313,14 @@ int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
 
 
 cm_grid *load_cmgrid(si *s) {
+    printf_dbg("load_cmgrid(): called\n");
     return s->cmg;
 } /* load_cmgrid */
 
 
 
 int get_nlayers(cm_grid *g) {
+    printf_dbg("get_nlayers(): called\n");
     if (g) return g->nlayers;
     return 0;
 } /* load_cmgrid */
@@ -320,6 +328,7 @@ int get_nlayers(cm_grid *g) {
 
 
 int *get_layers(cm_grid *g) {
+    printf_dbg("get_layers(): called\n");
     if (g) return g->layer_size;
     return NULL;
 } /* load_cmgrid */
@@ -327,13 +336,14 @@ int *get_layers(cm_grid *g) {
 
 
 int store_cmgrid(si *s, cm_grid *g) {
-    if (s->cmg) delete_cmgrid(s->cmg);
+    //if (s->cmg) delete_cmgrid(s->cmg);   // fuck-up... to fix...
     s->cmg = g;
 } /* store_cmgrid */
 
 
 
 void delete_cmgrid(cm_grid *g) {
+    printf_dbg("delete_cmgrid(): called\n");
     if (g) {
         if (g->layer_size) tsi_free(g->layer_size);
         if (g->cg) tsi_free(g->cg);

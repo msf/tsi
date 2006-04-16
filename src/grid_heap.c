@@ -8,7 +8,7 @@
 
 #define ALLIGNMENT 16          /* byte allignment */
 
-grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, int xsize, int ysize, int zsize) {
+grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, unsigned int grid_size) {
     grid_heap *h;
     int i;
     char filename[32];
@@ -26,7 +26,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
 
     /* heap constants */
     h->heap_size = heap_size;   /* number of grids in heap */
-    h->grid_size = (unsigned int)xsize * (unsigned int)ysize * (unsigned int)zsize; // + ALLIGNMENT/sizeof(float);
+    h->grid_size = grid_size;
     h->threshold = swap_thr;
     h->use_fs = use_fs;
 

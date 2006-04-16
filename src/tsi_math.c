@@ -3,33 +3,6 @@
 #include "debug.h"
 #include "tsi_math.h"
 
-void update_best_grids(unsigned int size, float *BCM, float *BAI, float *new_ai, float *new_corr)
-{
-	int x, y, z;
-	int i;
-
-	for(i = 0; i < size; i++) {
-		if(BCM[i] < new_corr[i])
-		{
-  		// new best correlation 
-			BCM[i] = new_corr[i];
-			BAI[i] = new_ai[i];
-		}
-	}
-	
-	/*
-	for(x=0; x<BCM->x_max; x++)
-		for(y=0; y<BCM->y_max; y++)
-			for(z=0; z<BCM->z_max; z++) {
-				if (BCM->values[BCM->Coords(x,y,z)] < new_corr->values[BCM->Coords(x,y,z)]) {
-					// new best correlation 
-					BCM->values[BCM->Coords(x,y,z)] = new_corr->values[BCM->Coords(x,y,z)];
-					BAI->values[BCM->Coords(x,y,z)] = new_ai->values[BCM->Coords(x,y,z)];
-				}
-			}
-	*/
-}
-
 /**
  * calculate the global correlation between two grids
  */ 
@@ -44,6 +17,7 @@ double grid_correlation(float *A, float *B, unsigned int size) {
     double sum_B_2 = 0;
     double denom = 0;
 
+    printf_dbg("grid_correlation(): called\n");
     for (i = 0; i < size; i++) {
         sum_B  += B[i];
         sum_B2 += B[i] * B[i];
@@ -75,6 +49,7 @@ double nth_root(double xx, int nn) {
     double vdelta,diff,testval,midpnt,lower,upper;
     double xu,epsilon,sign;
 
+    printf_dbg("nth_root(): called\n");
     epsilon = 0.00000001;
     xu = xx;
     sign = 1.0;

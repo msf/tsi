@@ -18,7 +18,7 @@ dss *new_dss(registry *r, grid_heap *h) {
     TSI_FILE *fp;
     char hdbuf[64];
 
-
+    printf_dbg("new_dss(): called\n");
     /* object space allocation */
     d = (dss *) tsi_malloc(sizeof(dss));
     d->general    = (general_vars_t *) tsi_malloc(sizeof(general_vars_t));
@@ -87,6 +87,7 @@ dss *new_dss(registry *r, grid_heap *h) {
 
 
 int setup_dss(dss *d, float *currBAI) {
+    printf_dbg("setup_dss(): called\n");
     d->general->ktype = 1;
     if (currBAI) d->general->ktype = 5;
     readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
@@ -98,6 +99,7 @@ int setup_dss(dss *d, float *currBAI) {
 int run_dss(dss *d, float *AI) {
     int *order, *mask;
 
+    printf_dbg("run_dss(): called\n");
     d->covtab_idx = new_grid(d->heap);
     d->ixnode_idx = new_grid(d->heap);
     d->iynode_idx = new_grid(d->heap);
@@ -133,6 +135,7 @@ int run_dss(dss *d, float *AI) {
 int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     int *order, *mask;
 
+    printf_dbg("run_codss(): called\n");
     d->covtab_idx = new_grid(d->heap);
     d->ixnode_idx = new_grid(d->heap);
     d->iynode_idx = new_grid(d->heap);
@@ -165,6 +168,7 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
 
 
 void delete_dss(dss *d) {
+    printf_dbg("delete_dss(): called\n");
     if (d) {
         if (d->general) {
             if (d->general->x) tsi_free(d->general->x);

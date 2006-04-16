@@ -15,23 +15,23 @@ float index_value(si *s, int index);
 
 unsigned int getPoint(si *s, int x, int y, int z)
 {
-
 //	return (x-1) + ( (y-1) * s->xsize) + ( (z-1) * s->xsize * s->ysize);
-	return ((z)* s->xsize * s->ysize + (y) * s->xsize + (x+1)) - 1;
+//	return ((z)* s->xsize * s->ysize + (y) * s->xsize + (x+1)) - 1;
+	return (z * s->xsize * s->ysize + y * s->xsize + x);
 }
 
 int make_reflections_grid(si *s, float *AI, float *RG) 
 {
-
 	unsigned int x, y, z;
 	double value;
 
+	printf_dbg("make_reflections_grid(): called\n");
 	for(x = 0; x < s->xsize; x++)
 		for(y = 0; y < s->ysize; y++)
 			for(z = 0; z < s->zsize -1; z++) {
 				 value = (AI[getPoint(s,x,y,z+1)]-AI[getPoint(s,x,y,z)]) /
 					     (AI[getPoint(s,x,y,z+1)]+AI[getPoint(s,x,y,z)]);
-	             RG[getPoint(s,x,y,z)] = value; 
+	             RG[getPoint(s,x,y,z)] = value;
 			}
 	for(x = 0; x < s->xsize; x++)
 		for(y = 0; y < s->ysize; y++)
@@ -45,10 +45,10 @@ int make_reflections_grid(si *s, float *AI, float *RG)
  * creates a syntetic seismic grid.
  */
 int make_synthetic_grid(si *s, float *RG, float *SY) {
-	printf_dbg2("make_syntethic_grid(): called\n");
 	int x, y, z;
 	int wavelet_spots;
 
+	printf_dbg("make_synthetic_grid(): called\n");
 	wavelet_spots = s->wavelet_used_values / 2;
 
 	memset(SY,0,s->grid_size);
@@ -77,8 +77,6 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
  */
 int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM) 
 {
-	printf_dbg2("make_correlations_grid(): called\n");
-
 	int x, y, z;
 	int i, z1, z2;
 	int temp;
@@ -92,6 +90,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 
 	int n, nlayers, *layer_size;
 
+	printf_dbg("make_correlations_grid(): called\n");
         corr_grid = s->cmg->cg;   /* compressed grid */
         nlayers = s->cmg->nlayers;
         layer_size = s->cmg->layer_size;

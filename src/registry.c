@@ -217,7 +217,7 @@ reg_key *get_key_from_klist(reg_key *key, char* section, char *parm)
         else
             return key;
     }
-    printf_dbg("Failed to get key %s:%s from registry!", section, parm);
+    printf_dbg("Failed to get key %s:%s from registry!\n", section, parm);
     return NULL;
 } /* get_key */
 
@@ -232,7 +232,7 @@ reg_key *get_key(registry *reg, char *section, char *parm)
         else
             return get_key_from_klist(reg->klist, section, parm);
     }
-    printf_dbg("Failed to get key %s:%s from registry!", section, parm);
+    printf_dbg("Failed to get key %s:%s from registry!\n", section, parm);
     return NULL;
 } /* get_key */
 

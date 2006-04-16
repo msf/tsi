@@ -86,8 +86,14 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
 
 int tsi_is_best_parallel(tsi *t) {
 #ifdef TSI_MPI
-    best result;
+    corr result, corr_data;
+    int i;
 
+    t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
+    t->nextBCM = load_grid(t->heap, t->nextBAI_idx);
+    t->AI = load_grid(t->heap, t->nextBAI_idx);
+    t->CM = load_grid(t->heap, t->nextBAI_idx);
+    for (
     if (MPI_Reduce(&t->global_corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
 	return 1;
@@ -102,6 +108,7 @@ int tsi_is_best_parallel(tsi *t) {
 
 int tsi_compare_parallel(tsi *t) {
 #ifdef TSI_MPI
+    corr result;
     return 1;
 #endif /* TSI_MPI */
     return 0;
