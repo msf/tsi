@@ -86,20 +86,14 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
 
 int tsi_is_best_parallel(tsi *t) {
 #ifdef TSI_MPI
-    corr result, corr_data;
-    int i;
+    corr result;
 
-    t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
-    t->nextBCM = load_grid(t->heap, t->nextBAI_idx);
-    t->AI = load_grid(t->heap, t->nextBAI_idx);
-    t->CM = load_grid(t->heap, t->nextBAI_idx);
-    for (
-    if (MPI_Reduce(&t->global_corr, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+    if (MPI_Reduce(&t->global_best, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
-	return 1;
+        return 1;
     }
-    t->global_corr.value = result.value;
-    t->global_corr.proc_id = result.proc_id;
+    t->global_best.value = result.value;
+    t->global_best.proc_id = result.proc_id;
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_is_best_parallel */
@@ -108,8 +102,34 @@ int tsi_is_best_parallel(tsi *t) {
 
 int tsi_compare_parallel(tsi *t) {
 #ifdef TSI_MPI
-    corr result;
-    return 1;
+    corr corr_data, result;
+    int i;
+    unsigned int j;
+    float ai_val;
+    
+    t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
+    t->nextBCM = load_grid(t->heap, t->nextBAI_idx);
+    t->ai = load_grid(t->heap, t->nextBAI_idx);
+    t->cm = load_grid(t->heap, t->nextBAI_idx);
+    j = 0;
+    for (i = 0; i < t->grid_size; i++) {
+        corr_data.value = t->cm[i];
+        corr_data.proc_id = t->proc_id;
+        if (MPI_Reduce(&corr_data, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+            printf_dbg("tsi_compare_parallel(): Failed to execute CM reduce\n");
+	    return 1;
+        }
+        if (result.value > corr_data.value) {
+            t->cm[i] = result.value;
+            ai_val = t->ai[i];
+            if (MPI_Bcast(&ai_val, 1, MPI_FLOAT, result.proc_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
+                printf_dbg("tsi_compare_parallel: failed to broadcast new AI value\n");
+                return 1;
+            }
+            t->nextBAI[i] = ai_val;
+            j++;
+        }
+    }
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel */

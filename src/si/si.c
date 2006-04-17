@@ -95,14 +95,14 @@ si *new_si(registry *r, grid_heap *h) {
        delete_si(s);
        return NULL;
     }
-       s->min_number = get_int(k);
+    s->min_number = get_int(k);
 
     if ((k = get_key(r, "CORR", "LAYER_SIZE_MIN")) == NULL) {
        printf_dbg("new_si: failed to get size of layers setting from the registry!\n");
        delete_si(s);
        return NULL;
     }
-       s->min_size = get_int(k);
+    s->min_size = get_int(k);
 
     return s;
 } /* new_si */
@@ -110,7 +110,7 @@ si *new_si(registry *r, grid_heap *h) {
 
 
 int setup_si(si *s) {
-	printf_dbg("setup_si(): called but not implemented\n");
+    printf_dbg("setup_si(): called but not implemented\n");
     /* generate new set of layers */
     return 1;
 }
@@ -119,14 +119,16 @@ int setup_si(si *s) {
 
 int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
     int result;
+    float *RG;
 
+    RG = CM;
     printf_dbg("run_si(): called\n");
 
     /* build reflections grid (use CM as aux grid) */
-    result = make_reflections_grid(s, AI, CM);
+    result = make_reflections_grid(s, AI, RG);
 
     /* build synthetic grid */
-    result = make_synthetic_grid(s, CM, SY);   /* CM has reflections grid */
+    result = make_synthetic_grid(s, RG, SY);   /* CM has reflections grid */
 	
     /* build correlations cube, use CM has resulting correlations Grid */
     result = make_correlations_grid(s, seismic, SY, CM);
