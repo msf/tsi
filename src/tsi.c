@@ -498,33 +498,110 @@ int run_tsi(tsi *t) {
         getCurrTime(&t2);
         printf_dbg("run_tsi(%d): New set of layers took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
 
-        for (i = 0; i < t->simulations; i++) {
-        printf_dbg("run_tsi(%d): iteration %d, simulation %d\n", t->proc_id, j, i);
+        t->currBAI_idx = t->nextBAI_idx;
+        t->currBCM_idx = t->nextBCM_idx;
+        t->nextBAI_idx = -1;
+        t->nextBCM_idx = -1;
+        t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        setup_dss(t->dss_eng, t->currBAI);
 
-            if (i == 0) { /* first simulation */
-                t->currBAI_idx = new_grid(t->heap); 
-                t->currBCM_idx = new_grid(t->heap);
-                t->currBAI = load_grid(t->heap, t->currBAI_idx);
-                t->currBCM = load_grid(t->heap, t->currBCM_idx);
-                t->nextBAI = load_grid(t->heap, t->nextBCM_idx);
-                t->nextBCM = load_grid(t->heap, t->nextBAI_idx);
-                grid_copy(t->currBAI, t->nextBAI, t->grid_size);
-                grid_copy(t->currBCM, t->nextBCM, t->grid_size);
-                clear_grid(t->heap, t->nextBAI_idx);
-                clear_grid(t->heap, t->nextBCM_idx);
-                setup_dss(t->dss_eng, t->currBAI);
-            } /* if */
-            
+        /* CODSS n/1 */
+        if ((t->ai_idx = new_grid(t->heap)) < 0) {
+            printf_dbg("run_tsi(%d): failed to allocate AI grid n/1\n", t->proc_id);
+            delete_tsi(t);
+            return 0;
+        }
+        printf_dbg2("run_tsi(%d): loading AI grid n/1\n", t->proc_id);
+        t->ai = load_grid(t->heap, t->ai_idx);
+        printf_dbg2("run_tsi(%d): loading currBCM grid n/1\n", t->proc_id);
+        t->currBCM = load_grid(t->heap, t->currBCM_idx);
+        printf_dbg2("run_tsi(%d): loading currBAI grid n/n\n", t->proc_id);
+        t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        if (t->ai && t->currBAI && t->currBCM) {
+            getCurrTime(&t1);
+            result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> fuck-up */
+            getCurrTime(&t2);
+        } else {
+            printf_dbg("run_tsi(%d): failed to load AI, currBAI or currBCM for CoDSS! n/1\n", t->proc_id);
+            return 0;
+        }
+        clear_grid(t->heap, t->currBAI_idx);
+        clear_grid(t->heap, t->currBCM_idx);
+        printf_dbg("run_tsi(%d): DSS terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+
+
+        /* SI */
+        if (result) {
+            t->seismic = load_grid(t->heap, t->seismic_idx);
+            printf_dbg2("run_tsi(%d): loading SY n/n\n", t->proc_id);
+            if ((t->cm_idx = new_grid(t->heap)) < 0) {
+                printf_dbg("run_tsi(%d): failed to allocate CM grid\n", t->proc_id);
+                delete_tsi(t);
+                return 0;
+            }
+            if ((t->sy_idx = new_grid(t->heap)) < 0) {
+                printf_dbg("run_tsi(%d): failed to allocate SY grid\n", t->proc_id);
+                delete_tsi(t);
+                return 0;
+            }
+            printf_dbg2("run_tsi(%d): loading CM n/n\n", t->proc_id);
+            t->cm = load_grid(t->heap, t->cm_idx);
+            printf_dbg2("run_tsi(%d): loading seismic n/n\n", t->proc_id);
+            t->sy = load_grid(t->heap, t->sy_idx);
+            if (t->cm && t->seismic && t->sy) {
+                printf_dbg("run_tsi(%d): running CoDSS n/1\n", t->proc_id);
+                getCurrTime(&t1);
+                result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
+                getCurrTime(&t2);
+            } else {
+                printf_dbg("run_tsi(%d): failed to load CM, Seismic or SY for SI! n/1\n", t->proc_id);
+                return 0;
+            }
+        } else {
+            printf_dbg("run_tsi(%d): CoDSS simulation failed! n/1\n", t->proc_id);
+            return 0;
+        }
+        printf_dbg("run_tsi(%d): SI terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+
+        /* first isBest/Compare (optimal execution) 1/1 */
+        getCurrTime(&t1);
+        ai_corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
+        clear_grid(t->heap, t->seismic_idx);
+
+        if (ai_corr > t->global_best.value) {
+            t->global_best.value = ai_corr;
+            delete_grid(t->heap, t->bestAI_idx);   /* new bestAI, delete old */
+            t->bestAI_idx = t->ai_idx;
+            printf("\nNEW BEST CORRELATION = %f\n\n", t->global_best.value);
+            grid_copy(t->sy, t->ai, t->grid_size);     /* nextBAI = bestAI = AI at this stage (t->sy as aux grid) */
+            t->nextBAI_idx = t->sy_idx;
+            dirty_grid(t->heap, t->bestAI_idx);
+        } else {
+            delete_grid(t->heap, t->sy_idx);
+            t->nextBAI_idx = t->ai_idx;
+        }
+        dirty_grid(t->heap, t->nextBAI_idx);
+
+        t->nextBCM_idx = t->cm_idx;  /* nextBCM = CM at this stage */
+        dirty_grid(t->heap, t->nextBCM_idx);
+        t->ai_idx = t->cm_idx = t->sy_idx = -1;  /* free aux grids */
+        getCurrTime(&t2);
+        printf_dbg("run_tsi(%d): Compare execution took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
+
+
+        for (i = 1; i < t->simulations; i++) {
+            printf_dbg("run_tsi(%d): iteration %d, simulation %d\n", t->proc_id, j, i);
+
             /* CODSS n/n */
             if ((t->ai_idx = new_grid(t->heap)) < 0) {
                 printf_dbg("run_tsi(%d): failed to allocate AI grid n/1\n", t->proc_id);
                 delete_tsi(t);
                 return 0;
             }
-            printf_dbg2("run_tsi(%d): loading currBCM grid n/1\n", t->proc_id);
-            t->currBCM = load_grid(t->heap, t->currBCM_idx);
             printf_dbg2("run_tsi(%d): loading AI grid n/1\n", t->proc_id);
             t->ai = load_grid(t->heap, t->ai_idx);
+            printf_dbg2("run_tsi(%d): loading currBCM grid n/1\n", t->proc_id);
+            t->currBCM = load_grid(t->heap, t->currBCM_idx);
             printf_dbg2("run_tsi(%d): loading currBAI grid n/n\n", t->proc_id);
             t->currBAI = load_grid(t->heap, t->currBAI_idx);
             if (t->ai && t->currBAI && t->currBCM) {

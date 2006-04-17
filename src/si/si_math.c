@@ -140,7 +140,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
     int n, nlayers, *layer_size;
     struct timeval t1, t2;
 
-    printf_dbg("make_correlations_grid(): called");
+    printf_dbg("make_correlations_grid(): called\n");
     getCurrTime(&t1);
     corr_grid = s->cmg->cg;   /* compressed grid */
     nlayers = s->cmg->nlayers;
@@ -188,7 +188,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
        
     expand_correlations_grid(s->cmg, CM);
     getCurrTime(&t2);
-    printf_dbg(" (%f secs)\n", getElapsedTime(&t1, &t2));
+    printf_dbg("make_synthetic_grid(): finished (%f secs)\n", getElapsedTime(&t1, &t2));
 	
     return 1;
 } /* make_correlations_grid */
@@ -198,18 +198,22 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 int expand_correlations_grid(cm_grid *cmg, float *CM) {
     int z, i, j, n, nxy;
     float *cg;
+    float *t;
 
+    printf_dbg("expand_correlations_grid(): called\n");
     nxy = cmg->nxy;
-    cg = cmg->cg;
     z = 0;
     for (i = 0; i < cmg->nlayers; i++) {
-        cg += nxy*i;
+        cg =  &cmg->cg[nxy*i]; // next layer
         n = cmg->layer_size[i];
         for (j = 0; j < n; j++) {
-            memcpy(CM+(nxy*z)+(nxy*j), cg, nxy);
+	    t = &CM[(nxy*z) + (nxy*j)];
+	    printf_dbg2("expand...: z=%d, i=%d\n", z+j, i);
+            memcpy(t, cg, (nxy * sizeof(float)));
         }
         z += n;
     }
+    printf_dbg("expand_correlations_grid(): finished\n");
     return 0;
 } /* expand_correlations_grid */
 

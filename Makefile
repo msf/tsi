@@ -3,15 +3,15 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-#COMPILER := gcc
+COMPILER := gcc
 
 # Default settings for gcc
-CC       := gcc-3.4
-CPP      := g++-3.4
+CC       := gcc
+CPP      := g++
 CFLAGS   := -pipe 
 LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
 OPTS     := -O3 -ffast-math -fomit-frame-pointer 
-OPTS	+= -march=pentium-m
+#OPTS	+= -march=pentium-m
 #OPTS	+= -m32
 OPTS	+= -DTSI_DEBUG
 #OPTS     += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
@@ -23,7 +23,8 @@ OPTS	+= -DTSI_DEBUG
 #OPTS     += -freorder-blocks -freorder-functions -funit-at-a-time
 #OPTS     += -falign-functions  -falign-jumps -falign-loops  -falign-labels
 #OPTS     += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
-DEBUG    := -g -pg -ggdb -DTSI_DEBUG2
+DEBUG    := -g -ggdb -DTSI_DEBUG
+#DEBUG    += -pg
 DEBUG    += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
 #DEBUG    += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow -pedantic-errors
 #DEBUG    += -Wunreachable-code -Wdisabled-optimization
@@ -149,6 +150,7 @@ wc:
 clean: FORCE
 	rm -f $(RELEASE_DIR)/*.o $(DEBUG_DIR)/*.o $(DEBUG_TARGET) $(RELEASE_TARGET)
 	rm -f *~ $(SOURCE_DIR)/*~ $(DSS_DIR)/*~ $(SI_DIR)/*~ $(INCLUDE_DIR)/*~ gmon.out
+	rm -f core
 
 all: release debug
 
