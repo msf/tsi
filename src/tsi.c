@@ -285,18 +285,19 @@ int run_tsi(tsi *t) {
     if (result) {
         /* random layers */
         getCurrTime(&t1);
-        if (t->proc_id == t->root_id) {
+        if (t->proc_id == t->root_id) { // MPI
             cmg = new_cmgrid(t->si_eng, 0);    /* generate new set of layers */
             printf("New set of layers:\n");
-            print_layers(cmg);
         } else {
             cmg = new_cmgrid(t->si_eng, 1);    /* return an empty cm_grid */
         }
+		
         if (tsi_set_layers_parallel(t, cmg)) {
             printf_dbg("run_tsi(%d): failed to set layers\n", t->proc_id);
             delete_tsi(t);
             return 0;
-        }
+		}
+		print_layers(cmg);
         store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
         getCurrTime(&t2);
         printf_dbg("run_tsi(%d): New set of layers took %f secs\n\n",t->proc_id,getElapsedTime(&t1,&t2));
@@ -459,6 +460,7 @@ int run_tsi(tsi *t) {
         printf_dbg("run_tsi(%d): Compare execution took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
         
 		// TODO: REMOVE THIS
+		/*
 		printf_dbg("run_tsi(): DUMPING BAI & BCM!\n");
 		fp = create_file("BAI.out");
 		write_ascii_grid_file(fp, t->nextBAI, t->grid_size);
@@ -466,6 +468,7 @@ int run_tsi(tsi *t) {
 		fp = create_file("BCM.out");
 		write_ascii_grid_file(fp, t->nextBCM, t->grid_size);
 		close_file(fp);
+		*/
 		// --end--
 		
         delete_grid(t->heap, t->cm_idx);
@@ -496,10 +499,10 @@ int run_tsi(tsi *t) {
         if (t->proc_id == t->root_id) {
             cmg = new_cmgrid(t->si_eng, 0);    /* generate new set of layers */
             printf("New set of layers:\n");
-            print_layers(cmg);
         } else {
             cmg = new_cmgrid(t->si_eng, 1);    /* return an empty cm_grid */
-        }
+		}
+		print_layers(cmg);
         if (tsi_set_layers_parallel(t, cmg)) {
             printf_dbg("run_tsi(%d): failed to set layers\n", t->proc_id);
             delete_tsi(t);
@@ -706,6 +709,7 @@ int run_tsi(tsi *t) {
             printf_dbg("run_tsi(%d): (%d/%d) Compare terminated (%f secs)\n",t->proc_id,j,i,getElapsedTime(&t1,&t2));
 
 			// TODO: REMOVE THIS
+			/*
 			printf_dbg("run_tsi(): (%d/%d) DUMPING BAI & BCM!\n",j,i);
 			fp = create_file("BAI.out");
 			write_ascii_grid_file(fp, t->nextBAI, t->grid_size);
@@ -713,6 +717,7 @@ int run_tsi(tsi *t) {
 			fp = create_file("BCM.out");
 			write_ascii_grid_file(fp, t->nextBCM, t->grid_size);
 			close_file(fp);
+			*/
 			// --end--
 
         } /* for (simulations) */

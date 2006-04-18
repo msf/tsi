@@ -228,7 +228,7 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
 
 float point_value(si* s, int point) 
 {
-    printf_dbg2("Point %d is at array position %d.\n", point, (s->wavelet_used_values / 2) + point);
+   // printf_dbg2("Point %d is at array position %d.\n", point, (s->wavelet_used_values / 2) + point);
     return (s->values[(s->wavelet_used_values / 2) + point]);
 } /* point_value */
 
