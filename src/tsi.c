@@ -258,30 +258,30 @@ int run_tsi(tsi *t) {
 
     printf_dbg("run_tsi(%d): first iteration, first_simulation\n", t->proc_id);
 
-    /* DSS 1/1 */
+    /* DSS 0/0 */
     setup_dss(t->dss_eng, NULL);
-    printf_dbg2("run_tsi(%d): loading AI grid 1/1\n", t->proc_id);
+    printf_dbg2("run_tsi(%d): loading AI grid 0/0\n", t->proc_id);
     if ((t->ai_idx = new_grid(t->heap)) < 0) {
-        printf_dbg("new_tsi(%d): failed to allocate AI grid 1/1\n", t->proc_id);
+        printf_dbg("new_tsi(%d): failed to allocate AI grid 0/0\n", t->proc_id);
         delete_tsi(t);
         return 0;
     }
     t->ai = load_grid(t->heap, t->ai_idx);
-	printf_dbg("\nrun_tsi(%d): DSS is starting \n",t->proc_id);
+	printf_dbg("\nrun_tsi(%d): (0/0) DSS is starting \n",t->proc_id);
     if (t->ai) {
-        printf_dbg("run_tsi(%d): running DSS 1/1\n", t->proc_id);
+        printf_dbg("run_tsi(%d): running DSS\n", t->proc_id);
         getCurrTime(&t1);
         result = run_dss(t->dss_eng, t->ai);
         getCurrTime(&t2);
     } else {
-        printf_dbg("run_tsi(%d): failed to load AI for DSS 1/1\n", t->proc_id);
+        printf_dbg("run_tsi(%d): failed to load AI for DSS 0/0\n", t->proc_id);
         return 0;
     }
 
-    printf_dbg("run_tsi(%d): DSS terminated (%f secs)\n\n",t->proc_id,getElapsedTime(&t1,&t2));
+    printf_dbg("run_tsi(%d): (0/0) DSS terminated (%f secs)\n\n",t->proc_id,getElapsedTime(&t1,&t2));
     
 
-    /* SI 1/1 */
+    /* SI 0/0 */
     if (result) {
         /* random layers */
         getCurrTime(&t1);
@@ -302,43 +302,43 @@ int run_tsi(tsi *t) {
         printf_dbg("run_tsi(%d): New set of layers took %f secs\n\n",t->proc_id,getElapsedTime(&t1,&t2));
 
         /* load data and grids for SI */
-        printf_dbg2("run_tsi(%d): loading seismic 1/1\n", t->proc_id);
+        printf_dbg2("run_tsi(%d): loading seismic 0/0\n", t->proc_id);
         t->seismic = load_grid(t->heap, t->seismic_idx);
         if ((t->cm_idx = new_grid(t->heap)) < 0) {
-            printf_dbg("run_tsi(%d): failed to allocate CM grid 1/1\n", t->proc_id);
+            printf_dbg("run_tsi(%d): failed to allocate CM grid 0/0\n", t->proc_id);
             delete_tsi(t);
             return 0;
         }
         if ((t->sy_idx = new_grid(t->heap)) < 0) {
-            printf_dbg("run_tsi(%d): failed to allocate SY grid 1/1\n", t->proc_id);
+            printf_dbg("run_tsi(%d): failed to allocate SY grid 0/0\n", t->proc_id);
             delete_tsi(t);
             return 0;
         }
-        printf_dbg2("run_tsi(%d): loading CM 1/1\n", t->proc_id);
+        printf_dbg2("run_tsi(%d): loading CM 0/0\n", t->proc_id);
         t->cm = load_grid(t->heap, t->cm_idx);
-        printf_dbg2("run_tsi(%d): loading SY 1/1\n", t->proc_id);
+        printf_dbg2("run_tsi(%d): loading SY 0/0\n", t->proc_id);
         t->sy = load_grid(t->heap, t->sy_idx);
 
         /* run Seismic Inversion if all went well */
         if (t->cm && t->seismic && t->sy) {
-            printf_dbg2("run_tsi(%d): running SI 1/1\n", t->proc_id);
+            printf_dbg2("run_tsi(%d): (0/0) running SI\n", t->proc_id);
             getCurrTime(&t1);
             result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);  /* 4 grids */
             getCurrTime(&t2);
         } else {
-            printf_dbg("run_tsi(%d): failed to load CM, Seismic or SY for SI! 1/1\n", t->proc_id);
+            printf_dbg("run_tsi(%d): failed to load CM, Seismic or SY for SI! 0/0\n", t->proc_id);
             return 0;
         }
     } else {
-        printf_dbg("run_tsi(%d): DSS failed! 1/1\n", t->proc_id);
+        printf_dbg("run_tsi(%d): (0/0) DSS failed!\n", t->proc_id);
         return 0;
     }
-    printf_dbg("run_tsi(%d): SI execution took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
+    printf_dbg("run_tsi(%d): (0/0) SI execution took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
 
     /* first isBest/Compare (optimal execution) 1/1 */
     getCurrTime(&t1);
     t->global_best.value = grid_correlation(t->sy, t->seismic, t->grid_size);    /* first best correlation */
-    printf("\nCurrent best correlation = %f\n\n", t->global_best.value);
+    printf("\n\t\t (0/0) Current best correlation = %f\n\n", t->global_best.value);
     clear_grid(t->heap, t->seismic_idx);
 
     grid_copy(t->sy, t->ai, t->grid_size);     /* nextBAI = bestAI = AI at this stage */
@@ -369,7 +369,7 @@ int run_tsi(tsi *t) {
         printf_dbg2("run_tsi(%d): loading AI grid 1/n\n", t->proc_id);
         t->ai = load_grid(t->heap, t->ai_idx);
         if (t->ai) {
-            printf_dbg("run_tsi(%d): running DSS 1/n\n", t->proc_id);
+            printf_dbg("run_tsi(%d): (0/%d) running DSS!\n", t->proc_id,i);
             getCurrTime(&t1);
             result = run_dss(t->dss_eng, t->ai);
             getCurrTime(&t2);
@@ -377,7 +377,7 @@ int run_tsi(tsi *t) {
             printf_dbg("run_tsi(%d): failed to load AI for DSS 1/n\n", t->proc_id);
             return 0;
         }
-        printf_dbg("run_tsi(%d): DSS terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+        printf_dbg("run_tsi(%d): (0/%d) DSS terminated (%f secs)\n",t->proc_id,i,getElapsedTime(&t1,&t2));
 
         /* SI 1/n */
         if (result) {
@@ -401,7 +401,7 @@ int run_tsi(tsi *t) {
 
 			/* run Seismic Inversion if all went well */
             if (t->cm && t->seismic && t->sy) {
-                printf_dbg("run_tsi(): running SI \n");
+                printf_dbg("run_tsi(): (0/%d) running SI \n",i);
                 getCurrTime(&t1);
                 result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
                 getCurrTime(&t2);
@@ -410,30 +410,31 @@ int run_tsi(tsi *t) {
                 return 0;
             }
         } else {
-            printf_dbg("run_tsi(): DSS failed!\n");
+            printf_dbg("run_tsi(): (0/%d) DSS failed!\n",i);
             return 0;
         }
-        printf_dbg("run_tsi(%d): SI execution took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
+        printf_dbg("run_tsi(%d): (0/%d) SI execution took %f secs\n",t->proc_id,i,getElapsedTime(&t1,&t2));
 
         /* Is best? 1/n */
         getCurrTime(&t1);
         if (result) {
             printf_dbg("run_tsi(): checking best global correlation\n");
             ai_corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
+			printf_dbg("isBest(0/%d): grid correlation: %f\n",i,ai_corr);
             if (ai_corr > t->global_best.value) {
                 t->global_best.value = ai_corr;
                 delete_grid(t->heap, t->bestAI_idx);   /* new bestAI, delete old */
                 t->bestAI_idx = t->ai_idx;
-                printf("\nNEW BEST CORRELATION = %f\n\n", t->global_best.value);
+                printf("\n\t\t\t(t/%d) NEW BEST CORRELATION = %f\n\n",i, t->global_best.value);
             }
             clear_grid(t->heap, t->seismic_idx);
         } else {
-            printf_dbg("run_tsi(): SI failed!\n");
+            printf_dbg("run_tsi(): (0/%d) SI failed!\n",i);
             return 0;
         }
         
         /* Compare 1/n */
-        printf_dbg("run_tsi(): running Compare\n");
+        printf_dbg("run_tsi(): (0/%d) running Compare\n",i);
         t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
         t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
         if (t->nextBAI && t->nextBCM)
@@ -457,6 +458,16 @@ int run_tsi(tsi *t) {
         getCurrTime(&t2);
         printf_dbg("run_tsi(%d): Compare execution took %f secs\n",t->proc_id,getElapsedTime(&t1,&t2));
         
+		// TODO: REMOVE THIS
+		printf_dbg("run_tsi(): DUMPING BAI & BCM!\n");
+		fp = create_file("BAI.out");
+		write_ascii_grid_file(fp, t->nextBAI, t->grid_size);
+		close_file(fp);
+		fp = create_file("BCM.out");
+		write_ascii_grid_file(fp, t->nextBCM, t->grid_size);
+		close_file(fp);
+		// --end--
+		
         delete_grid(t->heap, t->cm_idx);
         delete_grid(t->heap, t->sy_idx);
         t->ai_idx = t->cm_idx = t->sy_idx = -1;  /* free aux grids */
@@ -517,7 +528,8 @@ int run_tsi(tsi *t) {
         t->currBCM = load_grid(t->heap, t->currBCM_idx);
         printf_dbg2("run_tsi(%d): loading currBAI grid n/n\n", t->proc_id);
         t->currBAI = load_grid(t->heap, t->currBAI_idx);
-        if (t->ai && t->currBAI && t->currBCM) {
+		if (t->ai && t->currBAI && t->currBCM) {
+			printf_dbg("run_tsi(%d): (%d/0) running CoDSS \n", t->proc_id, j);
             getCurrTime(&t1);
             result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> fuck-up */
             getCurrTime(&t2);
@@ -527,7 +539,7 @@ int run_tsi(tsi *t) {
         }
         clear_grid(t->heap, t->currBAI_idx);
         clear_grid(t->heap, t->currBCM_idx);
-        printf_dbg("run_tsi(%d): DSS terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+        printf_dbg("run_tsi(%d): (%d/0) CoDSS terminated (%f secs)\n",t->proc_id,j,getElapsedTime(&t1,&t2));
 
 
         /* SI */
@@ -549,7 +561,7 @@ int run_tsi(tsi *t) {
             printf_dbg2("run_tsi(%d): loading seismic n/n\n", t->proc_id);
             t->sy = load_grid(t->heap, t->sy_idx);
             if (t->cm && t->seismic && t->sy) {
-                printf_dbg("run_tsi(%d): running CoDSS n/1\n", t->proc_id);
+                printf_dbg("run_tsi(%d): (%d/0) running SI\n", t->proc_id,j);
                 getCurrTime(&t1);
                 result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
                 getCurrTime(&t2);
@@ -558,21 +570,22 @@ int run_tsi(tsi *t) {
                 return 0;
             }
         } else {
-            printf_dbg("run_tsi(%d): CoDSS simulation failed! n/1\n", t->proc_id);
+            printf_dbg("run_tsi(%d): SI simulation failed!\n", t->proc_id);
             return 0;
         }
-        printf_dbg("run_tsi(%d): SI terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+        printf_dbg("run_tsi(%d): (%d/0) SI terminated (%f secs)\n",t->proc_id,j,getElapsedTime(&t1,&t2));
 
         /* first isBest/Compare (optimal execution) 1/1 */
         getCurrTime(&t1);
         ai_corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
+		printf_dbg("isBest(%d/0): grid correlation: %f\n",j,ai_corr);
         clear_grid(t->heap, t->seismic_idx);
 
         if (ai_corr > t->global_best.value) {
             t->global_best.value = ai_corr;
             delete_grid(t->heap, t->bestAI_idx);   /* new bestAI, delete old */
             t->bestAI_idx = t->ai_idx;
-            printf("\nNEW BEST CORRELATION = %f\n\n", t->global_best.value);
+            printf("\n\t\t\ti (%d/0) NEW BEST CORRELATION = %f\n\n", j,t->global_best.value);
             grid_copy(t->sy, t->ai, t->grid_size);     /* nextBAI = bestAI = AI at this stage (t->sy as aux grid) */
             t->nextBAI_idx = t->sy_idx;
             dirty_grid(t->heap, t->bestAI_idx);
@@ -604,7 +617,8 @@ int run_tsi(tsi *t) {
             t->currBCM = load_grid(t->heap, t->currBCM_idx);
             printf_dbg2("run_tsi(%d): loading currBAI grid n/n\n", t->proc_id);
             t->currBAI = load_grid(t->heap, t->currBAI_idx);
-            if (t->ai && t->currBAI && t->currBCM) {
+			if (t->ai && t->currBAI && t->currBCM) {
+				printf_dbg("run_tsi(%d): (%d/%d) running CoDSS \n", t->proc_id, j,i);
                 getCurrTime(&t1);
                 result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> fuck-up */
                 getCurrTime(&t2);
@@ -614,7 +628,7 @@ int run_tsi(tsi *t) {
             }
             clear_grid(t->heap, t->currBAI_idx);
             clear_grid(t->heap, t->currBCM_idx);
-            printf_dbg("run_tsi(%d): DSS terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+            printf_dbg("run_tsi(%d): (%d/%d) CoDSS terminated (%f secs)\n",t->proc_id,j,i,getElapsedTime(&t1,&t2));
 
 
             /* SI */
@@ -636,7 +650,7 @@ int run_tsi(tsi *t) {
                 printf_dbg2("run_tsi(%d): loading seismic n/n\n", t->proc_id);
                 t->sy = load_grid(t->heap, t->sy_idx);
                 if (t->cm && t->seismic && t->sy) {
-                    printf_dbg("run_tsi(%d): running CoDSS n/1\n", t->proc_id);
+                    printf_dbg("run_tsi(%d): (%d/%d) running SI n/1\n", t->proc_id,j,i);
                     getCurrTime(&t1);
                     result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);
                     getCurrTime(&t2);
@@ -645,21 +659,23 @@ int run_tsi(tsi *t) {
                     return 0;
                 }
             } else {
-                printf_dbg("run_tsi(%d): CoDSS simulation failed! n/1\n", t->proc_id);
+                printf_dbg("run_tsi(%d): (%d/%d) SI simulation failed!\n", t->proc_id,j,i);
                 return 0;
             }
-            printf_dbg("run_tsi(%d): SI terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+            printf_dbg("run_tsi(%d): (%d/%d) SI terminated (%f secs)\n",t->proc_id,j,i,getElapsedTime(&t1,&t2));
 
             /* Is best? */
             getCurrTime(&t1);
             if (result) {
                 ai_corr = grid_correlation(t->seismic, t->sy, t->grid_size);
+				printf_dbg("isBest(%d/%d): grid correlation: %f\n",j,i,ai_corr);
                 if (ai_corr > t->global_best.value) {
-					if (t->bestAI_idx > -1) delete_grid(t->heap, t->bestAI_idx);
+					if (t->bestAI_idx > -1) 
+						delete_grid(t->heap, t->bestAI_idx);
 					t->global_best.value = ai_corr;
 					t->global_best.proc_id = t->proc_id;
 					t->bestAI_idx = t->ai_idx;
-                    printf("\nNEW BEST CORRELATION = %f\n\n", t->global_best.value);
+                    printf("\n\tNEW BEST CORRELATION = %f\n\n", t->global_best.value);
                 }
                 delete_grid(t->heap, t->sy_idx);
                 clear_grid(t->heap, t->seismic_idx);
@@ -687,7 +703,17 @@ int run_tsi(tsi *t) {
             dirty_grid(t->heap, t->nextBAI_idx);
             dirty_grid(t->heap, t->nextBCM_idx);
             t->ai_idx = t->cm_idx = t->sy_idx = -1;  /* free aux grids */
-            printf_dbg("run_tsi(%d): Compare terminated (%f secs)\n",t->proc_id,getElapsedTime(&t1,&t2));
+            printf_dbg("run_tsi(%d): (%d/%d) Compare terminated (%f secs)\n",t->proc_id,j,i,getElapsedTime(&t1,&t2));
+
+			// TODO: REMOVE THIS
+			printf_dbg("run_tsi(): (%d/%d) DUMPING BAI & BCM!\n",j,i);
+			fp = create_file("BAI.out");
+			write_ascii_grid_file(fp, t->nextBAI, t->grid_size);
+			close_file(fp);
+			fp = create_file("BCM.out");
+			write_ascii_grid_file(fp, t->nextBCM, t->grid_size);
+			close_file(fp);
+			// --end--
 
         } /* for (simulations) */
 
@@ -717,7 +743,7 @@ int run_tsi(tsi *t) {
 	
     printf_dbg("run_tsi(%d): heap performance: R=%d ", t->proc_id, t->heap->reads);
     printf_dbg("W=%d G=%d X=%d\n", t->heap->writes, t->heap->curr_grids, t->heap->max_grids);
-    printf("Final correlation = %f\n", t->global_best.value);
+    printf("\t\t\tFinal correlation = %f\n", t->global_best.value);
     return 1;
 } /* run_tsi */
 
@@ -731,8 +757,7 @@ int tsi_compare(unsigned int size, float *AI, float *CM, float *BAI, float *BCM)
     /* execute Compare */
     x = 0;
     for (i = 0; i < size; i++) {
-        if (BCM[i] < CM[i])
-        {
+        if (BCM[i] < CM[i]) {
             /* new best correlation */ 
             BCM[i] = CM[i];
             BAI[i] = AI[i];

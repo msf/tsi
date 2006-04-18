@@ -7,9 +7,9 @@
 
 typedef struct cm_grid_type {
     int nlayers;      /* number of layers */
+    int nxy;          /* size of each xy grid */
     int *layer_size;  /* size of each layer */
     float *cg;        /* compressed correlations grid */
-    int nxy;          /* size of each xy grid */
 } cm_grid;
 
 

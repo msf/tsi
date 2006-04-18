@@ -32,8 +32,7 @@ int make_reflections_grid(si *s, float *AI, float *RG)
     for (x = 0; x < s->xsize; x++)
         for (y = 0; y < s->ysize; y++)
             for (z = 0; z < s->zsize -1; z++) {
-                 value =  AI[getPoint(s,x,y,z+1)] - AI[getPoint(s,x,y,z)];
-                 value /= AI[getPoint(s,x,y,z+1)] + AI[getPoint(s,x,y,z)];
+                 value =  (AI[getPoint(s,x,y,z+1)] - AI[getPoint(s,x,y,z)]) / (AI[getPoint(s,x,y,z+1)] + AI[getPoint(s,x,y,z)]);
                  RG[getPoint(s,x,y,z)] = value;
             }
     for (x = 0; x < s->xsize; x++)
@@ -63,7 +62,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
     wavelet_spots = s->wavelet_used_values / 2;
     nxy = s->xsize * s->ysize;
     nxyz = s->zsize * nxy;
-    memset(SY,0,s->grid_size);
+    memset(SY, 0, s->grid_size * sizeof(float));
 
 
     it = 0;
@@ -78,7 +77,6 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
                     }
                 }
             }
-
 
 /*
     it = 0;
@@ -173,19 +171,28 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
                 sum_x_2 = sum_x * sum_x;
                 sum_y_2 = sum_y * sum_y;
 
-                denom = sqrt(((n * sum_x2 ) - sum_x_2 ) * ((n * sum_y2 ) - sum_y_2));
+                denom = sqrt(
+						((n * sum_x2 ) - sum_x_2 ) * 
+						((n * sum_y2 ) - sum_y_2)
+						);
                 if (denom > 0)
                     r = ((n * sum_xy) - ( sum_x *sum_y ))/denom;
                 else 
                     r = 0; 
 
-                corr_grid[getPoint(s,x,y,i)] = r; 
+				if (r < 0) {
+					if(x == 0 && y == 0  && i == 0)
+						printf("corr(x:%d,y:%d,i:%d) r: %f\n",x,y,i,r);
+					corr_grid[getPoint(s,x,y,i)] = 0; 
+				}
+				else
+					corr_grid[getPoint(s,x,y,i)] = r; 
 				
                 // reposition Z pointer
                 z1 = z2;
             }
         }
-       
+	
     expand_correlations_grid(s->cmg, CM);
     getCurrTime(&t2);
     printf_dbg("make_synthetic_grid(): finished (%f secs)\n", getElapsedTime(&t1, &t2));

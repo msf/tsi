@@ -91,7 +91,7 @@ int setup_dss(dss *d, float *currBAI) {
     d->general->ktype = 1;
     if (currBAI) d->general->ktype = 5;
     readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
-	return readWellsData(d->general, d->harddata, d->harddata_size);
+    return readWellsData(d->general, d->harddata, d->harddata_size);
 } /* setup_dss */
 
 
