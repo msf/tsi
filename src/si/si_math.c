@@ -151,10 +151,10 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
                 z2 = z1+layer_size[i];
 
                 sum_x = 0;
-                sum_x_2 = 0;
-                sum_xy = 0;
                 sum_y = 0;
+                sum_x2 = 0;
                 sum_y2 = 0;
+                sum_xy = 0;
                 n = layer_size[i];
 
                 for (z = z1; z < z2; z++) {
