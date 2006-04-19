@@ -180,11 +180,8 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
                 else 
                     r = 0; 
 
-				if (r < 0) {
-					if(x == 0 && y == 0  && i == 0)
-						printf("corr(x:%d,y:%d,i:%d) r: %f\n",x,y,i,r);
+				if (r < 0)
 					corr_grid[getPoint(s,x,y,i)] = 0; 
-				}
 				else
 					corr_grid[getPoint(s,x,y,i)] = r; 
 				
