@@ -224,12 +224,12 @@ tsi *new_tsi(registry *reg) {
         return NULL;
     }
     if ((fp = open_file(get_string(k))) == NULL) {
-       printf_dbg("Failed to open the seismic grid file!\n");
+       printf_dbg("Failed to open the seismic grid file: %s!\n",get_string(k));
        delete_tsi(t);
        return NULL;
     }
     if (!read_ascii_grid_file(fp, t->seismic, t->grid_size)) {
-        printf_dbg("Failed to load seismic file!\n");
+        printf_dbg("Failed to load seismic file: %s!\n",get_string(k));
         delete_tsi(t);
         return NULL;
     }
@@ -268,7 +268,8 @@ int run_tsi(tsi *t) {
     printf_dbg("run_tsi(%d,0,0): begin\n", t->proc_id);
 
     /* Expand inverted execution tree */
-    if (tsi_recurse_iterations(t, t->iterations, t->simulations) == 0) return 0;
+    if (tsi_recurse_iterations(t, t->iterations, t->simulations) == 0) 
+		return 0;
 
     tsi_save_results(t);
     return 1;
@@ -277,11 +278,11 @@ int run_tsi(tsi *t) {
 
 
 int tsi_recurse_iterations(tsi *t, int i, int s) {
-    if (--i) {
+    if (--i) { // 2nd to last iteration
         if (tsi_recurse_iterations(t, i, s))
             if (tsi_recurse_simulations(t, i, s))
                 return tsi_finish_iteration(t, i, s);
-    } else {
+    } else { // first iteration
         if (tsi_recurse_simulations(t, i, s))
             return tsi_finish_iteration(t, i, s);
     }
@@ -291,12 +292,12 @@ int tsi_recurse_iterations(tsi *t, int i, int s) {
 
 
 int tsi_recurse_simulations(tsi *t, int i, int s) {
-    if (--s) {
+    if (--s) { // 2nd to last simulation
         if (tsi_recurse_simulations(t, i, s))
             if (tsi_direct_sequential_simulation(t, i, s))
                 if (tsi_seismic_inversion(t, i, s))
                     return tsi_evaluate_best_correlations(t, i, s);
-    } else {
+    } else { // first simulation
         if (tsi_setup_new_iteration(t, i))
             if (tsi_direct_sequential_simulation(t, i, s))
                 if (tsi_seismic_inversion(t, i, s))
@@ -414,6 +415,14 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation) {
         dirty_grid(t->heap, t->ai_idx);
     }
 
+	TSI_FILE *fp;
+
+	printf_dbg("run_tsi(%d,%d,%d) DUMPING AI!\n",t->proc_id,iteration,simulation);
+	fp = create_file("AI.out");
+	write_ascii_grid_file(fp, t->ai, t->grid_size);
+	close_file(fp);
+
+
     /* evaluate simulation result */
     run_time = getElapsedTime(&t2,&t3);
     mm_time = getElapsedTime(&t1,&t2);
@@ -469,6 +478,15 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation) {
         printf_dbg("run_tsi(%d,%d,%d): failed to load CM, Seismic, AI or SY for SI!\n", t->proc_id, iteration, simulation);
         return 0;
     }
+
+
+	TSI_FILE *fp;
+
+	printf_dbg("run_tsi(%d,%d,%d) DUMPING SY!\n",t->proc_id,iteration,simulation);
+	fp = create_file("SY.out");
+	write_ascii_grid_file(fp, t->sy, t->grid_size);
+	close_file(fp);
+
     clear_grid(t->heap, t->seismic_idx);
     clear_grid(t->heap, t->ai_idx);
     dirty_grid(t->heap, t->cm_idx);
@@ -518,15 +536,6 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation) {
     /* evaluate best global correlation */
     printf_dbg("run_tsi(%d,%d,%d): checking best global correlation\n", t->proc_id, iteration, simulation);
     getCurrTime(&t2);    /* BENCHMARKING... */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
-    corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
     corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
     getCurrTime(&t3);
     clear_grid(t->heap, t->seismic_idx);
