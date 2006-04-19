@@ -27,6 +27,13 @@ typedef struct tsi_type {
     int iterations,           /* number of iterations */
         simulations;          /* number of simulations for each iteration */
     int root;
+    
+    /* execution time counters */
+    double mm_time;           /* time spent in memory management functions */
+    double dss_time;          /* time for simulations */
+    double si_time;           /* time for seismic inversion functions */
+    double corr_time;         /* time for correlation results evaluation */
+    double par_time;          /* time spent executing parallel functions */
 
     /* parallel execution related data */
     unsigned int grid_segsize;   /* grid segment size = (int)grid_size/n_procs */
@@ -36,7 +43,7 @@ typedef struct tsi_type {
         root_id,                 /* root process ID */
         optimize;                /* runtime optimization flag */
 
-	/* grid size */
+    /* grid size */
     int xsize,
         ysize,
         zsize;
@@ -64,6 +71,16 @@ typedef struct tsi_type {
           *ai,
           *cm,
           *sy;
+
+    /* execution log */
+    int dump_ai,
+        dump_cm,
+        dump_bai,
+        dump_bcm;
+    char *dump_path,
+         *results_path,
+         *log_path;
+        
 } tsi;
 
 tsi *new_tsi(registry *reg);

@@ -178,7 +178,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	--bestAICube;
 	--sim;
 
-	printf_dbg2("dssim() called\n");
+	printf_dbg("\tdssim() called\n");
 
 	/* Function Body */
 	for (i = 1; i <= covariance->nst[0]; ++i) {
@@ -233,7 +233,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		}
 	}
 
-	printf_dbg2("dssim(): Starting simulation now\n");
+	printf_dbg("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
 	simulation->nsim = index = in = 0;
 	zmean = 0.f;
@@ -242,11 +242,11 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	while( toSim > 0 ) {
 		
 		if(toSim == (general->nxyz * 0.75))
-			printf_dbg2("dsssim(): 1/4 completed.\n");
+			printf_dbg("\tdsssim(): 1/4 completed.\n");
 		else if(toSim == (general->nxyz / 2))
-			printf_dbg2("dsssim(): 1/2 completed.\n");
+			printf_dbg("\tdsssim(): 1/2 completed.\n");
 		else if(toSim == (general->nxyz / 4))
-			printf_dbg2("dsssim(): 3/4 completed.\n");
+			printf_dbg("\tdsssim(): 3/4 completed.\n");
 
 		/* generate point to simulate */
 		in = ((int) random() % toSim) +1; /* +1 because of fortran offsets */
@@ -259,7 +259,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		
 
 		if(index < 1)
-			printf("dssim(): ERROR, INDEX(%d) < 1\n", index);
+			printf("\tdssim(): ERROR, INDEX(%d) < 1\n", index);
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
 		/* if( sim[index] >= general->tmin &&
 		    sim[index] <= general->tmax) { */

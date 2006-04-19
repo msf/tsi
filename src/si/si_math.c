@@ -64,7 +64,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
     nxyz = s->zsize * nxy;
     memset(SY, 0, s->grid_size * sizeof(float));
 
-
+    /* original code */
     it = 0;
     for (x = 0; x < s->xsize; x++) 
         for (y = 0; y < s->ysize; y++) 

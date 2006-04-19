@@ -59,7 +59,7 @@ dss *new_dss(registry *r, grid_heap *h) {
         return NULL;
     }
     close_file(fp);
-    
+
     /* ugly hack for "readdata" */
     d->general->maxdat = d->harddata_size / 4;
     d->general->x = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
@@ -80,6 +80,8 @@ dss *new_dss(registry *r, grid_heap *h) {
         !d->general->sec)
         return NULL;
         
+    /* readWellsData */    
+
     printf_dbg("new_dss(): DSS engine started sucessfully.\n");
     return d;
 } /* new_dss */

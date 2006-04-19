@@ -19,6 +19,6 @@ double getElapsedTime(struct timeval *start, struct timeval *stop)
 	
 int getCurrTime(struct timeval *tv)
 {
-	return gettimeofday(tv,NULL);
+    return gettimeofday(tv,NULL);
 }
 
