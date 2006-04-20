@@ -65,7 +65,6 @@ int readdata(float *lvm,
 	double w, cp, av;
 	int ix, nt, iy, iz;
 	double ss;
-	int ind;
 	float var[4], vrg, twt;
 	int iend, ierr;
 	unsigned int nelem;

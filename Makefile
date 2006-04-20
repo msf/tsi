@@ -25,9 +25,9 @@ OPTS	+= -DTSI_DEBUG
 #OPTS     += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
 DEBUG    := -g -ggdb -DTSI_DEBUG
 #DEBUG    += -pg
-DEBUG    += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
+DEBUG    += -Wall -Wextra -std=gnu99 -pedantic
 #DEBUG    += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow -pedantic-errors
-#DEBUG    += -Wunreachable-code -Wdisabled-optimization
+#DEBUG    += -Wunreachable-code -Wdisabled-optimization -Wcast-qual -Wcast-align -Wconversion 
 #DEBUG    += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
 
 ifeq ($(COMPILER), icc)

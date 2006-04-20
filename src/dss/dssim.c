@@ -293,8 +293,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			if (search->nclose < search->ndmin) {
 				printf("dssim(): SKIP2  %d\n",index);
 				continue;
-			}
-			if (search->nclose > search->ndmax) {
+			} else if (search->nclose > search->ndmax) {
 				search->nclose = search->ndmax;
 			}
 		}

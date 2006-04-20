@@ -132,8 +132,16 @@ int write_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block
 int read_ascii_grid_file(TSI_FILE *fp, float *g, unsigned int grid_size) {
     unsigned int i;
 	
-	for(i=0; i < grid_size; i++)
+	int x,y,z;
+	char name[32];
+
+
+	fscanf(fp, "%s %d %d %d\n",name, &x, &y, &z);
+	fscanf(fp, "%d\n%s\n",&i,&name);
+
+	for(i=0; i < grid_size; i++){
 		fscanf(fp, "%f\n", &g[i]);
+	}
 
 	return i;
 }
