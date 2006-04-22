@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <time.h>
+
 #include "debug.h"
 #include "memdebug.h"
 #include "registry.h"
@@ -33,6 +35,8 @@ tsi *new_tsi(registry *reg) {
     reg_key *k;
     int usefs, heap_size, swap_thr, new_sims, over_sims, over_procs, i;
     TSI_FILE *fp;
+	long lTime;
+	unsigned int timeSeed;
 
     t = (tsi *) tsi_malloc(sizeof(tsi));
     if (!t) return NULL;
@@ -40,6 +44,11 @@ tsi *new_tsi(registry *reg) {
     t->heap = NULL;
     t->l = new_log(NULL);    /************* FINISH **************/
 
+	 // set a Starting point for the rand()
+	lTime = time(NULL);
+	timeSeed = (unsigned int) lTime/2;
+	srandom(timeSeed);
+	 
     /* get machine parameters */
     if (new_tsi_parallel(&t->n_procs, &t->proc_id) < 0) {
         printf("Machine failed to start!\n");
@@ -294,7 +303,7 @@ void tsi_iteration(tsi *t, int iteration)
 		tsi_simulation(t, iteration,i);
 
 		getCurrTime(&t2);
-		printf_dbg("run_tsi(%d,%d,%d): \t\t\tsimulation took %f secs\n", t->proc_id, iteration, i, getElapsedTime(&t1,&t2));
+		printf_dbg("run_tsi(%d,%d,%d): \t\tsimulation took %f secs\n", t->proc_id, iteration, i, getElapsedTime(&t1,&t2));
 	}
 	tsi_finish_iteration(t, iteration, t->simulations);
 }
@@ -323,6 +332,8 @@ int tsi_setup_iteration(tsi *t, int iteration)
     struct timeval t1, t2, t3, t4;
     double mm_time, run_time, par_time;
     cm_grid *cmg;
+	char fname[32];
+	TSI_FILE *fp;
 
     /* prepare simulations */
     printf_dbg("tsi_setup_iteration(%d,%d,0): setup [Co]DSS\n", t->proc_id, iteration);
@@ -363,9 +374,9 @@ int tsi_setup_iteration(tsi *t, int iteration)
     store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
     getCurrTime(&t4);
 
-    printf("tsi_setup_iteration: \tNew set of layers:\n");
-    print_layers(cmg);
-    printf("\n");
+    printf_dbg2("tsi_setup_iteration: \tNew set of layers:\n");
+// print_layers(cmg);
+//    printf("\n");
     
     mm_time  = getElapsedTime(&t1, &t2);
     run_time = getElapsedTime(&t2, &t3);
@@ -387,6 +398,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     struct timeval t1, t2, t3;
     int result;
     double run_time, mm_time;
+	TSI_FILE *fp;
+	char fname[32];
 
     /* load new AI for simulation result */
     getCurrTime(&t1);
@@ -412,8 +425,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     } else {              /* co-simulation */
         printf_dbg2("tsi_dss(%d,%d,%d): loading currBCM grid\n", t->proc_id, iteration, simulation);
         t->currBCM = load_grid(t->heap, t->currBCM_idx);
-        printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
-        t->currBAI = load_grid(t->heap, t->currBAI_idx);
+ //       printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
+ //       t->currBAI = load_grid(t->heap, t->currBAI_idx);
         if (!t->currBAI || !t->currBCM) {
             printf_dbg("tsi_dss(%d,%d,%d):", t->proc_id, iteration, simulation);
             printf_dbg(" failed to load currBAI or currBCM for CoDSS!\n");
@@ -424,16 +437,31 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
         getCurrTime(&t2);
         result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> too much  :-( */
         getCurrTime(&t3);
+		
+		/*
+		printf_dbg("DSS(%d,%d,%d) DUMPING currBAI!\n",t->proc_id,iteration,simulation);
+		sprintf(fname,"currBAI%d.%d.out",iteration,simulation);
+		fp = create_file(fname);
+		write_ascii_grid_file(fp, t->currBAI, t->grid_size);
+		close_file(fp);
+
+		printf_dbg("DSS(%d,%d,%d) DUMPING currBCM!\n",t->proc_id,iteration,simulation);
+		sprintf(fname,"currBCM%d.%d.out",iteration,simulation);
+		fp = create_file(fname);
+		write_ascii_grid_file(fp, t->currBCM, t->grid_size);
+		close_file(fp);
+		*/
+
         clear_grid(t->heap, t->currBAI_idx);
         clear_grid(t->heap, t->currBCM_idx);
         dirty_grid(t->heap, t->ai_idx);
     }
 
-	TSI_FILE *fp;
 
 	/*
 	printf_dbg("DSS(%d,%d,%d) DUMPING AI!\n",t->proc_id,iteration,simulation);
-	fp = create_file("AI.out");
+	sprintf(fname,"ai-%d.%d.out",iteration,simulation);
+	fp = create_file(fname);
 	write_ascii_grid_file(fp, t->ai, t->grid_size);
 	close_file(fp);
 	*/
@@ -599,7 +627,6 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
         }
 
         getCurrTime(&t4);
-        printf_dbg("tsi_eval_best_corr(%d,%d,%d): \t\t\t running Compare&Update\n");
 		/* update  nextBAI and nextBCM */
         result = tsi_compare(t->grid_size, t->ai, t->cm, t->nextBAI, t->nextBCM);
         getCurrTime(&t5);
@@ -646,13 +673,13 @@ int tsi_finish_iteration(tsi *t, int iteration, int simulation)
 	// TODO: REMOVE THIS
 	printf_dbg("run_tsi(): (%d/%d) DUMPING BAI & BCM!\n",iteration,simulation);
 
-	sprintf(fname,"BAI%d.out",iteration);
+	sprintf(fname,"nextBAI%d.out",iteration);
 	fp = create_file(fname);
 	t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
 	write_ascii_grid_file(fp, t->nextBAI, t->grid_size);
 	close_file(fp);
 
-	sprintf(fname,"BCM%d.out",iteration);
+	sprintf(fname,"nextBCM%d.out",iteration);
 	fp = create_file(fname);
 	t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
 	write_ascii_grid_file(fp, t->nextBCM, t->grid_size);
