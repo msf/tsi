@@ -10,8 +10,9 @@
 
 si *new_si(registry *r, grid_heap *h) {
     si *s;
-    reg_key *k;
+    reg_key *k, *kpath;
     TSI_FILE *fp;
+    char filename[512];
     int i;
     char buf[64];
 
@@ -59,11 +60,17 @@ si *new_si(registry *r, grid_heap *h) {
         return NULL;
     }
     
+    if ((kpath = get_key(r, "WAVELET", "PATH")) == NULL)
+        kpath = get_key(r, "GLOBAL", "INPUT_PATH");
     if ((k = get_key(r, "WAVELET", "FILENAME")) == NULL) {
         printf_dbg("\tnew_si(): failed to get WAVELET:FILENAME from registry!\n");
         return NULL;
     }
-    fp = open_file(get_string(k));
+    if (kpath)
+        sprintf(filename, "%s%s", get_string(kpath), get_string(k));
+    else
+        sprintf(filename, "%s", get_string(k));
+    fp = open_file(filename);
     if (!fp) {
         printf_dbg("\tnew_si(): failed to open wavelet file!\n");
         return NULL;
@@ -340,6 +347,7 @@ int *get_layers(cm_grid *g) {
 int store_cmgrid(si *s, cm_grid *g) {
     //if (s->cmg) delete_cmgrid(s->cmg);   // fuck-up... to fix...
     s->cmg = g;
+    return 1;
 } /* store_cmgrid */
 
 

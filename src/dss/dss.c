@@ -9,13 +9,14 @@
 #include "tsi_io.h"
 #include "acorni.h"
 
-double * load_harddata_file(TSI_FILE *, char *, int *);
+double * load_harddata_file(TSI_FILE *, char *, unsigned int *);
 
 dss *new_dss(registry *r, grid_heap *h) {
     dss *d;
-    reg_key *k;
+    reg_key *k, *kpath;
     /* auxiliar variables for harddata */
     TSI_FILE *fp;
+    char filename[512];
     char hdbuf[64];
 
     printf_dbg("new_dss(): called\n");
@@ -49,8 +50,15 @@ dss *new_dss(registry *r, grid_heap *h) {
     printf_dbg("new_dss(): Reading harddata file.\n");
     /* read harddata file */
     d->harddata_size = 0;
+    kpath = NULL;
+    if ((kpath = get_key(r, "HARDDATA", "PATH")) == NULL)
+        kpath = get_key(r, "GLOBAL", "INPUT_PATH");
     if ((k = get_key(r, "HARDDATA", "FILENAME")) == NULL) return NULL;
-    if ((fp = open_file(get_string(k))) == NULL) {
+    if (kpath)
+        sprintf(filename, "%s%s", get_string(kpath), get_string(k));
+    else
+        sprintf(filename, "%s", get_string(k));
+    if ((fp = open_file(filename)) == NULL) {
         printf("new_dss(): ERROR - Can't open Hard Data file: %s\n", get_string(k));
         return NULL;
     }
@@ -150,6 +158,8 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     order = (int *) load_grid(d->heap, d->order_idx);
     mask = NULL;
 
+    printf_dbg("%d\n", order);
+    fflush(stdout);
     /* CO-SIMULATION */
     dssim(AI, currBAI, currBCM, order, mask,
           d->general,
@@ -205,7 +215,7 @@ void delete_dss(dss *d) {
 
 
 
-double *load_harddata_file(TSI_FILE *fp, char *buf, int *size) {
+double *load_harddata_file(TSI_FILE *fp, char *buf, unsigned int *size) {
     double x, y, z, val, *ret;
     int i;
 

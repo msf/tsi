@@ -3,6 +3,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "debug.h"
+#include "timer.h"
 
 double getElapsedTime(struct timeval *start, struct timeval *stop)
 {

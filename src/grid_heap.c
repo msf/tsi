@@ -8,10 +8,10 @@
 
 #define ALLIGNMENT 16          /* byte allignment */
 
-grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, unsigned int grid_size) {
+grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, char *path, unsigned int grid_size) {
     grid_heap *h;
     int i;
-    char filename[32];
+    char filename[128];
     
     /* initializes the heap record */
     h = (grid_heap *) tsi_malloc(sizeof(grid_heap));
@@ -50,10 +50,13 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
 
     /* create the swap files for each grid */
     for(i = 0; i < heap_size; i++) {
-        if (h->use_fs) {      
-            sprintf(filename, "/tmp/tsi_grid.node%d.%d", rank, i);
+        if (h->use_fs) {
+            if (path)
+                sprintf(filename, "%stsi_grid.node%d.%d", path, rank, i);
+            else
+                sprintf(filename, "/tmp/tsi_grid.node%d.%d", rank, i);
             printf_dbg2("new_heap(): filename string >%s<\n", filename);
-            h->g[i].fp = open_grid_file(filename);
+            h->g[i].fp = create_file(filename);
             if (!h->g[i].fp) {
                 printf_dbg2("new_heap(): failed to open grid file!\n");
                 delete_heap(h);
@@ -132,7 +135,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* dump j grid */
             h->writes++;
             printf_dbg2("load_grid(): swapping dirty grid %d to disk\n", j);
-            if (!write_grid_file(h->g[j].fp, h->g[j].grid, h->grid_size)) {
+            if (!dump_binary_grid(h->g[j].fp, h->g[j].grid, h->grid_size)) {
                 printf_dbg2("load_grid(): failed to dump grid %d\n", j);
                 return NULL;
             }
@@ -159,7 +162,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* load grid */
             h->reads++;
             printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
-            if (!read_grid_file(h->g[idx].fp, h->g[idx].grid, h->grid_size)) {
+            if (!load_binary_grid(h->g[idx].fp, h->g[idx].grid, h->grid_size)) {
                  printf_dbg2("load_grid(): failed to load grid %d\n", idx);
                  return NULL;
             }

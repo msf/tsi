@@ -3,7 +3,7 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-COMPILER := gcc
+#COMPILER := gcc
 
 # Default settings for gcc
 CC       := gcc
@@ -11,8 +11,8 @@ CPP      := g++
 CFLAGS   := -pipe 
 LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
 OPTS     := -O3 -ffast-math -fomit-frame-pointer 
-#OPTS	+= -march=pentium-m
-#OPTS	+= -m32
+OPTS	+= -march=pentium-m
+OPTS	+= -m32
 OPTS	+= -DTSI_DEBUG
 #OPTS     += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS     += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
@@ -23,12 +23,12 @@ OPTS	+= -DTSI_DEBUG
 #OPTS     += -freorder-blocks -freorder-functions -funit-at-a-time
 #OPTS     += -falign-functions  -falign-jumps -falign-loops  -falign-labels
 #OPTS     += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
-DEBUG    := -g -ggdb -DTSI_DEBUG
+DEBUG    := -g -ggdb -DTSI_DEBUG2
 #DEBUG    += -pg
-DEBUG    += -Wall -Wextra -std=gnu99 -pedantic
-#DEBUG    += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow -pedantic-errors
-#DEBUG    += -Wunreachable-code -Wdisabled-optimization -Wcast-qual -Wcast-align -Wconversion 
-#DEBUG    += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
+DEBUG    += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
+DEBUG    += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow
+DEBUG    += -Wunreachable-code -Wdisabled-optimization
+DEBUG    += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
 
 ifeq ($(COMPILER), icc)
 CC       := icc

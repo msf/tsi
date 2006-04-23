@@ -29,13 +29,18 @@ typedef struct si_type {
     int   wavelet_used_values,
           max_values;  /* max number of wavelet values (for point > 0) */
           
-	/* layers data */
-	int random;
-	int min_size;
-	int min_number;
+    /* layers data */
+    int random;
+    int min_size;
+    int min_number;
 
     /* correlations grid */
     cm_grid *cmg;
+    
+    /* execution log */
+    int dump_sy,
+        dump_rg;
+    char *dump_path;
 } si;
 
 

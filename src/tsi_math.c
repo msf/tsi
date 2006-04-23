@@ -16,6 +16,7 @@ double grid_correlation(float *A, float *B, unsigned int size) {
     double sum_B2 = 0;
     double sum_B_2 = 0;
     double denom = 0;
+    double nom = 0;
 
     printf_dbg("grid_correlation(): called\n");
     for (i = 0; i < size; i++) {
@@ -28,19 +29,27 @@ double grid_correlation(float *A, float *B, unsigned int size) {
     sum_A_2 = sum_A * sum_A;
     sum_B_2 = sum_B * sum_B;
 
+
+    if (denom > 0)
+        return (((size * sum_AB) - (sum_A * sum_B)) / denom);
+    else
+        printf_dbg("calculateGlobalCorr: ERROR: division by zero, returning 0\n");
+
+
     //printf("sum_SEISMIC = %f\t sum_SY = %f\nsum_SEISMIC2 = %f\t sum_SY2 = %f\nsum_AB = %f\n", sum_A,sum_B,sum_A2,sum_B2,sum_AB);
-	denom = ((size * sum_A2) - sum_A_2) * ((size * sum_B2) - sum_B_2);
+    denom = ((size * sum_A2) - sum_A_2) * ((size * sum_B2) - sum_B_2);
+    nom =  size * sum_AB - sum_A * sum_B;
 
-	if (denom > 0){
-    	return (((size * sum_AB) - (sum_A * sum_B)) / sqrt(denom));
-
-	} else if(denom == 0) {
-        printf_dbg("grid_correlation(): ERROR: division by zero, returning 0\n");
-		return 0;
-	}
-	printf_dbg("grid_correlation(): ERROR: sqrt of negative number! returning 0\n");
-	return 0;
-
+    if (denom > 0) {
+        if (nom > 0)
+            return (nom / sqrt(denom));
+    	else
+            printf_dbg("grid_correlation(): ERROR: negative correlation! returning 0\n");
+    } else {
+	printf_dbg("grid_correlation(): ERROR: sqrt of negative number or division by zero! returning 0\n");
+    }
+                                                                                                                                                                        
+    return 0;
 } /* grid_correlation */
 
 
@@ -87,3 +96,4 @@ double nth_root(double xx, int nn) {
 } /* nth_root */
 
 /* end of file tsi_math.c */
+

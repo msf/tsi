@@ -1,5 +1,6 @@
 /* log.c */
 
+#include <stdlib.h>
 #include "tsi.h"
 #include "log.h"
 

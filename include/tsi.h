@@ -7,6 +7,14 @@
 #include "si.h"
 #include "log.h"
 
+
+#define CARTESIAN_FILE  0
+#define TSI_ASCII_FILE  1
+#define TSI_BIN_FILE    2
+#define GSLIB_FILE      3
+#define SGEMS_FILE      4
+
+
 typedef struct corr_type {
     float value;         /* current best global correlation value */
     int   proc_id;       /* process that holds best AI data */
@@ -78,9 +86,16 @@ typedef struct tsi_type {
         dump_bai,
         dump_bcm;
     char *dump_path,
-         *results_path,
-         *log_path;
-        
+         *input_path,
+         *output_path,
+         *log_path,
+         *seismic_path,
+         *empty_path;
+    
+    /* file formats */
+    int result_file,
+        seismic_file,
+        dump_file;
 } tsi;
 
 tsi *new_tsi(registry *reg);

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <time.h>
 
 #include "debug.h"
@@ -17,26 +16,29 @@
 
 
 /* additional prototypes to TSI */
-void tsi_iteration(tsi *t, int iteration);
-void tsi_simulation(tsi *t, int iteration, int simulation);
+int   tsi_recurse_iterations(tsi *t, int i, int s);
+int   tsi_recurse_simulations(tsi *t, int i, int s);
 int   tsi_seismic_inversion(tsi *t, int iteration, int simulation);
 int   tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation);
-int   tsi_evaluate_best_correlation(tsi *t, int iteration, int simulation);
-int   tsi_setup_new_iteration(tsi *t, int iteration);
-int   tsi_finish_simulation(tsi *t, int iteration, int simulation);
+int   tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation);
+int   tsi_setup_iteration(tsi *t, int iteration);
+int   tsi_finish_iteration(tsi *t, int iteration, int simulation);
 int   tsi_save_results(tsi *t);
 int   tsi_compare(unsigned int size, float *AI, float *CM, float *nextBAI, float *BCM);
 void  grid_copy(float *a, float *b, unsigned int grid_size);
+int   tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc);
+int   tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type);
 
 
 
 tsi *new_tsi(registry *reg) {
     tsi *t;
-    reg_key *k;
-    int usefs, heap_size, swap_thr, new_sims, over_sims, over_procs, i;
+    reg_key *k, *kpath;
+    int usefs, heap_size, swap_thr, new_sims, over_sims, over_procs;
     TSI_FILE *fp;
-	long lTime;
-	unsigned int timeSeed;
+    char filename[512];
+    unsigned int timeSeed;
+    long lTime;
 
     t = (tsi *) tsi_malloc(sizeof(tsi));
     if (!t) return NULL;
@@ -44,11 +46,11 @@ tsi *new_tsi(registry *reg) {
     t->heap = NULL;
     t->l = new_log(NULL);    /************* FINISH **************/
 
-	 // set a Starting point for the rand()
-	lTime = time(NULL);
-	timeSeed = (unsigned int) lTime/2;
-	srandom(timeSeed);
-	 
+    /* set a starting point for the rand() */
+    lTime = time(NULL);
+    timeSeed = (unsigned int) lTime / 2;
+    srandom(timeSeed);
+
     /* get machine parameters */
     if (new_tsi_parallel(&t->n_procs, &t->proc_id) < 0) {
         printf("Machine failed to start!\n");
@@ -130,7 +132,35 @@ tsi *new_tsi(registry *reg) {
     }
     printf_dbg("new_tsi(%d): number of simulations=%d\n", t->proc_id, t->simulations);
 
+    /* get paths parameters */
+    t->empty_path = (char *) tsi_malloc(sizeof(char));
+    t->empty_path[0] = 0;
 
+    t->input_path = t->empty_path;
+    if ((k = get_key(reg, "GLOBAL", "INPUT_PATH")) != NULL) t->input_path = get_string(k);
+
+    t->output_path = t->empty_path;
+    if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) != NULL) t->output_path = get_string(k);;
+
+    t->log_path = t->output_path;
+    if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) != NULL) t->log_path = get_string(k);
+
+    t->dump_path = t->output_path;
+    if ((k = get_key(reg, "DUMP", "PATH")) != NULL) t->dump_path = get_string(k);
+
+    t->seismic_path = t->input_path;
+    if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL) t->seismic_path = get_string(k);
+
+    /* get dump parameters */
+    t->dump_ai = 0;
+    t->dump_cm = 0;
+    t->dump_bai = 0;
+    t->dump_bcm = 0;
+    if ((k = get_key(reg, "DUMP", "AI"))   != NULL) t->dump_ai = get_int(k);
+    if ((k = get_key(reg, "DUMP", "CORR")) != NULL) t->dump_cm = get_int(k);
+    if ((k = get_key(reg, "DUMP", "BAI"))  != NULL) t->dump_bai = get_int(k);
+    if ((k = get_key(reg, "DUMP", "BCM"))  != NULL) t->dump_bcm = get_int(k);
+    
     /* get heap data */
     k = get_key(reg, "HEAP", "USEFS");
     if (k)
@@ -192,12 +222,25 @@ tsi *new_tsi(registry *reg) {
 
     /* start grid heap */
     printf_dbg("new_tsi(%d): starting heap\n", t->proc_id);
-    t->heap = new_heap(t->n_procs, t->proc_id, heap_size, swap_thr, usefs, t->even_size);
+    kpath = get_key(reg, "GLOBAL", "TMP_PATH");
+    if (kpath)
+        t->heap = new_heap(t->n_procs, t->proc_id, heap_size, swap_thr, usefs, get_string(kpath), t->even_size);
+    else
+        t->heap = new_heap(t->n_procs, t->proc_id, heap_size, swap_thr, usefs, NULL, t->even_size);
     if (!t->heap) {
        printf_dbg("new_tsi(%d): failed to start heap\n", t->proc_id);
        delete_tsi(t);
        return NULL;
     }
+    t->seismic_idx =
+    t->bestAI_idx =
+    t->currBAI_idx =
+    t->currBCM_idx =
+    t->nextBAI_idx =
+    t->nextBCM_idx =
+    t->ai_idx =
+    t->sy_idx =
+    t->cm_idx = -1;
 
     /* start DSS engine */
     t->dss_eng = new_dss(t->reg, t->heap);
@@ -218,6 +261,32 @@ tsi *new_tsi(registry *reg) {
 	printf_dbg("new_tsi(): SI engine loaded\n");
 
 
+    /* get file types */
+    t->seismic_file = TSI_ASCII_FILE;
+    t->dump_file = TSI_BIN_FILE;     /* increases performance for dump/resume features */
+    t->result_file = TSI_ASCII_FILE;
+    if ((k = get_key(reg, "DUMP", "FILE_TYPE")) != NULL) {
+        if (!strcmp(get_string(k), "cart-grid")) t->dump_file = CARTESIAN_FILE;
+        else if (!strcmp(get_string(k), "tsi-ascii")) t->dump_file = TSI_ASCII_FILE;
+        else if (!strcmp(get_string(k), "tsi-bin")) t->dump_file = TSI_BIN_FILE;
+        //else if (!strcmp(get_string(k), "sgems")) t->dump_file = SGEMS_FILE;
+        else if (!strcmp(get_string(k), "gslib")) t->dump_file = GSLIB_FILE;
+    }
+    if ((k = get_key(reg, "GLOBAL", "RESULT_TYPE")) != NULL) {
+        if (!strcmp(get_string(k), "cart-grid")) t->result_file = CARTESIAN_FILE;
+        else if (!strcmp(get_string(k), "tsi-ascii")) t->result_file = TSI_ASCII_FILE;
+        else if (!strcmp(get_string(k), "tsi-bin")) t->result_file = TSI_BIN_FILE;
+        //else if (!strcmp(get_string(k), "sgems")) t->result_file = SGEMS_FILE;
+        else if (!strcmp(get_string(k), "gslib")) t->result_file = GSLIB_FILE;
+    }
+    if ((k = get_key(reg, "SEISMIC", "FILE_TYPE")) != NULL) {
+        if (!strcmp(get_string(k), "cart-grid")) t->seismic_file = CARTESIAN_FILE;
+        else if (!strcmp(get_string(k), "tsi-ascii")) t->seismic_file = TSI_ASCII_FILE;
+        else if (!strcmp(get_string(k), "tsi-bin")) t->seismic_file = TSI_BIN_FILE;
+        //else if (!strcmp(get_string(k), "sgems")) t->seismic_file = SGEMS_FILE;
+        else if (!strcmp(get_string(k), "gslib")) t->seismic_file = GSLIB_FILE;
+    }
+
     /* load seismic grid */
     if ((t->seismic_idx = new_grid(t->heap)) < 0) {
         printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
@@ -232,17 +301,18 @@ tsi *new_tsi(registry *reg) {
         delete_tsi(t);
         return NULL;
     }
-    if ((fp = open_file(get_string(k))) == NULL) {
-       printf_dbg("Failed to open the seismic grid file: %s!\n",get_string(k));
-       delete_tsi(t);
-       return NULL;
-    }
-    if (!read_ascii_grid_file(fp, t->seismic, t->grid_size)) {
-        printf_dbg("Failed to load seismic file: %s!\n",get_string(k));
+    sprintf(filename, "%s%s", t->seismic_path, get_string(k));
+    if ((fp = open_file(filename)) == NULL) {
+        printf("ERROR: Failed to open the seismic grid file!\n");
         delete_tsi(t);
         return NULL;
     }
-	
+    if (!tsi_read_grid(t, fp, t->seismic, t->seismic_file)) {
+        printf("ERROR: Failed to load seismic file!\n");
+        delete_tsi(t);
+        return NULL;
+    }
+    printf_dbg("new_tsi(): Seismic Data loaded\n");
     dirty_grid(t->heap, t->seismic_idx);
 
     /* reset time counters */
@@ -263,6 +333,7 @@ void delete_tsi(tsi *t) {
         if (t->dss_eng) delete_dss(t->dss_eng);
         if (t->heap) delete_heap(t->heap);
         if (t->reg) delete_registry(t->reg);
+        if (t->empty_path) tsi_free(t->empty_path);
         tsi_free(t);
     }
     delete_tsi_parallel();
@@ -271,60 +342,47 @@ void delete_tsi(tsi *t) {
 
 
 int run_tsi(tsi *t) {
-    int i, s;
-    struct timeval t1,t2;
-
     printf_dbg("run_tsi(%d,0,0): begin\n", t->proc_id);
 
-	for(i = 0; i < t->iterations; i++) {
-		getCurrTime(&t1);
-		
-		tsi_iteration(t,i);
-		
-		getCurrTime(&t2);
-		printf_dbg("run_tsi(%d,%d,-): \t\titeration took %f secs\n", t->proc_id, i, getElapsedTime(&t1,&t2));
-	}
+
+    /* Expand inverted execution tree */
+    if (tsi_recurse_iterations(t, t->iterations, t->simulations) == 0) return 0;
 
     tsi_save_results(t);
     return 1;
 } /* run_tsi */
 
 
-void tsi_iteration(tsi *t, int iteration)
-{
-	int i;
-	struct timeval t1,t2;
 
-	tsi_setup_iteration(t, iteration);
-	
-	for(i = 0; i < t->simulations; i++) {
-		getCurrTime(&t1);
+int tsi_recurse_iterations(tsi *t, int i, int s) {
+    if (--i) {
+        if (tsi_recurse_iterations(t, i, s))
+            if (tsi_recurse_simulations(t, i, s))
+                return tsi_finish_iteration(t, i, s);
+    } else {
+        if (tsi_recurse_simulations(t, i, s))
+            return tsi_finish_iteration(t, i, s);
+    }
+    return 0;
+} /* tsi_recurse_iterations */
 
-		tsi_simulation(t, iteration,i);
 
-		getCurrTime(&t2);
-		printf_dbg("run_tsi(%d,%d,%d): \t\tsimulation took %f secs\n", t->proc_id, iteration, i, getElapsedTime(&t1,&t2));
-	}
-	tsi_finish_iteration(t, iteration, t->simulations);
-}
-	
-void tsi_simulation(tsi *t, int iteration, int simulation)
-{
 
-	// SIMULATION CODE
-	if( tsi_direct_sequential_simulation(t,iteration,simulation) ) {
-		if( tsi_seismic_inversion(t,iteration,simulation) ) {
-			if( !tsi_evaluate_best_correlations(t,iteration,simulation) ) 
-				printf_dbg("tsi_simulation(%d,%d,%d): tsi_evaluate_best_correlations() FAILED\n",t->proc_id, iteration,simulation);
-			//best_corr correu mal
-		} else
-			printf_dbg("tsi_simulation(%d,%d,%d): tsi_seismic_inversion() FAILED\n",t->proc_id, iteration,simulation);
-		//seismic inversion correu mal
-	} else
-		printf_dbg("tsi_simulation(%d,%d,%d): tsi_direct_sequential_simulation() FAILED\n",t->proc_id, iteration,simulation);
-	//DSS correu mal
+int tsi_recurse_simulations(tsi *t, int i, int s) {
+    if (--s) {
+        if (tsi_recurse_simulations(t, i, s))
+            if (tsi_direct_sequential_simulation(t, i, s))
+                if (tsi_seismic_inversion(t, i, s))
+                    return tsi_evaluate_best_correlations(t, i, s);
+    } else {
+        if (tsi_setup_iteration(t, i))
+            if (tsi_direct_sequential_simulation(t, i, s))
+                if (tsi_seismic_inversion(t, i, s))
+                    return tsi_evaluate_best_correlations(t, i, s);
+    }
+    return 0;
+} /* tsi_recurse_simulations */
 
-}
 
 
 int tsi_setup_iteration(tsi *t, int iteration) 
@@ -332,8 +390,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
     struct timeval t1, t2, t3, t4;
     double mm_time, run_time, par_time;
     cm_grid *cmg;
-	char fname[32];
-	TSI_FILE *fp;
 
     /* prepare simulations */
     printf_dbg("tsi_setup_iteration(%d,%d,0): setup [Co]DSS\n", t->proc_id, iteration);
@@ -342,16 +398,16 @@ int tsi_setup_iteration(tsi *t, int iteration)
         getCurrTime(&t2);
 		t->currBAI_idx = -1; 
 		t->currBCM_idx = -1;
-        setup_dss(t->dss_eng, NULL);
+        //setup_dss(t->dss_eng, NULL);
     } else {
         t->currBAI_idx = t->nextBAI_idx;
         t->currBCM_idx = t->nextBCM_idx;
         t->nextBAI_idx = -1;
         t->nextBCM_idx = -1;
-        t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        //t->currBAI = load_grid(t->heap, t->currBAI_idx);
         getCurrTime(&t2);
-        setup_dss(t->dss_eng, t->currBAI);
-        dirty_grid(t->heap, t->currBAI_idx);
+        //setup_dss(t->dss_eng, t->currBAI);
+        //dirty_grid(t->heap, t->currBAI_idx);
     }
     getCurrTime(&t3);
 
@@ -374,9 +430,9 @@ int tsi_setup_iteration(tsi *t, int iteration)
     store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
     getCurrTime(&t4);
 
-    printf_dbg2("tsi_setup_iteration: \tNew set of layers:\n");
-// print_layers(cmg);
-//    printf("\n");
+    printf("tsi_setup_iteration: \tNew set of layers:\n");
+    print_layers(cmg);
+    printf("\n");
     
     mm_time  = getElapsedTime(&t1, &t2);
     run_time = getElapsedTime(&t2, &t3);
@@ -398,8 +454,22 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     struct timeval t1, t2, t3;
     int result;
     double run_time, mm_time;
-	TSI_FILE *fp;
-	char fname[32];
+
+    /* prepare simulations */
+    if (iteration == 0) { /* first iteration */
+	//t->currBAI_idx = -1; 
+	//t->currBCM_idx = -1;
+        setup_dss(t->dss_eng, NULL);
+    } else {
+        //t->currBAI_idx = t->nextBAI_idx;
+        //t->currBCM_idx = t->nextBCM_idx;
+        //t->nextBAI_idx = -1;
+        //t->nextBCM_idx = -1;
+        t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        //getCurrTime(&t2);
+        setup_dss(t->dss_eng, t->currBAI);
+        dirty_grid(t->heap, t->currBAI_idx);
+    }
 
     /* load new AI for simulation result */
     getCurrTime(&t1);
@@ -425,8 +495,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     } else {              /* co-simulation */
         printf_dbg2("tsi_dss(%d,%d,%d): loading currBCM grid\n", t->proc_id, iteration, simulation);
         t->currBCM = load_grid(t->heap, t->currBCM_idx);
- //       printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
- //       t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
+        t->currBAI = load_grid(t->heap, t->currBAI_idx);
         if (!t->currBAI || !t->currBCM) {
             printf_dbg("tsi_dss(%d,%d,%d):", t->proc_id, iteration, simulation);
             printf_dbg(" failed to load currBAI or currBCM for CoDSS!\n");
@@ -437,31 +507,16 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
         getCurrTime(&t2);
         result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> too much  :-( */
         getCurrTime(&t3);
-		
-		/*
-		printf_dbg("DSS(%d,%d,%d) DUMPING currBAI!\n",t->proc_id,iteration,simulation);
-		sprintf(fname,"currBAI%d.%d.out",iteration,simulation);
-		fp = create_file(fname);
-		write_ascii_grid_file(fp, t->currBAI, t->grid_size);
-		close_file(fp);
-
-		printf_dbg("DSS(%d,%d,%d) DUMPING currBCM!\n",t->proc_id,iteration,simulation);
-		sprintf(fname,"currBCM%d.%d.out",iteration,simulation);
-		fp = create_file(fname);
-		write_ascii_grid_file(fp, t->currBCM, t->grid_size);
-		close_file(fp);
-		*/
-
         clear_grid(t->heap, t->currBAI_idx);
         clear_grid(t->heap, t->currBCM_idx);
         dirty_grid(t->heap, t->ai_idx);
     }
 
+	TSI_FILE *fp;
 
 	/*
 	printf_dbg("DSS(%d,%d,%d) DUMPING AI!\n",t->proc_id,iteration,simulation);
-	sprintf(fname,"ai-%d.%d.out",iteration,simulation);
-	fp = create_file(fname);
+	fp = create_file("AI.out");
 	write_ascii_grid_file(fp, t->ai, t->grid_size);
 	close_file(fp);
 	*/
@@ -478,6 +533,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     }
     printf_dbg("tsi_dss(%d,%d,%d): \t\t\t [Co]DSS terminated", t->proc_id, iteration, simulation);
     printf_dbg("\t %f secs (%f secs for memory management)\n", run_time, mm_time);
+
+
     return 1;
 } /* tsi_direct_sequential_simulation */
 
@@ -547,6 +604,8 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
     }
     printf_dbg("tsi_seismic_inversion(%d,%d,%d): \t\t\t SI terminated", t->proc_id, iteration, simulation);
     printf_dbg("\t %f secs (%f secs for memory management)\n", run_time, mm_time);
+
+
     return 1;
 } /* tsi_seismic_inversion */
 
@@ -627,6 +686,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
         }
 
         getCurrTime(&t4);
+        printf_dbg("tsi_eval_best_corr(%d,%d,%d): \t\t\t running Compare&Update\n");
 		/* update  nextBAI and nextBCM */
         result = tsi_compare(t->grid_size, t->ai, t->cm, t->nextBAI, t->nextBCM);
         getCurrTime(&t5);
@@ -642,10 +702,12 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
         }
     } /* if first simulation */
 
-	dirty_grid(t->heap, t->nextBAI_idx);
-	dirty_grid(t->heap, t->nextBCM_idx);
 
-	getCurrTime(&t6);
+
+    dirty_grid(t->heap, t->nextBAI_idx);
+    dirty_grid(t->heap, t->nextBCM_idx);
+
+    getCurrTime(&t6);
 
     mm_time = getElapsedTime(&t1, &t2);
     run_time = getElapsedTime(&t2, &t3);
@@ -656,6 +718,8 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
     t->corr_time += run_time;
     printf_dbg("tsi_eval_best_corr(%d,%d,%d): \t\t\t terminated", t->proc_id, iteration, simulation);
     printf_dbg(" \t%f secs (%f secs for memory management)\n", run_time, mm_time);
+
+
     return 1;    
 } /* tsi_evaluate_best_correlations */
 
@@ -663,31 +727,16 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 int tsi_finish_iteration(tsi *t, int iteration, int simulation) 
 {
-	struct timeval t1, t2;
-	char fname[32];
-	TSI_FILE *fp;
+    struct timeval t1, t2;
+    char fname[32];
+    TSI_FILE *fp;
 
-	getCurrTime(&t1);
-    printf_dbg("tsi_finish_iteration(%d,%d,%d): \t Finishing iterationn\n", t->proc_id, iteration, simulation);
+    getCurrTime(&t1);
+    printf_dbg("tsi_finish_iteration(%d,%d,%d): \t Finishing iteration\n", t->proc_id, iteration, simulation);
 
-	// TODO: REMOVE THIS
-	printf_dbg("run_tsi(): (%d/%d) DUMPING BAI & BCM!\n",iteration,simulation);
-
-	sprintf(fname,"nextBAI%d.out",iteration);
-	fp = create_file(fname);
-	t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
-	write_ascii_grid_file(fp, t->nextBAI, t->grid_size);
-	close_file(fp);
-
-	sprintf(fname,"nextBCM%d.out",iteration);
-	fp = create_file(fname);
-	t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
-	write_ascii_grid_file(fp, t->nextBCM, t->grid_size);
-	close_file(fp);
-	// --end--
-	
     if (t->n_procs > 1) {
-        if (tsi_is_best_parallel(t)) return 0;
+        if (tsi_is_best_parallel(t))
+            return 0;
 
         if (t->global_best.proc_id != t->proc_id) {
 	    /* delete local best AI grid */
@@ -696,43 +745,84 @@ int tsi_finish_iteration(tsi *t, int iteration, int simulation)
         }
     }
 
-    if (tsi_compare_parallel(t)) return 0;
+    if (tsi_compare_parallel(t))
+        return 0;
 
-	if(iteration > 0) {
-		delete_grid(t->heap, t->currBAI_idx);
-		delete_grid(t->heap, t->currBCM_idx);
-		t->currBAI_idx = t->currBCM_idx = -1;
-	}
+    if (iteration > 0) {
+        delete_grid(t->heap, t->currBAI_idx);
+        delete_grid(t->heap, t->currBCM_idx);
+        t->currBAI_idx = t->currBCM_idx = -1;
+    }
 
-	getCurrTime(&t2);
+    getCurrTime(&t2);
     printf_dbg("tsi_finish_iteration(%d,%d,%d): \t terminated, took %f secs\n", t->proc_id, iteration, simulation,getElapsedTime(&t1, &t2));
 
     return 1;
 } /* tsi_eval_best_correlations */
 
 
+
 int tsi_save_results(tsi *t) {
+    reg_key *k;
     TSI_FILE *fp;
+    char filename[128];
 
     /* save best AI grid */
     if (t->global_best.proc_id == t->proc_id) {
-        fp = create_file("bestAI.out");
-        write_ascii_grid_file(fp, t->ai, t->grid_size);
+        t->bestAI = load_grid(t->heap, t->bestAI_idx);
+
+        if ((k = get_key(t->reg, "GLOBAL", "RESULT_FILE")) == NULL)
+            sprintf(filename, "%sBestAI.tsi", t->output_path);
+        else
+            sprintf(filename, "%s%s", t->output_path, get_string(k));
+
+        if ((fp = create_file(filename)) == NULL) {
+            printf("ERROR: Failed to create the result grid file!\n");
+            delete_tsi(t);
+            return 0;
+        }
+
+        sprintf(filename, "bestAI");
+        if (!tsi_write_grid(t, fp, t->bestAI, t->result_file, filename)) {
+            printf("ERROR: Failed to write result file!\n");
+            delete_tsi(t);
+            return 0;
+        }
+
         close_file(fp);
-        printf_dbg("tsi_save_results(%d): bestAI grid dumped\n",t->proc_id);
+        printf_dbg("run_tsi(%d): bestAI grid dumped\n",t->proc_id);
     }
 	
-    printf_dbg("tsi_save_results(%d): heap performance: R=%d ", t->proc_id, t->heap->reads);
+/*
+        t->seismic = load_grid(t->heap, t->seismic_idx);
+        sprintf(filename, "%stest_end-19x19x200.tsi", t->output_path);
+
+        if ((fp = create_file(filename)) == NULL) {
+            printf("ERROR: Failed to create the result grid file!\n");
+            delete_tsi(t);
+            return 0;
+        }
+        sprintf(filename, "seismic");
+        if (!tsi_write_grid(t, fp, t->seismic, t->result_file, filename)) {
+            printf("ERROR: Failed to write result file!\n");
+            delete_tsi(t);
+            return 0;
+        }
+        close_file(fp);
+*/
+
+    printf_dbg("run_tsi(%d): heap performance: R=%d ", t->proc_id, t->heap->reads);
     printf_dbg("W=%d G=%d X=%d\n", t->heap->writes, t->heap->curr_grids, t->heap->max_grids);
     printf("\t\t\tFinal correlation = %f\n", t->global_best.value);
+    return 1;
 } /* tsi_save_results */
 
 
-int tsi_compare(unsigned int size, float *AI, float *CM, float *BAI, float *BCM) {
-    int i;
-    unsigned int x;
 
-    printf_dbg2("\ttsi_compare(): called\n");
+int tsi_compare(unsigned int size, float *AI, float *CM, float *BAI, float *BCM) {
+    unsigned int i, x;
+
+    printf_dbg("\ttsi_compare(): called\n");
     /* execute Compare */
     x = 0;
     for (i = 0; i < size; i++) {
@@ -743,7 +833,7 @@ int tsi_compare(unsigned int size, float *AI, float *CM, float *BAI, float *BCM)
             x++;
         }
     }
-    printf_dbg("\t\t\t\t\ttsi_compare(): changed %d points\n", x);
+    printf_dbg("\ttsi_compare(): changed %d points\n", x);
     return 1;
 } /* tsi_compare */
 
@@ -756,5 +846,45 @@ void grid_copy(float *a, float *b, unsigned int grid_size)
 }
 
 
-/* end of file tsi.c */
 
+int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
+    switch(type) {
+        case CARTESIAN_FILE:
+            return (read_cartesian_grid(fp, grid, t->grid_size));
+        case TSI_ASCII_FILE:
+        case TSI_BIN_FILE:
+            return (read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize));
+        case GSLIB_FILE:
+            return (read_gslib_grid(fp, grid, t->grid_size));
+/*
+        case SGEMS_FILE:
+            return read_sgems_grid(fp, grid, t->grid_size));
+*/
+        default:
+            fprintf(stderr, "ERROR: Unknown grid file type!\n");
+            return 0;
+    } /* switch */ 
+}
+
+
+
+int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
+    switch(type) {
+        case CARTESIAN_FILE:
+            return (write_cartesian_grid(fp, grid, t->grid_size));
+        case TSI_ASCII_FILE:
+        case TSI_BIN_FILE:
+            return (write_tsi_grid(fp, type, grid, t->xsize, t->ysize, t->zsize));
+        case GSLIB_FILE:
+            return (write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc));
+/*
+        case SGEMS_FILE:
+            return write_sgems_grid(fp, grid, t->grid_size));
+*/
+        default:
+            fprintf(stderr, "ERROR: Unknown grid file type!\n");
+            return 0;
+    } /* switch */ 
+}
+
+/* end of file tsi.c */

@@ -22,7 +22,8 @@ struct tsi_mem {
 
 LIST_HEAD(tsi_mem_list);
 
-
+/* memdebug prototypes */
+void debug_check(void);
 
 void *debug_malloc(unsigned int size)
 {

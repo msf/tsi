@@ -2,16 +2,17 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include "debug.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "timer.h"
 #include "si.h"
+#include "si_math.h"
 
-
-/* wavelet functions */
+/* prototypes */
 float point_value(si *s, int point);
-float index_value(si *s, int index);
+float index_value(si *s, int idx);
 
 
 unsigned int getPoint(si *s, int x, int y, int z)
@@ -23,7 +24,7 @@ unsigned int getPoint(si *s, int x, int y, int z)
 
 int make_reflections_grid(si *s, float *AI, float *RG) 
 {
-    unsigned int x, y, z;
+    int x, y, z;
     double value;
     struct timeval t1, t2;
         
@@ -231,9 +232,9 @@ float point_value(si* s, int point)
 
 
 
-float index_value(si *s, int index) 
+float index_value(si *s, int idx) 
 {
-    return s->values[index];
+    return s->values[idx];
 } /* index_value */
 
 

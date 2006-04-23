@@ -37,7 +37,7 @@ typedef struct grid_heap_type {
 } grid_heap;
 
 /* starts a new grid heap */
-grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, unsigned int grid_size);
+grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, char *path, unsigned int grid_size);
 
 /* allocates a new grid */
 int new_grid(grid_heap *h);
