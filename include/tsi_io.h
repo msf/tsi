@@ -1,20 +1,10 @@
 #ifndef _TSI_IO_H
 #define _TSI_IO_H
 
-#ifdef TSI_MPI
-
-#include <mpi.h>
-#define TSI_FILE MPI_File
-#ifndef EOF
-#define EOF (-1)
-#endif /* EOF */
-
-#else
 
 #include <stdio.h>
 #define TSI_FILE FILE
 
-#endif /* TSI_MPI */
 
 //#include "si.h"      <- fuck-up
 

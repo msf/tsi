@@ -79,8 +79,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l) {
     }
 
     i = 0;
-    while (read_line_file(fp, buf) != EOF) {
-        sscanf(buf, "%d %f\n", &(s->points[i]), &(s->values[i]));
+    while (fscanf(fp,"%d %f\n", &(s->points[i]), &(s->values[i])) != EOF) {
         printf_dbg2("Wavelet[%d] = Pair(%d, %f)\n", i, s->points[i], s->values[i]);
         i++;
     }

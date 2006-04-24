@@ -3,7 +3,7 @@
 #include "debug.h"
 #include "memdebug.h"
 #include "tsi_io.h"
-#ifdef TSI_MPI
+#ifdef TSI_NUNCA
 
 /*
  *

@@ -222,9 +222,8 @@ double *load_harddata_file(TSI_FILE *fp, char *buf, unsigned int *size) {
     double x, y, z, val, *ret;
     int i;
 
-    i = *size;
-    if (read_line_file(fp, buf) != EOF) {
-        sscanf(buf, "%lf %lf %lf %lf", &x, &y, &z, &val);
+	i = *size;
+	if(fscanf(fp,"%lf %lf %lf %lf", &x, &y, &z, &val) != EOF) {
         (*size)++;
 		ret = load_harddata_file(fp, buf, size);
         if ( ret ) {

@@ -3,7 +3,6 @@
 #include "debug.h"
 #include "tsi.h"
 #include "tsi_io.h"
-#ifndef TSI_MPI
 
 
 /* I/O prototypes */
@@ -32,66 +31,6 @@ int close_file(TSI_FILE *fp) {
 } /* close_file */
 
 
-
-/**** generic read/write functions ****/
-
-int read_file(TSI_FILE *fp) {
-    return getc(fp);
-} /* read_file */
-
-
-
-int write_file(TSI_FILE *fp, char c) { /* TEST */
-    return putc(c, fp);
-} /* write_file */
-
-
-
-int read_line_file(TSI_FILE *fp, char *buf) {
-    int c;
-
-    do {
-        c = read_file(fp);
-        if (c == EOF) break;
-        *buf = (char) c;
-        buf++;
-    } while (c != '\n');
-    *buf = 0;
-    return c;
-} /* read_line_file */
-
-
-
-int write_line_file(TSI_FILE *fp, char *buf) { /* TEST */
-    int ret;
-
-    ret = 0;
-    while (*buf) {
-        ret = write_file(fp, *buf);
-        buf++;
-        if (ret < 0) break;
-    }
-    return ret;
-} /* write_line_file */
-
-
-
-int read_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size) {
-    if (fseek(fp, offset, SEEK_SET)) return 0;
-    if (fread(address, 1, block_size, fp) < (unsigned int) block_size) return 0;
-    return offset;
-} /* read_block_file */
-
-
-
-int write_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block_size) {
-    if (fseek(fp, offset, SEEK_SET)) return 0;
-    if (fwrite(address, 1, block_size, fp) < (unsigned int) block_size) return 0;
-    return offset;
-} /* write_block_file */
-
-
-
 /**** grid read/write functions ****/
 
 int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
@@ -101,9 +40,10 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
     unsigned int grid_size;
 
     /* load file header */
-    for (i = 0; i < 3; i++)
-        if ((header[i] = read_file(fp)) < 0)
-            return 0;
+	
+	if ( fread(header, sizeof(char), 3, fp ) < 3)
+			return 0;
+
 
     /* parse header */
     if (strncmp(header, tsi_h, 3)) {
@@ -116,15 +56,16 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
         printf_dbg("\tread_tsi_grid(): incompatible format\n");
         return 0;
     }
-    if ((x != x1) || (y != y1) || (z != z1)) {
+    if ((x != x1) || (y != y1) || (z < z1)) {
         printf_dbg("\tread_tsi_grid(): incoeherent size parameters\n");
         return 0;
     }
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
     switch (type) {
         case 1:      /* ASCII data */
-            read_line_file(fp, header);
-            read_line_file(fp, header);
+			fgets( header, 63, fp);
+			fgets( header, 63, fp);
+			fgets( header, 63, fp);
             return read_cartesian_grid(fp, grid, grid_size);
 
         case 2:      /* data in binary floats */
@@ -168,7 +109,8 @@ int write_tsi_grid(TSI_FILE *fp, int type, float *grid, int x, int y, int z) {
 int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
 	
-    for (i=0; i < grid_size; i++) fscanf(fp, "%f\n", &grid[i]);
+    for (i=0; i < grid_size; i++) 
+		fscanf(fp, "%f\n", &grid[i]);
     return i;
 } /* read_cartesian_grid */
 
@@ -177,7 +119,8 @@ int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
 
-    for (i = 0; i < grid_size; i++) fprintf(fp, "%.3f\n", grid[i]);
+    for (i = 0; i < grid_size; i++) 
+		fprintf(fp, "%.3f\n", grid[i]);
     return i;
 } /* write_cartesian_grid */
 
@@ -188,9 +131,9 @@ int read_gslib_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     char str[64];
 
     /* ignore header */
-    if (read_line_file(fp, str) < 0) return 0;
-    if (read_line_file(fp, str) < 0) return 0;
-    if (read_line_file(fp, str) < 0) return 0;
+    if (fgets(str, 64, fp) < 0) return 0;
+    if (fgets(str, 64, fp) < 0) return 0;
+    if (fgets(str, 64, fp) < 0) return 0;
 
     return read_cartesian_grid(fp, grid, grid_size);
 } /* read_gslib_grid */
@@ -217,14 +160,19 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
 /************************* EVAL *********************************************/
 
 int dump_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
-    if (fseek(fp, (long) 0, SEEK_SET)) return 0;
-    if (fwrite(grid, sizeof(float), (size_t) grid_size, fp) < grid_size) return 0;
+    if (fseek(fp, (long) 0, SEEK_SET)) 
+		return 0;
+	if ( write_float(fp, grid, grid_size) < grid_size)
+		return 0;
+
     return 1;
 } /* write_grid_file */
 
 int load_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     if (fseek(fp, (long) 0, SEEK_SET)) return 0;
-    if (fread(grid, sizeof(float), (size_t) grid_size, fp) < grid_size) return 0;
+	if ( read_float(fp, grid, grid_size) < grid_size)
+		return 0;
+
     return 1;
 } /* load_grid_file */
 
@@ -256,7 +204,6 @@ int write_float(TSI_FILE *fp, float *grid, unsigned int nelems)
 } /* write_float */
 
 
-#endif /* TSI_MPI */
 
 /* end of tsi_io.c */
 

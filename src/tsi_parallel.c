@@ -1,7 +1,12 @@
+#ifdef TSI_MPI
+#include <mpi.h>
+#endif
+
 #include "debug.h"
 #include "tsi.h"
 #include "tsi_parallel.h"
 #include "tsi_math.h"
+
 
 
 int new_tsi_parallel(int *n_procs, int *proc_id) {
