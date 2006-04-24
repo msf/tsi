@@ -114,7 +114,7 @@ float *load_grid(grid_heap *h, int idx) {
             return h->g[idx].grid;     /* return pointer to grid space */
         } else if (h->curr_grids < h->threshold) {  /* if #grids is bellow threshold */
             h->curr_grids++;
-            printf("Number of grids raised to %d\n", h->curr_grids);
+            printf_dbg2("Number of grids raised to %d\n", h->curr_grids);
             h->g[idx].grid = (float *) tsi_malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
@@ -146,7 +146,7 @@ float *load_grid(grid_heap *h, int idx) {
         if (i == h->heap_size) {
             /* no grid available, allocate more ram */
             h->curr_grids++;
-            printf("Number of grids raised to %d\n", h->curr_grids);
+            printf_dbg2("Number of grids raised to %d\n", h->curr_grids);
             h->g[idx].grid = (float *) tsi_malloc(h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;

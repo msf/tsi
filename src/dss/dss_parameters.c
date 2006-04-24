@@ -251,7 +251,7 @@ int  dss_parameters(dss *d, registry *r )
         sprintf(variogram, "VARIOGRAM%d", i+1);
         if ((k = get_key(r, variogram, "TYPE")) == NULL) return 1;
         d->covariance->it[i] = get_int(k);
-		printf("%s - type: %d\t %d\n",variogram,get_int(k),d->covariance->it[i]);
+		printf_dbg2("%s - type: %d\t %d\n",variogram,get_int(k),d->covariance->it[i]);
         if (d->covariance->it[i] == 4) {
             printf("load_dss_configs(): ERROR - A power model is not allowed! Choose a different model and re-start.\n");
             return 1;

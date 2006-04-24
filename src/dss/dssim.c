@@ -178,7 +178,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	--bestAICube;
 	--sim;
 
-	printf_dbg("\tdssim() called\n");
+	printf_dbg2("\tdssim() called\n");
 
 	/* Function Body */
 	for (i = 1; i <= covariance->nst[0]; ++i) {
@@ -233,7 +233,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		}
 	}
 
-	printf_dbg("\tdssim(): Starting simulation now\n");
+	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
 	simulation->nsim = index = in = 0;
 	zmean = 0.f;
@@ -401,7 +401,7 @@ L9999:
 	
 	}	/* !END MAIN LOOP OVER NODES: */
 
-	printf("dssim(): DEBUG: SKIP points: %d\n",simulation->nsim);
+	printf_dbg("dssim(): DEBUG: SKIP points: %d\n",simulation->nsim);
 
 
 	/* !Return to the main program: */

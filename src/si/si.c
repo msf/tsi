@@ -2,13 +2,14 @@
 
 #include <stdlib.h>
 #include "debug.h"
+#include "log.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "si.h"
 #include "si_math.h"
 
 
-si *new_si(registry *r, grid_heap *h) {
+si *new_si(registry *r, grid_heap *h, log_t *l) {
     si *s;
     reg_key *k, *kpath;
     TSI_FILE *fp;
@@ -23,6 +24,7 @@ si *new_si(registry *r, grid_heap *h) {
     }
     s->reg = r;
     s->heap = h;
+	s->l = l;
     s->cmg = NULL;
 
     /* get grid parameters */
@@ -129,7 +131,7 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
     float *RG;
 
     RG = CM;
-    printf_dbg("\trun_si(): called\n");
+    printf_dbg2("\trun_si(): called\n");
 
     /* build reflections grid (use CM as aux grid) */
     result = make_reflections_grid(s, AI, RG);
@@ -145,7 +147,7 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
 
 
 void delete_si(si *s) {
-    printf_dbg("\tdelete_si(): called\n");
+    printf_dbg2("\tdelete_si(): called\n");
     if (s) {
        if (s->points) tsi_free(s->points);
        if (s->values) tsi_free(s->values);
@@ -160,7 +162,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
     cm_grid *g;
     int delta, i, x, n, sum, *temp;
     
-    printf_dbg("\tnew_cmgrid(): called\n");
+    printf_dbg2("\tnew_cmgrid(): called\n");
     if ((g = tsi_malloc(sizeof(cm_grid))) == NULL) {
         printf_dbg("\tnew_cmgrid: failed to allocate space for cm_grid\n");
         return NULL;
@@ -258,11 +260,11 @@ cm_grid *new_cmgrid(si *s, int empty) {
                 x = i;
             }
         }
-        /* now we reduce its size */
+        /* reduce its size */
         temp[x] -= s->min_size;
         temp[x] /= 2;
         temp[x] += s->min_size;
-        /* lets see if its good now */
+        /* see if its good now */
         sum = 0;
         for (i = 0; i < n; i++) sum += temp[i];
     }
@@ -273,7 +275,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
           temp[x] += i;
     }
 
-    /* now lets count the layers != 0 */
+    /* count the layers != 0 */
     sum = 0;
     for (i = 0; i < n; i++)
         if (temp[i] != 0)
@@ -305,7 +307,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
 
 
 int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
-    printf_dbg("\tbuild_cmgrid(): called\n");
+    printf_dbg2("\tbuild_cmgrid(): called\n");
     if (g == NULL) {
         printf_dbg2("\tbuild_cmgrid: unexpected NULL for cm_grid\n");
         return 0;
@@ -322,14 +324,14 @@ int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
 
 
 cm_grid *load_cmgrid(si *s) {
-    printf_dbg("\tload_cmgrid(): called\n");
+    printf_dbg2("\tload_cmgrid(): called\n");
     return s->cmg;
 } /* load_cmgrid */
 
 
 
 int get_nlayers(cm_grid *g) {
-    printf_dbg("\tget_nlayers(): called\n");
+    printf_dbg2("\tget_nlayers(): called\n");
     if (g) return g->nlayers;
     return 0;
 } /* load_cmgrid */
@@ -337,7 +339,7 @@ int get_nlayers(cm_grid *g) {
 
 
 int *get_layers(cm_grid *g) {
-    printf_dbg("\tget_layers(): called\n");
+    printf_dbg2("\tget_layers(): called\n");
     if (g) return g->layer_size;
     return NULL;
 } /* load_cmgrid */
@@ -353,7 +355,7 @@ int store_cmgrid(si *s, cm_grid *g) {
 
 
 void delete_cmgrid(cm_grid *g) {
-    printf_dbg("\tdelete_cmgrid(): called\n");
+    printf_dbg2("\tdelete_cmgrid(): called\n");
     if (g) {
         if (g->layer_size) tsi_free(g->layer_size);
         if (g->cg) tsi_free(g->cg);
@@ -366,7 +368,7 @@ void delete_cmgrid(cm_grid *g) {
 void print_layers(cm_grid *g) {
     int i;
     for (i = 0; i < g->nlayers; i++)
-         printf("layer[%d] = %d\n",i,g->layer_size[i]);
+         printf_dbg("layer[%d] = %d\n",i,g->layer_size[i]);
 } /* print_layers*/
 
 /* end of file si.c */

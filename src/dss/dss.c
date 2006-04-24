@@ -2,16 +2,16 @@
 
 #include "debug.h"
 #include "memdebug.h"
+#include "log.h"
 #include "grid_heap.h"
 #include "registry.h"
 #include "dss.h"
 #include "dss_legacy.h"
 #include "tsi_io.h"
-#include "acorni.h"
 
 double * load_harddata_file(TSI_FILE *, char *, unsigned int *);
 
-dss *new_dss(registry *r, grid_heap *h) {
+dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     dss *d;
     reg_key *k, *kpath;
     /* auxiliar variables for harddata */
@@ -40,14 +40,15 @@ dss *new_dss(registry *r, grid_heap *h) {
         return NULL;
     d->reg = r;
     d->heap = h;
+	d->l = l;
 
-    printf_dbg("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
+    printf_dbg2(d->l,"new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, r)){
 		printf("new_dss(): ERROR loaging dss configs\n");
 		return NULL;
 	}
 	
-    printf_dbg("new_dss(): Reading harddata file.\n");
+    printf_dbg2("new_dss(): Reading harddata file.\n");
     /* read harddata file */
     d->harddata_size = 0;
     kpath = NULL;
@@ -90,14 +91,14 @@ dss *new_dss(registry *r, grid_heap *h) {
         
     /* readWellsData */    
 
-    printf_dbg("new_dss(): DSS engine started sucessfully.\n");
+    printf_dbg2("new_dss(): DSS engine started sucessfully.\n");
     return d;
 } /* new_dss */
 
 
 
 int setup_dss(dss *d, float *currBAI) {
-    printf_dbg("setup_dss(): called\n");
+    printf_dbg2("setup_dss(): called\n");
     d->general->ktype = 1;
     if (currBAI) d->general->ktype = 5;
     readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
@@ -109,7 +110,7 @@ int setup_dss(dss *d, float *currBAI) {
 int run_dss(dss *d, float *AI) {
     int *order, *mask;
 
-    printf_dbg("run_dss(): called\n");
+    printf_dbg2("run_dss(): called\n");
     d->covtab_idx = new_grid(d->heap);
     d->ixnode_idx = new_grid(d->heap);
     d->iynode_idx = new_grid(d->heap);
@@ -145,7 +146,7 @@ int run_dss(dss *d, float *AI) {
 int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     int *order, *mask;
 
-    printf_dbg("run_codss(): called\n");
+    printf_dbg2("run_codss(): called\n");
     d->covtab_idx = new_grid(d->heap);
     d->ixnode_idx = new_grid(d->heap);
     d->iynode_idx = new_grid(d->heap);
@@ -180,7 +181,7 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
 
 
 void delete_dss(dss *d) {
-    printf_dbg("delete_dss(): called\n");
+    printf_dbg2("delete_dss(): called\n");
     if (d) {
         if (d->general) {
             if (d->general->x) tsi_free(d->general->x);
@@ -191,6 +192,8 @@ void delete_dss(dss *d) {
             if (d->general->vrtr) tsi_free(d->general->vrtr);
             if (d->general->vrgtr) tsi_free(d->general->vrgtr);
             if (d->general->sec) tsi_free(d->general->sec);
+			if (d->general->wellsDataVal) tsi_free(d->general->wellsDataVal);
+			if (d->general->wellsDataPos) tsi_free(d->general->wellsDataPos);
             tsi_free(d->general);
         }
         if (d->search) tsi_free(d->search);

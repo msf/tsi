@@ -3,6 +3,7 @@
 
 #include "debug.h"
 #include "grid_heap.h"
+#include "log.h"
 #include "registry.h"
 
 
@@ -181,8 +182,10 @@ typedef struct file_vars_type {
 
 
 typedef struct dss_type {
-    registry  *reg;
-    grid_heap *heap;
+    /* auxiliar objects */
+    registry *reg;            /* reference to the registry */
+    grid_heap *heap;          /* reference to the grid heap */
+    log_t *l;                   /* reference to the log */
 
     /* auxiliar grids */
     int covtab_idx,
@@ -206,7 +209,7 @@ typedef struct dss_type {
 } dss;
 
 
-dss *new_dss(registry *r, grid_heap *h);
+dss *new_dss(registry *r, grid_heap *h, log_t *l);
 
 int setup_dss(dss *d, float *AI);
 

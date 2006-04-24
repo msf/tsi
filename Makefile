@@ -3,7 +3,7 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-#COMPILER := gcc
+COMPILER := gcc
 
 # Default settings for gcc
 CC       := gcc
@@ -11,9 +11,9 @@ CPP      := g++
 CFLAGS   := -pipe 
 LDFLAGS  := -lm -lc -lpthread -lstdc++ -lgcc
 OPTS     := -O3 -ffast-math -fomit-frame-pointer 
-OPTS	+= -march=pentium-m
-OPTS	+= -m32
-OPTS	+= -DTSI_DEBUG
+#OPTS	+= -march=pentium-m
+#OPTS	+= -m32
+#OPTS	+= -DTSI_DEBUG
 #OPTS     += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS     += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS     += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
@@ -23,7 +23,7 @@ OPTS	+= -DTSI_DEBUG
 #OPTS     += -freorder-blocks -freorder-functions -funit-at-a-time
 #OPTS     += -falign-functions  -falign-jumps -falign-loops  -falign-labels
 #OPTS     += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
-DEBUG    := -g -ggdb -DTSI_DEBUG2
+DEBUG    := -g -ggdb
 #DEBUG    += -pg
 DEBUG    += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
 DEBUG    += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow

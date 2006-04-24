@@ -16,6 +16,7 @@ typedef struct cm_grid_type {
 typedef struct si_type {
     registry  *reg;
     grid_heap *heap;
+    log_t *l;                   /* reference to the log */
 
 	/* grid size */
     int xsize,
@@ -44,7 +45,7 @@ typedef struct si_type {
 } si;
 
 
-si *new_si(registry *r, grid_heap *h);
+si *new_si(registry *r, grid_heap *h, log_t *l);
 
 int setup_si(si *s);
 

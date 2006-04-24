@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
+#include "log.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "timer.h"
@@ -22,25 +23,27 @@ unsigned int getPoint(si *s, int x, int y, int z)
 	return (z * s->xsize * s->ysize + y * s->xsize + x);
 }
 
+/**
+ * make Reflection Coeficients grid
+ */
 int make_reflections_grid(si *s, float *AI, float *RG) 
 {
     int x, y, z;
     double value;
     struct timeval t1, t2;
         
-    printf_dbg("make_reflections_grid(): called");
     getCurrTime(&t1);
-    for (x = 0; x < s->xsize; x++)
+    for (x = 0; x < s->xsize; x++) {
         for (y = 0; y < s->ysize; y++)
             for (z = 0; z < s->zsize -1; z++) {
                  value =  (AI[getPoint(s,x,y,z+1)] - AI[getPoint(s,x,y,z)]) / (AI[getPoint(s,x,y,z+1)] + AI[getPoint(s,x,y,z)]);
                  RG[getPoint(s,x,y,z)] = value;
             }
-    for (x = 0; x < s->xsize; x++)
-        for (y = 0; y < s->ysize; y++)
-             RG[getPoint(s,x,y,s->zsize -1)] = 0;
+            RG[getPoint(s,x,y,s->zsize -1)] = 0;
+	}
     getCurrTime(&t2);
-    printf_dbg(" (%f secs)\n", getElapsedTime(&t1, &t2));
+
+	log_action_time(s->l, 2, "make_reflections_grid() cpuTime",getElapsedTime(&t1,&t2));
 	
     return 1;
 } /* make_reflections_grid */
@@ -58,7 +61,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
     unsigned int aux;
 
     aux = 0;
-    printf_dbg("make_synthetic_grid(): called");
+    printf_dbg2("make_synthetic_grid(): called");
     getCurrTime(&t1);
     wavelet_spots = s->wavelet_used_values / 2;
     nxy = s->xsize * s->ysize;
@@ -79,6 +82,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
                 }
             }
 
+	/* optimization tests */
 /*
     it = 0;
     for (x = 0; x < s->xsize; x++) 
@@ -112,7 +116,8 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
     }
 */
     getCurrTime(&t2);
-    printf_dbg(" (%f secs, %u calcs)\n", getElapsedTime(&t1, &t2), aux);
+	log_action_time(s->l, 2, "make_syntetic_grid() cpuTime",getElapsedTime(&t1,&t2));
+    printf_dbg2("make_syntetic_grid (%f secs, %u calcs)\n", getElapsedTime(&t1, &t2), aux);
 
     return 1;
 } /* make_synthetic_grid */
@@ -139,7 +144,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
     int n, nlayers, *layer_size;
     struct timeval t1, t2;
 
-    printf_dbg("make_correlations_grid(): called\n");
+    printf_dbg2("make_correlations_grid(): called\n");
     getCurrTime(&t1);
     corr_grid = s->cmg->cg;   /* compressed grid */
     nlayers = s->cmg->nlayers;
@@ -193,7 +198,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 	
     expand_correlations_grid(s->cmg, CM);
     getCurrTime(&t2);
-    printf_dbg("make_synthetic_grid(): finished (%f secs)\n", getElapsedTime(&t1, &t2));
+	log_action_time(s->l, 2, "make_correlations_grid() cpuTime",getElapsedTime(&t1,&t2));
 	
     return 1;
 } /* make_correlations_grid */
@@ -205,7 +210,7 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
     float *cg;
     float *t;
 
-    printf_dbg("expand_correlations_grid(): called\n");
+    printf_dbg2("expand_correlations_grid(): called\n");
     nxy = cmg->nxy;
     z = 0;
     for (i = 0; i < cmg->nlayers; i++) {
@@ -218,7 +223,7 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
         }
         z += n;
     }
-    printf_dbg("expand_correlations_grid(): finished\n");
+    printf_dbg2("expand_correlations_grid(): finished\n");
     return 0;
 } /* expand_correlations_grid */
 
