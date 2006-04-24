@@ -187,7 +187,7 @@ tsi *new_tsi(registry *reg) {
        heap_size = get_int(k);
     else {
        printf_dbg("new_tsi(%d): failed to get heap size flag from the registry! Using defaults...\n", t->proc_id);
-       heap_size = 14;
+       heap_size = 12;
     }
     k = get_key(reg, "HEAP", "THRESHOLD");
     if (k)
@@ -456,6 +456,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
     cm_grid *cmg;
 
     /* prepare simulations */
+	log_separator(t->l);
 	log_iteration_number(t->l, iteration);
 	log_message(t->l, 0, "tsi_setup_iteration() setup [Co]-Direct Sequential Simulation");
 
@@ -606,7 +607,7 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
         return 0;
     }
 
-	if(mm_time > 0)
+	if(mm_time > 0.01)
 		log_action_time(t->l, 1, "tsi_DSSimulation() cpuTime in memory management", mm_time);
 	log_action_time(t->l, 1, "tsi_DSSimulation() cpuTime",run_time); 
 	log_string(t->l,"\n");
@@ -678,7 +679,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
         delete_tsi(t);
         return 0;
     }
-	if(mm_time > 0)
+	if(mm_time > 0.01)
 		log_action_time(t->l, 1, "tsi_seismic_inversion() cpuTime in memory management", mm_time);
 	log_action_time(t->l, 1, "tsi_seismic_inversion() cpuTime",run_time);
 	/*
@@ -744,7 +745,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 		t->bestAI = load_grid(t->heap, t->bestAI_idx);
 		grid_copy(t->bestAI, t->ai, t->grid_size);
 		dirty_grid(t->heap, t->bestAI_idx);
-		log_result(t->l, 1,"tsi_eval_best_correlations() \t\tNEW BEST CORRELATION",t->global_best.value);
+		log_result(t->l, 1,"tsi_eval_best_correlations() \tNEW BEST AI\t CORRELATION",t->global_best.value);
     }
 
     /* update best values found for AI and CM */
@@ -799,7 +800,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
     mm_time += getElapsedTime(&t5, &t6);
     t->mm_time += mm_time;
     t->corr_time += run_time;
-	if(mm_time > 0)
+	if(mm_time > 0.01)
 		log_action_time(t->l, 1, "tsi_eval_best_correlation() cpuTime for memory management",mm_time);
 	log_action_time(t->l, 1, "tsi_eval_best_correlation() cpuTime",run_time);
 
