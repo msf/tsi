@@ -48,19 +48,18 @@ int delete_tsi_parallel(tsi *t) {
             fflush(stdout);
             return -1;
         }
-		log_message(t->l, 0, "delete_tsi_parallel() calling MPI_Finalize()");
+		printf("delete_tsi_parallel() calling MPI_Finalize()\n");
         if (MPI_Finalize() != MPI_SUCCESS) {
             printf_dbg("delete_tsi_parallel(): MPI_Finalize failed!\n");
             fflush(stdout);
             return -1;
-        } else {
-            printf_dbg("delete_tsi_parallel(): MPI stoped\n");
-            fflush(stdout);
-            return 1;
-        }
+        } 
+		printf_dbg("delete_tsi_parallel(): MPI stoped\n");
+		printf("delete_tsi_parallel() FINISHED OK\n");
+		fflush(stdout);
+		return 1;
     } else
 		return 1;
-	log_message(t->l, 0, "delete_tsi_parallel() FINISHED OK");
 #endif /* TSI_MPI */
     return 0;
 }

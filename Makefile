@@ -3,7 +3,7 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-COMPILER := gcc
+#COMPILER := gcc
 
 # Default settings for gcc
 CC       := gcc

@@ -369,9 +369,9 @@ void delete_tsi(tsi *t) {
         if (t->reg) delete_registry(t->reg);
         tsi_free(t);
     }
-    delete_tsi_parallel();
 
 	debug_check();
+    delete_tsi_parallel();
 } /* delete_tsi */
 
 
