@@ -3,6 +3,7 @@
 #endif
 
 #include "debug.h"
+#include "log.h"
 #include "tsi.h"
 #include "tsi_parallel.h"
 #include "tsi_math.h"
@@ -32,7 +33,7 @@ int new_tsi_parallel(int *n_procs, int *proc_id) {
 
 
 
-int delete_tsi_parallel() {
+int delete_tsi_parallel(tsi *t) {
 #ifdef TSI_MPI
     int mpi_flag = 0;
 
@@ -45,6 +46,7 @@ int delete_tsi_parallel() {
             printf_dbg("delete_tsi_parallel(): MPI_Barrier failed!\n");    
             return -1;
         }
+		log_message(t->l, 0, "delete_tsi_parallel() calling MPI_Finalize()");
         if (MPI_Finalize() != MPI_SUCCESS) {
             printf_dbg("delete_tsi_parallel(): MPI_Finalize failed!\n");
             return -1;
@@ -53,7 +55,8 @@ int delete_tsi_parallel() {
             return 1;
         }
     } else
-        return 1;
+		return 1;
+	log_message(t->l, 0, "delete_tsi_parallel() FINISHED OK");
 #endif /* TSI_MPI */
     return 0;
 }

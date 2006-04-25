@@ -22,11 +22,13 @@ log_t *new_log(registry *reg, int proc_id) {
 
 	new_log->procID = proc_id;
 	
-    /* open file */
-    if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) {
-       delete_log(new_log);
-       return NULL;
-    }
+			/* use log or output path */
+	if ( ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) || 
+		 ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) == NULL) ) {
+		fprintf(stderr, "MISSING LOG_PATH AND OUTPUT PATH on config file, aborting\n");	
+		delete_log(new_log);
+		return NULL;
+	}
 
 	sprintf(logName,"%s/tsi-proc-%d.log", get_string(k),proc_id);
 
@@ -48,6 +50,8 @@ log_t *new_log(registry *reg, int proc_id) {
 		new_log->verbose = 0;
 	}
 
+	new_log->simulNum = 0;
+	new_log->iterNum = 0;
     return new_log;
 }
 
@@ -74,6 +78,7 @@ void log_indent(char *buf, int nivel)
 
 void log_iteration_number(log_t *l,int iterNum)
 {
+	l->simulNum = 0;
 	l->iterNum = iterNum;
 	fprintf(l->logFile, "(%d,%d,-) - starting Iteration: %2d\n", l->procID,l->iterNum, iterNum);
 	if(l->verbose){

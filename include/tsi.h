@@ -91,7 +91,7 @@ typedef struct tsi_type {
          *output_path,
          *log_path,
          *seismic_path,
-         *empty_path;
+         empty_path;
     
     /* file formats */
     int result_file,

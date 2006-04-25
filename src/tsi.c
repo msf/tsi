@@ -50,39 +50,70 @@ tsi *new_tsi(registry *reg) {
     timeSeed = (unsigned int) lTime / 2;
     srandom(timeSeed);
 
-    /* get machine parameters */
-    if (new_tsi_parallel(&t->n_procs, &t->proc_id) < 0) {
-        printf("Machine failed to start!\n");
-        return NULL;
-    }
-    t->root_id = t->proc_id;
+	t->empty_path = NULL; 
+
+    t->input_path = &t->empty_path;
+    if ((k = get_key(reg, "GLOBAL", "INPUT_PATH")) != NULL) 
+		t->input_path = get_string(k);
+
+    t->output_path = &t->empty_path;
+    if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) != NULL) 
+		t->output_path = get_string(k);
+
+    t->seismic_path = t->input_path;
+    if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL) 
+		t->seismic_path = get_string(k);
+
+    t->log_path = t->output_path;
+    if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) != NULL) 
+		t->log_path = get_string(k);
+
+    t->dump_path = t->output_path;
+    if ((k = get_key(reg, "DUMP", "PATH")) != NULL) 
+		t->dump_path = get_string(k);
+
+
+	/* get machine parameters */
+	if (new_tsi_parallel(&t->n_procs, &t->proc_id) < 0) {
+		printf("Machine failed to start!\n");
+		delete_tsi(t);
+		return NULL;
+	}
+	t->root_id = t->proc_id;
 
 	/* create logger */
-    t->l = new_log(reg, t->proc_id);
+	t->l = new_log(t->reg, t->proc_id);
+	if(t->l == NULL) {
+		printf("log creation failed, aborting\n");
+		delete_tsi(t);
+		return NULL;
+	}
 	sprintf(buf,"TSI %s - started!\n",TSI_VERSION);
 	log_string(t->l, buf); 
 
-    t->global_best.value = -999;
-    t->global_best.proc_id = t->proc_id;
-    
-    /* get initial data from registry */
-    if ((k = get_key(reg, "GLOBAL", "ITERATIONS")) == NULL) {
-       delete_tsi(t);
-       return NULL;
-    }
+	t->global_best.value = -999;
+	t->global_best.proc_id = t->proc_id;
+
+	/* get initial data from registry */
+	if ((k = get_key(reg, "GLOBAL", "ITERATIONS")) == NULL) {
+		log_string(t->l, "ERROR, missing ITERATIONS parameter on config file\n Aborting\n");
+		delete_tsi(t);
+		return NULL;
+	}
     t->iterations = get_int(k);
     if (t->iterations < 1) {
-        printf("Incoeherent number of iterations!\n");
+        log_string(t->l,"Incoeherent number of iterations!\n");
         delete_tsi(t);
         return NULL;
     }
     if ((k = get_key(reg, "GLOBAL", "SIMULATIONS")) == NULL) {
+		log_string(t->l, "ERROR, missing SIMULATIONS parameter on config file\n Aborting\n");
        delete_tsi(t);
        return NULL;
     }
     t->simulations = get_int(k);
     if (t->simulations < 1) {
-        printf("Incoeherent number of simulations!\n");
+        log_string(t->l,"Incoeherent number of simulations!\n");
         delete_tsi(t);
         return NULL;
     }
@@ -135,30 +166,6 @@ tsi *new_tsi(registry *reg) {
         if (t->root_id) t->root_id = t->n_procs / 2;
     }
     printf_dbg("new_tsi(%d): number of simulations=%d\n", t->proc_id, t->simulations);
-
-    /* get paths parameters */
-    t->empty_path = (char *) tsi_malloc(sizeof(char));
-    t->empty_path[0] = 0;
-
-    t->input_path = t->empty_path;
-    if ((k = get_key(reg, "GLOBAL", "INPUT_PATH")) != NULL) 
-		t->input_path = get_string(k);
-
-    t->output_path = t->empty_path;
-    if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) != NULL) 
-		t->output_path = get_string(k);;
-
-    t->log_path = t->output_path;
-    if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) != NULL) 
-		t->log_path = get_string(k);
-
-    t->dump_path = t->output_path;
-    if ((k = get_key(reg, "DUMP", "PATH")) != NULL) 
-		t->dump_path = get_string(k);
-
-    t->seismic_path = t->input_path;
-    if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL) 
-		t->seismic_path = get_string(k);
 
     /* get dump parameters */
     t->dump_ai = 0;
@@ -360,7 +367,6 @@ void delete_tsi(tsi *t) {
         if (t->dss_eng) delete_dss(t->dss_eng);
         if (t->heap) delete_heap(t->heap);
         if (t->reg) delete_registry(t->reg);
-        if (t->empty_path) tsi_free(t->empty_path);
         tsi_free(t);
     }
     delete_tsi_parallel();
