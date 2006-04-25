@@ -103,13 +103,13 @@ int  dss_parameters(dss *d, registry *r )
     
     /* simulations quality */
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;
-    d->clookup->ntry = get_int(k);
+    d->clookup->ntry = d->clookup->ntry_bk = get_int(k);
 
     if ((k = get_key(r, "QUALITY", "ICVAR")) == NULL) return 1;
-    d->clookup->icvar = get_int(k);
+    d->clookup->icvar = d->clookup->icvar_bk = get_int(k);
 
     if ((k = get_key(r, "QUALITY", "ICMEAN")) == NULL) return 1;
-    d->clookup->icmean = get_int(k);
+    d->clookup->icmean = d->clookup->icmean_bk = get_int(k);
 
     
     /* grid parameters */
@@ -160,7 +160,7 @@ int  dss_parameters(dss *d, registry *r )
     d->search->ndmax = get_int(k);
 
     if ((k = get_key(r, "SEARCH", "NODMAX")) == NULL) return 1;
-    d->clookup->nodmax = get_int(k);
+    d->clookup->nodmax = d->clookup->nodmax_bk = get_int(k);
 
     if ((k = get_key(r, "SEARCH", "SSTRAT")) == NULL) return 1;
     d->search->sstrat = get_int(k);
@@ -291,7 +291,7 @@ int  dss_parameters(dss *d, registry *r )
         printf("load_dss_configs(): WARNING: The sill of the variogram is not 1.0! sill = %f\n", sill);
     }
 
-    d->simulation->nsim = 1;   /* number of simulations */
+    d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
 
 	return 0;
 }

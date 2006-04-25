@@ -50,7 +50,7 @@ tsi *new_tsi(registry *reg) {
     timeSeed = (unsigned int) lTime / 2;
     srandom(timeSeed);
 
-	t->empty_path = NULL; 
+    t->empty_path = 0; 
 
     t->input_path = &t->empty_path;
     if ((k = get_key(reg, "GLOBAL", "INPUT_PATH")) != NULL) 

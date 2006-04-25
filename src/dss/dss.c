@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "debug.h"
 #include "memdebug.h"
@@ -28,15 +29,13 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->covariance = (covariance_vars_t *) tsi_malloc(sizeof(covariance_vars_t));
     d->clookup    = (covtable_lookup_vars_t *) tsi_malloc(sizeof(covtable_lookup_vars_t));
     d->krige      = (krige_vars_t *) tsi_malloc(sizeof(krige_vars_t));
-    d->files      = (file_vars_t *) tsi_malloc(sizeof(file_vars_t));
     if (!d ||
         !d->general ||
         !d->search ||
         !d->simulation ||
         !d->covariance ||
         !d->clookup ||
-        !d->krige ||
-        !d->files)
+        !d->krige)
         return NULL;
     d->reg = r;
     d->heap = h;
@@ -102,6 +101,15 @@ int setup_dss(dss *d, float *currBAI) {
     d->general->ktype = 1;
     if (currBAI) d->general->ktype = 5;
     readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
+
+    /* restore initial values */
+    d->search->nclose =   0;
+    d->clookup->nodmax =  d->clookup->nodmax_bk;
+    d->clookup->ntry =    d->clookup->ntry_bk;
+    d->clookup->icmean =  d->clookup->icmean_bk;
+    d->clookup->icvar =   d->clookup->icvar_bk;
+    d->simulation->nsim = d->simulation->nsim_bk;
+
     return readWellsData(d->general, d->harddata, d->harddata_size);
 } /* setup_dss */
 
@@ -109,6 +117,8 @@ int setup_dss(dss *d, float *currBAI) {
 
 int run_dss(dss *d, float *AI) {
     int *order, *mask;
+    struct dss_check test;
+    simulation_vars_t *x;
 
     printf_dbg2("run_dss(): called\n");
     d->covtab_idx = new_grid(d->heap);
@@ -122,6 +132,16 @@ int run_dss(dss *d, float *AI) {
     d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
     mask = NULL;
+
+/*
+    test.general = tsi_malloc(sizeof(general_vars_t));
+    memcpy(test.general, d->general, sizeof(general_vars_t));
+    test.search = tsi_malloc(sizeof(search_vars_t));
+    memcpy(test.search, d->search, sizeof(search_vars_t));
+    printf("nclose=%d\n", d->search->nclose);
+    test.simulation = tsi_malloc(sizeof(simulation_vars_t));
+    memcpy(test.simulation, d->simulation, sizeof(simulation_vars_t));
+*/
 
     /* SIMULATION */
 	printf_dbg2("run_dss(): grids allocated, calling dssim()\n");
@@ -138,13 +158,37 @@ int run_dss(dss *d, float *AI) {
     delete_grid(d->heap, d->iynode_idx);
     delete_grid(d->heap, d->iznode_idx);
     delete_grid(d->heap, d->order_idx);
+
+/*
+    if (memcmp(test.general, d->general, sizeof(general_vars_t))) {
+        printf_dbg("failed general\n");
+    }
+    tsi_free(test.general);
+    if (memcmp(test.simulation, d->simulation, sizeof(simulation_vars_t))) {
+        printf_dbg("failed simulation\n");
+        x = (simulation_vars_t *) test.simulation;
+        if (x->nsim == d->simulation->nsim)
+            printf_dbg("simulation OK\n");
+        else
+            printf_dbg("%d\n", d->simulation->nsim);
+    }
+    tsi_free(test.simulation);
+    printf("nclose=%d\n", d->search->nclose);
+    if (memcmp(test.search, d->search, sizeof(search_vars_t))) {
+        printf_dbg("failed search\n");
+    }
+    tsi_free(test.search);
+*/
+    
     return 1;
 } /* run_dss */
 
 
 
 int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
-    int *order, *mask;
+    int *order, *mask, i;
+    struct dss_check test;
+    general_vars_t *x;
 
     printf_dbg2("run_codss(): called\n");
     d->covtab_idx = new_grid(d->heap);
@@ -159,8 +203,18 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     order = (int *) load_grid(d->heap, d->order_idx);
     mask = NULL;
 
-    printf_dbg("%d\n", order);
-    fflush(stdout);
+
+
+/*
+    test.general = tsi_malloc(sizeof(general_vars_t));
+    memcpy(test.general, d->general, sizeof(general_vars_t));
+    test.search = tsi_malloc(sizeof(search_vars_t));
+    memcpy(test.search, d->search, sizeof(search_vars_t));
+    printf("nclose=%d\n", d->search->nclose);
+    test.simulation = tsi_malloc(sizeof(simulation_vars_t));
+    memcpy(test.simulation, d->simulation, sizeof(simulation_vars_t));
+*/
+
     /* CO-SIMULATION */
     dssim(AI, currBAI, currBCM, order, mask,
           d->general,
@@ -175,6 +229,35 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     delete_grid(d->heap, d->iynode_idx);
     delete_grid(d->heap, d->iznode_idx);
     delete_grid(d->heap, d->order_idx);
+
+/*
+    if (memcmp(test.general, d->general, sizeof(general_vars_t))) {
+        printf_dbg("failed general\n");
+        x = (general_vars_t *) test.general;
+        if (x->nd   != d->general->nd)   printf_dbg("nd NOK\n");
+        if (x->ntr  != d->general->ntr)  printf_dbg("ntr NOK\n");
+        if (x->idbg != d->general->idbg) printf_dbg("idbg NOK\n");
+        if (x->lin  != d->general->lin)  printf_dbg("lin NOK\n");
+        if (x->lout != d->general->lout) printf_dbg("lout NOK\n");
+        if (x->ldbg != d->general->ldbg) printf_dbg("ldbg NOK\n");
+        if (x->llvm != d->general->llvm) printf_dbg("llvm NOK\n");
+        for (i = 0; i < 7000; i++) x->close[i] = d->general->close[i];
+        if (memcmp(test.general, d->general, sizeof(general_vars_t))) {
+            printf_dbg("general OK\n");
+        }
+    }
+    tsi_free(test.general);
+    if (memcmp(test.simulation, d->simulation, sizeof(simulation_vars_t))) {
+        printf_dbg("failed simulation\n");
+    }
+    printf("nclose=%d\n", d->search->nclose);
+    tsi_free(test.simulation);
+    if (memcmp(test.search, d->search, sizeof(search_vars_t))) {
+        printf_dbg("failed search\n");
+    }
+    tsi_free(test.search);
+*/
+
     return 1;
 } /* run_codss */
 
@@ -211,7 +294,6 @@ void delete_dss(dss *d) {
         }
         if (d->clookup) tsi_free(d->clookup);
         if (d->krige) tsi_free(d->krige);
-        if (d->files) tsi_free(d->files);
         tsi_free(d);
     }
 } /* delete_dss */

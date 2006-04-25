@@ -8,7 +8,7 @@
 
 
 typedef struct general_vars_type {
-    int    nd,     /* init to 0, inc to harddata */
+    int    nd,      /* init to 0, inc to harddata */
            ntr,     /* init to 0, inc to harddata */
            idbg,
            lin,
@@ -28,9 +28,9 @@ typedef struct general_vars_type {
            *vrgtr,  /* same size as harddata */
            *sec;    /* same size as harddata */
 	
-	/* new wells hard data containers */
-	unsigned int wellsNPoints, *wellsDataPos; 
-	double *wellsDataVal;
+    /* new wells hard data containers */
+    unsigned int wellsNPoints, *wellsDataPos; 
+    double *wellsDataVal;
 
     /* acorni data */
     int    *ixv;
@@ -82,7 +82,7 @@ typedef struct general_vars_type {
 
 
 typedef struct search_vars_type {
-    int  nclose;     /* LPL SHOULD BE INT!!!!! */
+    int    nclose;   /* LPL SHOULD BE INT!!!!! */
 
     /* parameters from registry */
     int    ndmin,    /* SEARCH:NDMIN */
@@ -102,13 +102,14 @@ typedef struct search_vars_type {
 
 
 typedef struct simulation_vars_type {
-    float  vmedexp,
-           vvarexp,
-           vmedsec,
-           vvarsec;
+    float  vmedexp,    /* average experimental (wells) */
+           vvarexp,    /* variance... */
+           vmedsec,    /* secondary (AI data) */
+           vvarsec;    /* secondary...*/
 
     /* parameters from registry */
-    int    nsim;         /* const = 1 */
+    int    nsim;         /* const = 1, number of simulations */
+    int    nsim_bk;
 } simulation_vars_t;
 
 
@@ -154,6 +155,12 @@ typedef struct covtable_lookup_vars_type {
     int    ntry,    /* QUALITY:NTRY */
            icmean,  /* QUALITY:ICMEAN */
            icvar;   /* QUALITY:ICVAR */
+
+    /* backup values */
+    int    nodmax_bk;  /* SEARCH:NODMAX */
+    int    ntry_bk,    /* QUALITY:NTRY */
+           icmean_bk,  /* QUALITY:ICMEAN */
+           icvar_bk;   /* QUALITY:ICVAR */
 } covtable_lookup_vars_t;
 
 
@@ -166,19 +173,6 @@ typedef struct krige_vars_type {
     float  vra[129],
            cbb;
 } krige_vars_t;
-
-
-typedef struct file_vars_type {
-    char   transfl[256],
-           smthfl[256],
-           tmpfl[256],
-           datafl[256],
-           outfl[256], 
-	   dbgfl[256],
-           lvmfl[256],
-           corrfl[256],
-           str[256];
-} file_vars_t;
 
 
 typedef struct dss_type {
@@ -201,13 +195,20 @@ typedef struct dss_type {
     covariance_vars_t       *covariance;
     covtable_lookup_vars_t  *clookup;
     krige_vars_t            *krige;
-    file_vars_t             *files;
 
     /* harddata */
     double *harddata;
     unsigned int    harddata_size;
 } dss;
 
+struct dss_check {
+    void *general,
+         *search,
+         *simulation,
+         *covariance,
+         *clookup,
+         *krige;
+};
 
 dss *new_dss(registry *r, grid_heap *h, log_t *l);
 

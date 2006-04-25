@@ -39,19 +39,23 @@ int delete_tsi_parallel(tsi *t) {
 
     if (MPI_Initialized(&mpi_flag) != MPI_SUCCESS) {
         printf_dbg("delete_tsi_parallel(): failed to detect MPI status!\n");
+        fflush(stdout);
         return -1;
     } else if (mpi_flag) {
         printf_dbg("delete_tsi_parallel(): entering MPI_Barrier\n");    
         if (MPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("delete_tsi_parallel(): MPI_Barrier failed!\n");    
+            fflush(stdout);
             return -1;
         }
 		log_message(t->l, 0, "delete_tsi_parallel() calling MPI_Finalize()");
         if (MPI_Finalize() != MPI_SUCCESS) {
             printf_dbg("delete_tsi_parallel(): MPI_Finalize failed!\n");
+            fflush(stdout);
             return -1;
         } else {
             printf_dbg("delete_tsi_parallel(): MPI stoped\n");
+            fflush(stdout);
             return 1;
         }
     } else
@@ -73,6 +77,7 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
     printf_dbg("tsi_set_layers_parallel(%d): starting broadcast of the number of layers\n", t->proc_id);
     if (MPI_Bcast(&nlayers, 1, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg2("tsi_set_layers_parallel: failed to broadcast nlayers\n");
+            fflush(stdout);
         return 1;
     }
 
@@ -81,6 +86,7 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
         printf_dbg("tsi_set_layers_parallel(%d): broadcast layers array\n", t->proc_id);
         if (MPI_Bcast(layers_size, nlayers, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg2("tsi_set_layers_parallel: failed to broadcast layers array\n");
+            fflush(stdout);
             return 1;
         }
         printf_dbg("tsi_set_layers_parallel(%d): finished sending layers\n", t->proc_id);
@@ -88,15 +94,18 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
         printf_dbg("tsi_set_layers_parallel(%d): received %d layers\n", t->proc_id, nlayers);
         if ((layers_size = (int *) tsi_malloc(sizeof(int) * nlayers)) == NULL) {
             printf_dbg2("tsi_set_layers_parallel: failed to allocate layers array\n");
+            fflush(stdout);
             return 1;
         }
         printf_dbg("tsi_set_layers_parallel(%d): waiting for layers array\n", t->proc_id);
         if (MPI_Bcast(layers_size, nlayers, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg2("tsi_set_layers_parallel: failed to receive layers array\n");
+            fflush(stdout);
             return 1;
         }
         build_cmgrid(g, nlayers, layers_size);
         printf_dbg("tsi_set_layers_parallel(%d): finished receiving layers\n", t->proc_id);
+            fflush(stdout);
     }
 #endif /* TSI_MPI */
     return 0;
@@ -111,21 +120,25 @@ int tsi_is_best_parallel(tsi *t) {
     printf_dbg("tsi_is_best_parallel(%d): start reducing best correlation (%f)\n", t->proc_id, t->global_best.value);
     if (MPI_Reduce(&t->global_best, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
+            fflush(stdout);
         return 1;
     }
     /* broadcast result of reduce */
     if (MPI_Bcast(&result.value, 1, MPI_FLOAT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
+            fflush(stdout);
         return 1;
     }
     if (MPI_Bcast(&result.proc_id, 1, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
         printf_dbg("tsi_is_best_parallel: Failed to execute is_best reduce\n");
+            fflush(stdout);
         return 1;
     }
     t->global_best.value = result.value;
     t->global_best.proc_id = result.proc_id;
     printf_dbg("tsi_is_best_parallel(%d): finished reducing best correlation\n", t->proc_id);
     printf_dbg("tsi_is_best_parallel(%d): result: max %f, loc %d\n", t->proc_id, result.value, result.proc_id);
+            fflush(stdout);
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_is_best_parallel */
@@ -148,16 +161,18 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
         corr_data.proc_id = t->proc_id;
         if (MPI_Reduce(&corr_data, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("tsi_compare_parallel(): Failed to execute CM reduce\n");
-		    return 1;
+	    return 1;
         }
 
         /* broadcast result of reduce */
         if (MPI_Bcast(&result.value, 1, MPI_FLOAT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("tsi_compare_parallel: Failed to execute is_best reduce\n");
+            fflush(stdout);
             return 1;
         }
         if (MPI_Bcast(&result.proc_id, 1, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("tsi_compare_parallel: Failed to execute is_best reduce\n");
+            fflush(stdout);
             return 1;
         }
         t->nextBCM[i] = result.value;
@@ -166,11 +181,13 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
         ai_val = t->nextBAI[i];
         if (MPI_Bcast(&ai_val, 1, MPI_FLOAT, result.proc_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("tsi_compare_parallel: failed to broadcast new AI value\n");
+            fflush(stdout);
             return 1;
         }
         t->nextBAI[i] = ai_val;
     }
 	log_message(t->l,0,"tsi_compare_parallel() finished");
+            fflush(stdout);
     dirty_grid(t->heap, t->nextBAI_idx);
     dirty_grid(t->heap, t->nextBCM_idx);
 #endif /* TSI_MPI */
