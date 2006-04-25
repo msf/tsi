@@ -3,7 +3,7 @@
 #include "debug.h"
 #include "memdebug.h"
 #include "tsi_io.h"
-#ifdef TSI_NUNCA
+#ifdef TSI_MPIIO
 
 /*
  *
@@ -324,7 +324,7 @@ int write_float(TSI_FILE *fp, float *grid, unsigned int nelems)
 
 
 
-#endif /* TSI_MPI */
+#endif /* TSI_MPIIO */
 
 /* end of tsi_io_parallel.c */
 

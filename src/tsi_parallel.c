@@ -139,13 +139,13 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
     t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
     t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
     j = 0;
-    printf_dbg("tsi_compare_parallel(%d): begin parallel compare&update\n", t->proc_id);
+	log_message(t->l,0,"tsi_compare_parallel()");
     for (i = 0; i < t->grid_size; i++) {
         corr_data.value = t->nextBCM[i];
         corr_data.proc_id = t->proc_id;
         if (MPI_Reduce(&corr_data, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("tsi_compare_parallel(): Failed to execute CM reduce\n");
-	    return 1;
+		    return 1;
         }
 
         /* broadcast result of reduce */
@@ -167,7 +167,7 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
         }
         t->nextBAI[i] = ai_val;
     }
-    printf_dbg("tsi_compare_parallel(%d): finished compare\n", t->proc_id);
+	log_message(t->l,0,"tsi_compare_parallel() finished");
     dirty_grid(t->heap, t->nextBAI_idx);
     dirty_grid(t->heap, t->nextBCM_idx);
 #endif /* TSI_MPI */

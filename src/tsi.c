@@ -549,14 +549,14 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     /* load new AI for simulation result */
     getCurrTime(&t1);
     printf_dbg2("tsi_dss(%d,%d,%d): new AI grid\n", t->proc_id, iteration, simulation);
-    if ((t->ai_idx = new_grid(t->heap)) < 0) {
-        printf_dbg("tsi_dss(%d,%d,%d): failed to allocate AI grid\n", t->proc_id, iteration, simulation);
+	if ((t->ai_idx = new_grid(t->heap)) < 0) {
+		log_message(t->l, 0, "ERROR tsi_DSSimulation() failed to create new AI grid");
         delete_tsi(t);
         return 0;
     }
     printf_dbg2("tsi_dss(%d,%d,%d): loading AI grid\n", t->proc_id, iteration, simulation);
-    if ((t->ai = load_grid(t->heap, t->ai_idx)) == NULL) {
-        printf_dbg("tsi_dss(%d,%d,%d): failed to load AI for [Co]DSS\n", t->proc_id, iteration, simulation);
+	if ((t->ai = load_grid(t->heap, t->ai_idx)) == NULL) {
+		log_message(t->l, 0, "ERROR tsi_DSSimulation() failed to load new AI grid");
         return 0;
     }
 
@@ -573,18 +573,19 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
         printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
         t->currBAI = load_grid(t->heap, t->currBAI_idx);
         if (!t->currBAI || !t->currBCM) {
-            printf_dbg("tsi_dss(%d,%d,%d):", t->proc_id, iteration, simulation);
-            printf_dbg(" failed to load currBAI or currBCM for CoDSS!\n");
+			log_message(t->l, 0, "ERROR tsi_DSSimulation() failed to load currBAI or currBCM");
             delete_tsi(t);
             return 0;
         }
-		log_message(t->l, 1, "tsi_DSSimulation() running Co-Direct Sequential Simulation"); 
+		log_message(t->l, 1, "tsi_DSSimulation() running Direct Sequential Co-Simulation"); 
         getCurrTime(&t2);
         result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> too much  :-( */
         getCurrTime(&t3);
+		printf_dbg("tsi_dss() - coDSS ended\n");
         clear_grid(t->heap, t->currBAI_idx);
         clear_grid(t->heap, t->currBCM_idx);
         dirty_grid(t->heap, t->ai_idx);
+		printf_dbg("tsi_dss() - coDSS ended, grids curr* grids cleared\n");
     }
 
 	TSI_FILE *fp;
@@ -626,12 +627,12 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
     getCurrTime(&t1);
     /* allocate new grids for CM and SY */
     if ((t->cm_idx = new_grid(t->heap)) < 0) {
-        printf_dbg("tsi_seismic_inversion(%d,%d,%d): failed to allocate CM grid\n", t->proc_id, iteration, simulation);
+		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATED CM grid");
         delete_tsi(t);
         return 0;
     }
     if ((t->sy_idx = new_grid(t->heap)) < 0) {
-        printf_dbg("tsi_seismic_inversion(%d,%d,%d): failed to allocate SY grid\n", t->proc_id, iteration, simulation);
+		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATED SY grid");
         delete_tsi(t);
         return 0;
     }

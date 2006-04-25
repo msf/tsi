@@ -4,6 +4,7 @@
 #include "tsi.h"
 #include "tsi_io.h"
 
+#ifndef TSI_MPIIO
 
 /* I/O prototypes */
 /* (none) */
@@ -202,6 +203,8 @@ int write_float(TSI_FILE *fp, float *grid, unsigned int nelems)
 
 	return err;
 } /* write_float */
+
+#endif /* TSI_MPIIO */
 
 
 
