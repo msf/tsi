@@ -148,14 +148,16 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
 #ifdef TSI_MPI
     corr corr_data, result;
     int i;
-    unsigned int j;
+    unsigned int j, grid_size;
     float ai_val;
     
     t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
-    t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+    //t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+    t->nextBCM = t->nextBCM_c->cg;
+    grid_size = t->nextBCM_c->nlayers * t->nextBCM_c->nxy;
     j = 0;
-	log_message(t->l,0,"tsi_compare_parallel()");
-    for (i = 0; i < t->grid_size; i++) {
+    log_message(t->l,0,"tsi_compare_parallel()");
+    for (i = 0; i < grid_size; i++) {
         corr_data.value = t->nextBCM[i];
         corr_data.proc_id = t->proc_id;
         if (MPI_Reduce(&corr_data, &result, 1, MPI_FLOAT_INT, MPI_MAXLOC, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
@@ -176,7 +178,9 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
         }
         t->nextBCM[i] = result.value;
 
-        /* broadcast new best AI value */
+        /* broadcast new best AI value */      
+        /* TODO: for(layer_size[i % nxy]) */
+/*
         ai_val = t->nextBAI[i];
         if (MPI_Bcast(&ai_val, 1, MPI_FLOAT, result.proc_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
             printf_dbg("tsi_compare_parallel: failed to broadcast new AI value\n");
@@ -184,11 +188,12 @@ int tsi_compare_parallel(tsi *t) {   /* FUCK-UP */
             return 1;
         }
         t->nextBAI[i] = ai_val;
+*/
     }
 	log_message(t->l,0,"tsi_compare_parallel() finished");
             fflush(stdout);
     dirty_grid(t->heap, t->nextBAI_idx);
-    dirty_grid(t->heap, t->nextBCM_idx);
+    //dirty_grid(t->heap, t->nextBCM_idx);
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel */
