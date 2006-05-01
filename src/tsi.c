@@ -127,6 +127,14 @@ tsi *new_tsi(registry *reg) {
        t->optimize = 1;
     }
 
+    k = get_key(reg, "GLOBAL", "OPTIMIZE_LAST");
+    if (k) {
+       t->optimize_last = get_int(k);
+    } else {
+       printf_dbg("new_tsi(%d): failed to get optimize_last flag from the registry! Using defaults...\n", t->proc_id);
+       t->optimize_last = 1;
+    }
+
     /* change simulation data to optimize resource use during execution */
     printf_dbg("new_tsi(%d): number of processes=%d\n", t->proc_id, t->n_procs);
     if (t->n_procs > 1) {
@@ -181,6 +189,22 @@ tsi *new_tsi(registry *reg) {
     if ((k = get_key(reg, "DUMP", "BCM"))  != NULL) 
 		t->dump_bcm = get_int(k);
     
+    k = get_key(reg, "GLOBAL", "RESUME");
+    if (k) {
+        t->resume = get_int(k);
+    } else {
+        printf_dbg("new_tsi(%d): failed to get resume flag from the registry! Using defaults...\n", t->proc_id);
+        t->resume = 0;
+    }
+    
+    if (t->resume) {
+        t->optimize_last = 0;
+        t->dump_ai = 1;
+        t->dump_cm = 1;
+        t->dump_bai = 1;
+        t->dump_bcm = 1;
+    }
+
     /* get heap data */
     k = get_key(reg, "HEAP", "USEFS");
     if (k)
@@ -750,7 +774,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
     //printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading CM\n", t->proc_id, iteration, simulation);
     //t->cm = load_grid(t->heap, t->cm_idx);
 
-    if (!t->seismic || !t->sy || !t->ai/* || !t->cm*/) {
+    if (!t->seismic || !t->sy || !t->ai /*|| !t->cm*/) {
         printf_dbg("tsi_eval_best_corr(%d,%d,%d):", t->proc_id, iteration, simulation);
         printf_dbg(" failed to load Seismic, SY, CM or AI for correlation evaluation!\n");
         return 0;
@@ -781,51 +805,56 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 		log_result(t->l, 1,"tsi_eval_best_correlations() \tNEW BEST AI\t CORRELATION",t->global_best.value);
     }
 
-    /* update best values found for AI and CM */
-	log_message(t->l, 1, "tsi_eval_best_correlations() running Compare & Update");
-    if (simulation == 0) { /* first simulation */
+    if (!t->optimize_last || (iteration+1 < t->iterations)) {
+        /* update best values found for AI and CM */
+        log_message(t->l, 1, "tsi_eval_best_correlations() running Compare & Update");
 
+        if (simulation == 0) { /* first simulation */
+
+            getCurrTime(&t4);
+            getCurrTime(&t5);
+
+            t->nextBAI_idx = t->ai_idx;    /* nextBxx = xx at this stage */
+            //t->nextBCM_idx = t->cm_idx;
+            t->ai_idx = t->cm_idx = -1;  /* free aux grids */
+
+            cmg = load_cmgrid(t->si_eng);
+            t->nextBCM_c = clone_cmgrid(cmg);
+
+        } else {               /* compare all values */
+
+            printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading nextBAI + nextBCM\n", t->proc_id, iteration, simulation);
+            t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
+            //t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+            if (!t->nextBAI /*|| !t->nextBCM*/) {
+                printf_dbg("tsi_eval_best_corr(%d,%d,%d): failed to load nextBAI or nextBCM!", t->proc_id);
+                return 0;
+            }
+
+            getCurrTime(&t4);
+            /* update  nextBAI and nextBCM */
+
+            result = tsi_compare(t->grid_size, t->ai, load_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
+            getCurrTime(&t5);
+            //delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
+            delete_grid(t->heap, t->ai_idx);
+            t->ai_idx = t->cm_idx = -1;
+
+            log_result(t->l, 2, "tsi_compare() - Compare & Update changed points",result);
+            if (result > 0) {
+                printf_dbg2("tsi_eval_best_corr(%d,%d,%d): final clean-up\n");
+            } else {
+                printf_dbg("tsi_eval_best_corr(%d,%d,%d): Compare&Update failed!\n");
+                return 0;
+            }
+        } /* if first simulation */
+
+        dirty_grid(t->heap, t->nextBAI_idx);
+        dirty_grid(t->heap, t->nextBCM_idx);
+    } else {
         getCurrTime(&t4);
         getCurrTime(&t5);
-
-        t->nextBAI_idx = t->ai_idx;    /* nextBxx = xx at this stage */
-        //t->nextBCM_idx = t->cm_idx;
-        t->ai_idx = t->cm_idx = -1;  /* free aux grids */
-
-        cmg = load_cmgrid(t->si_eng);
-        t->nextBCM_c = clone_cmgrid(cmg);
-
-    } else {               /* compare all values */
-
-        printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading nextBAI + nextBCM\n", t->proc_id, iteration, simulation);
-        t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
-        //t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
-        if (!t->nextBAI /*|| !t->nextBCM*/) {
-            printf_dbg("tsi_eval_best_corr(%d,%d,%d): failed to load nextBAI or nextBCM!", t->proc_id);
-            return 0;
-        }
-
-        getCurrTime(&t4);
-		/* update  nextBAI and nextBCM */
-        result = tsi_compare(t->grid_size, t->ai, load_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
-        getCurrTime(&t5);
-		//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
-		delete_grid(t->heap, t->ai_idx);
-		t->ai_idx = t->cm_idx = -1;
-
-		log_result(t->l, 2, "tsi_compare() - Compare & Update changed points",result);
-        if (result > 0) {
-            printf_dbg2("tsi_eval_best_corr(%d,%d,%d): final clean-up\n");
-        } else {
-            printf_dbg("tsi_eval_best_corr(%d,%d,%d): Compare&Update failed!\n");
-            return 0;
-        }
-    } /* if first simulation */
-
-
-
-    dirty_grid(t->heap, t->nextBAI_idx);
-    //dirty_grid(t->heap, t->nextBCM_idx);
+    } /* if optimize last iteration */
 
     getCurrTime(&t6);
 
@@ -866,10 +895,13 @@ int tsi_finish_iteration(tsi *t, int iteration, int simulation)
         }
     }
 
-    if (tsi_compare_parallel(t))
-        return 0;
+    if (!t->optimize_last || (iteration+1 < t->iterations)) {
+        if (tsi_compare_parallel(t))
+            return 0;
 
-	log_message(t->l, 0, "tsi_finish_iteration deleting currBAI & currBCM");
+        log_message(t->l, 0, "tsi_finish_iteration deleting currBAI & currBCM");
+    }
+
     if (iteration > 0) {
         delete_grid(t->heap, t->currBAI_idx);
         delete_grid(t->heap, t->currBCM_idx);

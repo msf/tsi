@@ -50,7 +50,8 @@ typedef struct tsi_type {
     int n_procs,                 /* number of processes running */
         proc_id,                 /* process ID */
         root_id,                 /* root process ID */
-        optimize;                /* runtime optimization flag */
+        optimize,                /* runtime optimization flag */
+        optimize_last;           /* optimize last iteration */
 
     /* grid size */
     int xsize,
@@ -89,7 +90,8 @@ typedef struct tsi_type {
     int dump_ai,
         dump_cm,
         dump_bai,
-        dump_bcm;
+        dump_bcm,
+        resume;
     char *dump_path,
          *input_path,
          *output_path,
