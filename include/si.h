@@ -60,6 +60,8 @@ int build_cmgrid(cm_grid *g, int nlayers, int *layer_size);
 
 cm_grid *load_cmgrid(si *s);
 
+cm_grid *clone_cmgrid(cm_grid *g);
+
 int get_nlayers(cm_grid *g);
 
 int *get_layers(cm_grid *g);

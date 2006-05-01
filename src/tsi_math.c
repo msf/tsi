@@ -18,7 +18,7 @@ double grid_correlation(float *A, float *B, unsigned int size) {
     double denom = 0;
     double nom = 0;
 
-    printf_dbg("grid_correlation(): called\n");
+    printf_dbg2("grid_correlation(): called\n");
     for (i = 0; i < size; i++) {
         sum_B  += B[i];
         sum_B2 += B[i] * B[i];

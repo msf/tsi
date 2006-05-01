@@ -24,7 +24,7 @@ int   tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation);
 int   tsi_setup_iteration(tsi *t, int iteration);
 int   tsi_finish_iteration(tsi *t, int iteration, int simulation);
 int   tsi_save_results(tsi *t);
-int   tsi_compare(unsigned int size, float *AI, float *CM, float *nextBAI, float *BCM);
+int   tsi_compare(unsigned int size, float *AI, cm_grid *CM, float *nextBAI, cm_grid *BCM);
 void  grid_copy(float *a, float *b, unsigned int grid_size);
 int   tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc);
 int   tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type);
@@ -355,6 +355,8 @@ tsi *new_tsi(registry *reg) {
     t->si_time = 0;
     t->corr_time = 0;
     t->par_time = 0;
+    
+    t->nextBCM_c = t->cm_c = NULL;
 
     return t;
 } /* new_tsi */
@@ -433,6 +435,8 @@ int tsi_recurse_simulations(tsi *t, int i, int s) {
     return 0;
 } /* tsi_recurse_simulations */
 
+
+
 int tsi_simulation(tsi *t, int i, int s)
 {
 	int r;
@@ -455,6 +459,7 @@ int tsi_simulation(tsi *t, int i, int s)
 }
 
 
+
 int tsi_setup_iteration(tsi *t, int iteration) 
 {
     struct timeval t1, t2, t3, t4;
@@ -469,8 +474,8 @@ int tsi_setup_iteration(tsi *t, int iteration)
     getCurrTime(&t1);
     if (iteration == 0) { /* first iteration */
         getCurrTime(&t2);
-		t->currBAI_idx = -1; 
-		t->currBCM_idx = -1;
+        t->currBAI_idx = -1; 
+        t->currBCM_idx = -1;
         //setup_dss(t->dss_eng, NULL);
     } else {
         t->currBAI_idx = t->nextBAI_idx;
@@ -478,6 +483,14 @@ int tsi_setup_iteration(tsi *t, int iteration)
         t->nextBAI_idx = -1;
         t->nextBCM_idx = -1;
         //t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        
+        /* expand compressed correlations grid from previous iteration */
+        t->currBCM_idx = new_grid(t->heap);
+        t->currBCM = load_grid(t->heap, t->currBCM_idx);
+        expand_correlations_grid(t->nextBCM_c, t->currBCM);
+        dirty_grid(t->heap, t->currBCM_idx);
+        delete_cmgrid(t->nextBCM_c);
+
         getCurrTime(&t2);
         //setup_dss(t->dss_eng, t->currBAI);
         //dirty_grid(t->heap, t->currBAI_idx);
@@ -485,7 +498,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
     getCurrTime(&t3);
 
     /* prepare seismic inversion (new set of layers) */
-	log_message(t->l, 0, "tsi_setup_iteration() setup Seismic Inversion");
+    log_message(t->l, 0, "tsi_setup_iteration() setup Seismic Inversion");
     cmg = load_cmgrid(t->si_eng);
     delete_cmgrid(cmg);   /* conflict with store??? */
     if (t->proc_id == t->root_id) {
@@ -535,6 +548,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     struct timeval t1, t2, t3;
     int result;
     double run_time, mm_time;
+    int aux_idx;
+    float *aux;
 
     /* prepare simulations */
     if (iteration == 0) { /* first iteration */
@@ -547,9 +562,17 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
         //t->nextBAI_idx = -1;
         //t->nextBCM_idx = -1;
         t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        
+        /* ugly hack to reset BAI for each simulation */
+        aux_idx = new_grid(t->heap);
+        aux = load_grid(t->heap, aux_idx);
+        grid_copy(aux, t->currBAI, t->grid_size);
+        clear_grid(t->heap, t->currBAI_idx);
+        t->currBAI = aux;
+
         //getCurrTime(&t2);
-        setup_dss(t->dss_eng, t->currBAI);
-        dirty_grid(t->heap, t->currBAI_idx);
+        setup_dss(t->dss_eng, aux);
+        //dirty_grid(t->heap, t->currBAI_idx);
     }
 
     /* load new AI for simulation result */
@@ -576,8 +599,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
     } else {              /* co-simulation */
         printf_dbg2("tsi_dss(%d,%d,%d): loading currBCM grid\n", t->proc_id, iteration, simulation);
         t->currBCM = load_grid(t->heap, t->currBCM_idx);
-        printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
-        t->currBAI = load_grid(t->heap, t->currBAI_idx);
+        //printf_dbg2("tsi_dss(%d,%d,%d): loading currBAI grid\n", t->proc_id, iteration, simulation);
+        //t->currBAI = load_grid(t->heap, t->currBAI_idx);
         if (!t->currBAI || !t->currBCM) {
 			log_message(t->l, 0, "ERROR tsi_DSSimulation() failed to load currBAI or currBCM");
             delete_tsi(t);
@@ -588,7 +611,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
         result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> too much  :-( */
         getCurrTime(&t3);
 		printf_dbg("tsi_dss() - coDSS ended\n");
-        clear_grid(t->heap, t->currBAI_idx);
+        //clear_grid(t->heap, t->currBAI_idx);
+        delete_grid(t->heap, aux_idx);
         clear_grid(t->heap, t->currBCM_idx);
         dirty_grid(t->heap, t->ai_idx);
 		printf_dbg("tsi_dss() - coDSS ended, grids curr* grids cleared\n");
@@ -673,7 +697,8 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 
     clear_grid(t->heap, t->seismic_idx);
     clear_grid(t->heap, t->ai_idx);
-    dirty_grid(t->heap, t->cm_idx); /* SI output - needed for BCM update */
+    //dirty_grid(t->heap, t->cm_idx); /* SI output - needed for BCM update */
+    delete_grid(t->heap, t->cm_idx); /* used only as aux grid */
     dirty_grid(t->heap, t->sy_idx); /* SI output - needed for grid_correlation() */
 
     /* evaluate result */
@@ -711,6 +736,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
     double mm_time, run_time;
     float corr;
     int result;
+    cm_grid *cmg;
 
     /* load grids needed */
     getCurrTime(&t1);
@@ -721,10 +747,10 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
     t->seismic = load_grid(t->heap, t->seismic_idx);
     printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading AI\n", t->proc_id, iteration, simulation);
     t->ai = load_grid(t->heap, t->ai_idx);
-    printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading CM\n", t->proc_id, iteration, simulation);
-    t->cm = load_grid(t->heap, t->cm_idx);
+    //printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading CM\n", t->proc_id, iteration, simulation);
+    //t->cm = load_grid(t->heap, t->cm_idx);
 
-    if (!t->seismic || !t->sy || !t->ai || !t->cm) {
+    if (!t->seismic || !t->sy || !t->ai/* || !t->cm*/) {
         printf_dbg("tsi_eval_best_corr(%d,%d,%d):", t->proc_id, iteration, simulation);
         printf_dbg(" failed to load Seismic, SY, CM or AI for correlation evaluation!\n");
         return 0;
@@ -741,7 +767,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 	log_result(t->l, 1, "tsi_eval_best_correlations() grid global correlation",corr);
 
-	/* is best? */
+    /* is best? */
     if (corr > t->global_best.value) {
         t->global_best.value = corr;
         t->global_best.proc_id = t->proc_id;
@@ -763,24 +789,27 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
         getCurrTime(&t5);
 
         t->nextBAI_idx = t->ai_idx;    /* nextBxx = xx at this stage */
-        t->nextBCM_idx = t->cm_idx;
+        //t->nextBCM_idx = t->cm_idx;
         t->ai_idx = t->cm_idx = -1;  /* free aux grids */
+
+        cmg = load_cmgrid(t->si_eng);
+        t->nextBCM_c = clone_cmgrid(cmg);
 
     } else {               /* compare all values */
 
         printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading nextBAI + nextBCM\n", t->proc_id, iteration, simulation);
         t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
-        t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
-        if (!t->nextBAI || !t->nextBCM) {
+        //t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+        if (!t->nextBAI /*|| !t->nextBCM*/) {
             printf_dbg("tsi_eval_best_corr(%d,%d,%d): failed to load nextBAI or nextBCM!", t->proc_id);
             return 0;
         }
 
         getCurrTime(&t4);
 		/* update  nextBAI and nextBCM */
-        result = tsi_compare(t->grid_size, t->ai, t->cm, t->nextBAI, t->nextBCM);
+        result = tsi_compare(t->grid_size, t->ai, load_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
         getCurrTime(&t5);
-		delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
+		//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
 		delete_grid(t->heap, t->ai_idx);
 		t->ai_idx = t->cm_idx = -1;
 
@@ -796,7 +825,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 
     dirty_grid(t->heap, t->nextBAI_idx);
-    dirty_grid(t->heap, t->nextBCM_idx);
+    //dirty_grid(t->heap, t->nextBCM_idx);
 
     getCurrTime(&t6);
 
@@ -909,20 +938,35 @@ int tsi_save_results(tsi *t) {
 
 
 
-int tsi_compare(unsigned int size, float *AI, float *CM, float *BAI, float *BCM) {
-    unsigned int i, x;
+int tsi_compare(unsigned int size, float *AI, cm_grid *CM_C, float *BAI, cm_grid *BCM_C) {
+    unsigned int i, j, k, l, z0, z1, nxy;
+    int nlayers, *layer;
+    float *CM, *BCM;
+
+    nlayers = get_nlayers(CM_C);
+    layer = get_layers(CM_C);
+    CM = CM_C->cg;
+    BCM = BCM_C->cg;
+    nxy = CM_C->nxy;
 
     /* execute Compare */
-    x = 0;
-    for (i = 0; i < size; i++) {
-        if (BCM[i] < CM[i]) {
-            /* new best correlation */ 
-            BCM[i] = CM[i];
-            BAI[i] = AI[i];
-            x++;
-        }
-    }
-    return x;
+    l = 0;
+    z0 = z1 = 0;
+    for (i = 0; i < nlayers; i++) {
+        z1 += layer[i];
+        for (j = 0; j < nxy; j++) {
+            if (BCM[i*nxy+j] < CM[i*nxy+j]) {
+                /* new best correlation */ 
+                BCM[i*nxy+j] = CM[i*nxy+j];
+                for (k = z0; k < z1; k++) {
+                    BAI[k*nxy + j] = AI[k*nxy + j];
+                    l++;
+                }
+            } /* if */
+        } /* for(j) */
+        z0 = z1;
+    } /* for(i) */
+    return l;
 } /* tsi_compare */
 
 

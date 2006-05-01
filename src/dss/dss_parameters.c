@@ -222,7 +222,7 @@ int  dss_parameters(dss *d, registry *r )
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;
     varnum = d->covariance->nst[0] = get_int(k);
-    printf_dbg("load_dss_configs(): varnum = %d\n", varnum);
+    printf_dbg2("load_dss_configs(): varnum = %d\n", varnum);
 
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
     sill = d->covariance->c0[0] = get_float(k);
@@ -282,7 +282,7 @@ int  dss_parameters(dss *d, registry *r )
         if ((k = get_key(r, variogram, "AA2")) == NULL) return 1;
         aa2 = get_float(k);
         d->covariance->anis2[i] = aa2 / aa;
-		printf_dbg("load_dss_configs(): variogram %d\n \ttype:\t%d\n \tcov:\t%.2f\n \tang1:\t%.2f\n \tang2:\t%.2f\n \tang3:\t%.2f\n \taa:\t%.2f\n \taa1:\t%.2f\n \taa2:\t%.2f\n\n",
+		printf_dbg2("load_dss_configs(): variogram %d\n \ttype:\t%d\n \tcov:\t%.2f\n \tang1:\t%.2f\n \tang2:\t%.2f\n \tang3:\t%.2f\n \taa:\t%.2f\n \taa1:\t%.2f\n \taa2:\t%.2f\n\n",
 				i,d->covariance->it[i],d->covariance->cc[i], 
 				d->covariance->ang1[i],d->covariance->ang2[i],d->covariance->ang3[i],aa,aa1,aa2);
     } /* for */
@@ -293,6 +293,6 @@ int  dss_parameters(dss *d, registry *r )
 
     d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
 
-	return 0;
+    return 0;
 }
 

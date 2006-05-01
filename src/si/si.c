@@ -329,6 +329,21 @@ cm_grid *load_cmgrid(si *s) {
 
 
 
+cm_grid *clone_cmgrid(cm_grid *g) {
+    cm_grid *clone;
+
+    clone = (cm_grid *) tsi_malloc(sizeof(cm_grid));
+    clone->nlayers = g->nlayers;
+    clone->nxy = g->nxy;
+    clone->layer_size = (int *) tsi_malloc(g->nlayers * sizeof(int));
+    clone->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float));
+    memcpy(clone->layer_size, g->layer_size, g->nlayers * sizeof(int));
+    memcpy(clone->cg, g->cg, g->nlayers * g->nxy * sizeof(float));
+    return clone;
+} /* clone_cmgrid */
+
+
+
 int get_nlayers(cm_grid *g) {
     printf_dbg2("\tget_nlayers(): called\n");
     if (g) return g->nlayers;

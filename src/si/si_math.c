@@ -214,7 +214,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
             }
         }
 	
-    expand_correlations_grid(s->cmg, CM);
+    //expand_correlations_grid(s->cmg, CM);
     getCurrTime(&t2);
 	log_action_time(s->l, 2, "make_correlations_grid() cpuTime",getElapsedTime(&t1,&t2));
 	

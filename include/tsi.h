@@ -69,6 +69,10 @@ typedef struct tsi_type {
         ai_idx,
         cm_idx,
         sy_idx;
+
+    /* compressed grids */
+    cm_grid *nextBCM_c,
+            *cm_c;
         
     /* data pointers */
     float *seismic,

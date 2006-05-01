@@ -20,7 +20,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     char filename[512];
     char hdbuf[64];
 
-    printf_dbg("new_dss(): called\n");
+    printf_dbg2("new_dss(): called\n");
     /* object space allocation */
     d = (dss *) tsi_malloc(sizeof(dss));
     d->general    = (general_vars_t *) tsi_malloc(sizeof(general_vars_t));
