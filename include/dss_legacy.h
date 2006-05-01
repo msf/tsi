@@ -57,7 +57,7 @@ extern int dsslib(float *params, float *models, double *hard_data,
 	          int hard_data_size, float *bcm_data, float *bai_data,
 		  float *output_data);
 
-extern int getPos(int, int, int, int, int);
+extern inline int getPos(int, int, int, int, int);
 
 extern int gauinv(double *, float *, int *);
 

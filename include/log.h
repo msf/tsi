@@ -4,10 +4,12 @@
 #include "registry.h"
 
 typedef struct log_type {
-	FILE *logFile;
-	int verbose;
-	int procID;
-	int iterNum,simulNum;
+    FILE *logFile;
+    char *logBuf;
+    int verbose;
+    int procID;
+    int iterNum,
+        simulNum;
 } log_t;
 
 log_t *new_log(registry *, int proc_id);

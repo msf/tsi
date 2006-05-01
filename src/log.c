@@ -7,51 +7,58 @@
 #include "registry.h"
 #include "log.h"
 
-#define MAXNAME	1024
+#define BUFFER_SIZE	1024
 
 log_t *new_log(registry *reg, int proc_id) {
-	char logName[MAXNAME];
+    char *log_path, empty_path;
     log_t *new_log;
-	reg_key *k;
+    reg_key *k;
     
-    new_log = (log_t *) tsi_malloc(sizeof(log_t));
-    if (new_log == NULL) {
+    if ((new_log = (log_t *) tsi_malloc(sizeof(log_t))) == NULL) {
         printf_dbg("new_log: failed to allocate space for new log\n");
         return NULL;
     }
+    
+    if ((new_log->logBuf = (char *) tsi_malloc(BUFFER_SIZE * sizeof(char))) == NULL) {
+        printf_dbg("new_log: failed to allocate space for new log\n");
+        delete_log(new_log);
+        return NULL;
+    }
 
-	new_log->procID = proc_id;
+    new_log->procID = proc_id;
 	
-			/* use log or output path */
-	if ( ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) || 
-		 ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) == NULL) ) {
-		fprintf(stderr, "MISSING LOG_PATH AND OUTPUT PATH on config file, aborting\n");	
-		delete_log(new_log);
-		return NULL;
-	}
+    /* use log or output path */
+    empty_path = 0;
+    if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) {
+       if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) == NULL) {
+           log_path = &empty_path;
+       } else {
+           log_path = get_string(k);
+       }
+    } else {
+        log_path = get_string(k);
+    }
 
-	sprintf(logName,"%s/tsi-proc-%d.log", get_string(k),proc_id);
+    sprintf(new_log->logBuf,"%stsi-proc-%d.log", log_path, proc_id);
 
-	k = get_key(reg, "GLOBAL", "VERBOSE");
-	if(k == NULL) {
-		delete_log(new_log);
-		return NULL;
-	}
-	new_log->verbose = get_int(k);
+    if ((k = get_key(reg, "GLOBAL", "VERBOSE")) == NULL)
+        new_log->verbose = 0;
+    else
+        new_log->verbose = get_int(k);
 
-	new_log->logFile = fopen(logName, "w");	
-	if(new_log->logFile == NULL){
-		if(new_log->verbose){
-			fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n using only stdout..\n",logName);
-		}
-		else
-			fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n enabling verbosive mode..\n",logName);
-		new_log->logFile = stdout;
-		new_log->verbose = 0;
-	}
+    new_log->logFile = fopen(new_log->logBuf, "w");
+    if (new_log->logFile == NULL) {
+        if (new_log->verbose) {
+            fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n using only stdout..\n", new_log->logBuf);
+        } else {
+            fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n enabling verbosive mode..\n", new_log->logBuf);
+            new_log->logFile = stdout;
+            new_log->verbose = 0;
+        }   
+    }
 
-	new_log->simulNum = 0;
-	new_log->iterNum = 0;
+    new_log->simulNum = 0;
+    new_log->iterNum = 0;
     return new_log;
 }
 
@@ -59,24 +66,26 @@ log_t *new_log(registry *reg, int proc_id) {
 void delete_log(log_t *l) {
     if (l) {
         /* close file */
-		log_close(l);
+        if (l->logFile) log_close(l);
+        if (l->logBuf) tsi_free(l->logBuf);
         tsi_free(l);
     } else {
         printf_dbg("delete_log: received NULL as parameter!\n");
     }
 }
  
-void log_indent(char *buf, int nivel) 
+void log_indent(char *buf, int level)
 {
-	int i;
+    int i;
 
-	for(i = 0; i < nivel && i < 9; i++) {
-		buf[i] = '\t';
-	}
-	buf[i] = '\0';
+    if (level > 8) level = 9; /* limit identation to 9 tabs */
+    for (i = 0; i < level; i++) {
+        buf[i] = '\t';
+    }
+    buf[i] = 0;
 }
 
-void log_iteration_number(log_t *l,int iterNum)
+void log_iteration_number(log_t *l, int iterNum)
 {
 	l->simulNum = 0;
 	l->iterNum = iterNum;
@@ -99,11 +108,11 @@ void log_simulation_number(log_t *l, int simulNum)
 	fflush(l->logFile);
 }
 
-void log_message(log_t *l, int nivel, char* message)
+void log_message(log_t *l, int level, char* message)
 {
 	char buf[10];
 			
-	log_indent(buf, nivel);
+	log_indent(buf, level);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s\n", l->procID, l->iterNum, l->simulNum, buf, message);
 	if(l->verbose) {
 		printf("(%d,%d,%d) %s+ - %s\n", l->procID, l->iterNum, l->simulNum, buf, message);
@@ -150,11 +159,12 @@ void log_string(log_t *l, char* dump)
 
 void log_separator(log_t *l)
 {
-	char buf[80];
+	char buf[81];
 	int i;
+
 	for(i = 0; i < 80; i++)
 		buf[i] = '=';
-	buf[i] = '\0';
+	buf[i] = 0;
 
 	fprintf(l->logFile, "%s\n",buf);
 	if(l->verbose) {

@@ -12,27 +12,29 @@
 #include "si_math.h"
 
 /* prototypes */
-float point_value(si *s, int point);
-float index_value(si *s, int idx);
+inline float point_value(si *s, int point);
+inline float index_value(si *s, int idx);
 
 
-unsigned int getPoint(si *s, int x, int y, int z)
+inline unsigned int getPoint(si *s, int x, int y, int z)
 {
 //	return (x-1) + ( (y-1) * s->xsize) + ( (z-1) * s->xsize * s->ysize);
 //	return ((z)* s->xsize * s->ysize + (y) * s->xsize + (x+1)) - 1;
 	return (z * s->xsize * s->ysize + y * s->xsize + x);
 }
 
+
 /**
  * make Reflection Coeficients grid
  */
 int make_reflections_grid(si *s, float *AI, float *RG) 
 {
-    int x, y, z;
+    int x, y, z, z_;
     double value;
     struct timeval t1, t2;
         
     getCurrTime(&t1);
+/*
     for (x = 0; x < s->xsize; x++) {
         for (y = 0; y < s->ysize; y++)
             for (z = 0; z < s->zsize -1; z++) {
@@ -41,6 +43,22 @@ int make_reflections_grid(si *s, float *AI, float *RG)
             }
             RG[getPoint(s,x,y,s->zsize -1)] = 0;
 	}
+*/
+
+    /* old code */
+    for (x = 0; x < s->xsize; x++)
+        for (y = 0; y < s->ysize; y++)
+            for (z = 0; z < s->zsize -1; z++) {
+                 value =  (AI[getPoint(s,x,y,z+1)] - AI[getPoint(s,x,y,z)]) / (AI[getPoint(s,x,y,z+1)] + AI[getPoint(s,x,y,z)]);
+                 RG[getPoint(s,x,y,z)] = value;
+            }
+
+    z_ = s->zsize-1;
+    for (x = 0; x < s->xsize; x++)
+        for (y = 0; y < s->ysize; y++) {
+             RG[getPoint(s,x,y,z_)] = 0;
+        }
+
     getCurrTime(&t2);
 
 	log_action_time(s->l, 2, "make_reflections_grid() cpuTime",getElapsedTime(&t1,&t2));
@@ -53,7 +71,7 @@ int make_reflections_grid(si *s, float *AI, float *RG)
  * creates a syntetic seismic grid.
  */
 int make_synthetic_grid(si *s, float *RG, float *SY) {
-    int x, y, z, nxy, nxyz, px;
+    int x, y, z, nxy, nxyz, px, z_;
     int wavelet_spots;
     float *wvals, wval;
     int j, it;
@@ -228,16 +246,14 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
 } /* expand_correlations_grid */
 
 
-
-float point_value(si* s, int point) 
+inline float point_value(si* s, int point) 
 {
    // printf_dbg2("Point %d is at array position %d.\n", point, (s->wavelet_used_values / 2) + point);
     return (s->values[(s->wavelet_used_values / 2) + point]);
 } /* point_value */
 
 
-
-float index_value(si *s, int idx) 
+inline float index_value(si *s, int idx) 
 {
     return s->values[idx];
 } /* index_value */

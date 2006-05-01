@@ -37,6 +37,7 @@
 
 #include <math.h>
 #include "dss.h"
+#include "dss_legacy.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -45,7 +46,7 @@
 extern int ksol(int *, int *, int *, double *, double *, double *, int *);
 extern int cova3(float *, float *, float *, float *, float *, float *, int *, int *, 
 			   int *, float *, int *, float *, float *, int *, int * , double *, float *, float *);
-extern int getPos(int, int, int, int, int);
+//extern int getPos(int, int, int, int, int);
 /* Table of constant values */
 
 static int one = 1;
