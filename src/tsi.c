@@ -722,7 +722,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
     clear_grid(t->heap, t->seismic_idx);
     clear_grid(t->heap, t->ai_idx);
     //dirty_grid(t->heap, t->cm_idx); /* SI output - needed for BCM update */
-    delete_grid(t->heap, t->cm_idx); /* used only as aux grid */
+    delete_grid(t->heap, t->cm_idx); /* used only as aux grid for SI */
     dirty_grid(t->heap, t->sy_idx); /* SI output - needed for grid_correlation() */
 
     /* evaluate result */

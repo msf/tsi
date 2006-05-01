@@ -110,7 +110,7 @@ void log_simulation_number(log_t *l, int simulNum)
 
 void log_message(log_t *l, int level, char* message)
 {
-	char buf[10];
+	char buf[20];
 			
 	log_indent(buf, level);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s\n", l->procID, l->iterNum, l->simulNum, buf, message);
@@ -123,7 +123,7 @@ void log_message(log_t *l, int level, char* message)
 
 void log_action_time(log_t *l, int nivel, char* action, float time)
 {
-	char buf[10];
+	char buf[20];
 			
 	log_indent(buf, nivel);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s ..... [ %.3fs ]\n", l->procID, l->iterNum, l->simulNum, buf, action, time);
@@ -136,7 +136,7 @@ void log_action_time(log_t *l, int nivel, char* action, float time)
 
 void log_result(log_t *l, int nivel, char* name, double value)
 {
-	char buf[10];
+	char buf[20];
 			
 	log_indent(buf, nivel);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s = %.5f\n", l->procID, l->iterNum, l->simulNum, buf, name, value);
@@ -159,7 +159,7 @@ void log_string(log_t *l, char* dump)
 
 void log_separator(log_t *l)
 {
-	char buf[81];
+	char buf[100];
 	int i;
 
 	for(i = 0; i < 80; i++)
