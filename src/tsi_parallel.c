@@ -151,6 +151,7 @@ int tsi_compare_parallel(tsi *t) {
     z1 = layer_size[0];
     layer = last_layer = 0;
     log_message(t->l,0,"tsi_compare_parallel()");
+    printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);
     for (i = 0; i < grid_size; i++) {
         corr_data.value = t->nextBCM[i];
         corr_data.proc_id = t->proc_id;
@@ -164,13 +165,16 @@ int tsi_compare_parallel(tsi *t) {
         layer = i / nxy;
         if (layer > last_layer) {   /* ugly hack, I know... */
             last_layer = layer;
-            z0 += z1;
+            z0 = z1;
             z1 += layer_size[layer];
+            printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
         }
 
         for (j = z0; j < z1; j++) {
             ai_p = (j * nxy) + (i - layer*nxy);
-            printf_dbg("parallel_compare(%d): size: %d, nlayers: %d, layer: %d, i: %d, [i]: %d\n", t->proc_id, grid_size, nlayers, layer, i, (i-layer*nxy));
+            //printf_dbg("parallel_compare(%d): size: %d, nlayers: %d, layer: %d, i: %d, [i]: %d\n", t->proc_id, grid_size, nlayers, layer, i, (i-layer*nxy));
+            //printf_dbg("parallel_compare(%d): i: %d, ai_p: %d\n", t->proc_id, i, ai_p);
+            fflush(stdout);
             ai_val = t->nextBAI[ai_p];
             if (MPI_Bcast(&ai_val, 1, MPI_FLOAT, result.proc_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
                 printf_dbg("tsi_compare_parallel: failed to broadcast new AI value\n");

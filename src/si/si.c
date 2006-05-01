@@ -212,7 +212,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
             return NULL;
         }
         for (i = 0; i < g->nlayers; i++) g->layer_size[i] = s->min_size;
-        if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+        if ((g->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float))) == NULL) {
             printf_dbg2("new_cmgrid: failed to allocate cg array\n");
             delete_cmgrid(g);
             return NULL;
@@ -296,7 +296,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
     
     tsi_free(temp);
 
-    if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+    if ((g->cg = (float *) memalign(16,g->nlayers * g->nxy * sizeof(float))) == NULL) {
         printf_dbg2("\tnew_cmgrid: failed to allocate cg array\n");
         delete_cmgrid(g);
         return NULL;
@@ -314,7 +314,7 @@ int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
     }
     g->nlayers = nlayers;
     g->layer_size = layers;
-    if ((g->cg = (float *) tsi_malloc(nlayers * g->nxy * sizeof(float))) == NULL) {
+    if ((g->cg = (float *) memalign(16, nlayers * g->nxy * sizeof(float))) == NULL) {
         printf_dbg2("\tbuild_cmgrid: failed to allocate cg array\n");
         return 0;
     }
