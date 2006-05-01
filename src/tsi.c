@@ -864,7 +864,7 @@ int tsi_finish_iteration(tsi *t, int iteration, int simulation)
 	    delete_grid(t->heap, t->bestAI_idx);
 	    t->bestAI_idx = -1;
         }
-	}
+    }
 
     if (tsi_compare_parallel(t))
         return 0;

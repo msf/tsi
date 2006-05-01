@@ -34,16 +34,14 @@ double grid_correlation(float *A, float *B, unsigned int size) {
     denom = ((size * sum_A2) - sum_A_2) * ((size * sum_B2) - sum_B_2);
     nom =  (size * sum_AB) - (sum_A * sum_B);
 
-    if (denom > 0) {
-        if (nom > 0)
-            return (nom / sqrt(denom));
-    	else
-            printf_dbg("grid_correlation(): ERROR: negative correlation! returning 0\n");
-    } else {
+    if (denom <= 0) {
 	printf_dbg("grid_correlation(): ERROR: sqrt of negative number or division by zero! returning 0\n");
+	return 0;
     }
+    if (nom < 0)
+        printf_dbg("grid_correlation(): negative correlation\n");
                                                                                                                                                                         
-    return 0;
+    return (nom / sqrt(denom));
 } /* grid_correlation */
 
 

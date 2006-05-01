@@ -6,7 +6,6 @@
 #include "debug.h"
 #include "tsi_io.h"
 
-#define ALLIGNMENT 16          /* byte allignment */
 
 grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs, char *path, unsigned int grid_size) {
     grid_heap *h;
@@ -115,7 +114,7 @@ float *load_grid(grid_heap *h, int idx) {
         } else if (h->curr_grids < h->threshold) {  /* if #grids is bellow threshold */
             h->curr_grids++;
             printf_dbg2("Number of grids raised to %d\n", h->curr_grids);
-            h->g[idx].grid = (float *) tsi_malloc(h->grid_size*sizeof(float));
+            h->g[idx].grid = (float *) memalign(16, h->grid_size*sizeof(float));
             h->g[idx].pointer = h->g[idx].grid;
             h->g[idx].swappable = 0;
             return h->g[idx].grid;
@@ -223,7 +222,7 @@ void delete_heap(grid_heap *h) {
         if (h->g) {
             for (i = 0; i < h->heap_size; i++) {
                 if (h->g[i].fp) close_file(h->g[i].fp);
-                if (h->g[i].grid) tsi_free(h->g[i].grid);
+                if (h->g[i].grid) free(h->g[i].grid);
             }
             free(h->g);
         }

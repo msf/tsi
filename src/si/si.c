@@ -1,6 +1,7 @@
 /* si.c */
 
 #include <stdlib.h>
+#include <string.h>
 #include "debug.h"
 #include "log.h"
 #include "registry.h"
@@ -187,7 +188,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
         for (i = 0; i < s->min_number; i++) g->layer_size[i] = n;
         g->layer_size += x;
 
-        if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+        if ((g->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float))) == NULL) {
             printf_dbg2("new_cmgrid: failed to allocate cg array\n");
             delete_cmgrid(g);
             return NULL;
@@ -336,7 +337,7 @@ cm_grid *clone_cmgrid(cm_grid *g) {
     clone->nlayers = g->nlayers;
     clone->nxy = g->nxy;
     clone->layer_size = (int *) tsi_malloc(g->nlayers * sizeof(int));
-    clone->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float));
+    clone->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float));
     memcpy(clone->layer_size, g->layer_size, g->nlayers * sizeof(int));
     memcpy(clone->cg, g->cg, g->nlayers * g->nxy * sizeof(float));
     return clone;
@@ -372,7 +373,7 @@ void delete_cmgrid(cm_grid *g) {
     printf_dbg2("\tdelete_cmgrid(): called\n");
     if (g) {
         if (g->layer_size) tsi_free(g->layer_size);
-        if (g->cg) tsi_free(g->cg);
+        if (g->cg) free(g->cg);
         tsi_free(g);
     }
 } /* delete_cmgrid */
