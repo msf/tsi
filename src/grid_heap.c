@@ -106,7 +106,7 @@ float *load_grid(grid_heap *h, int idx) {
     int i, j;
     
     printf_dbg2("load_grid(): grid req=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
-    if (idx < h->heap_size) {
+    if (idx < h->heap_size && idx >= 0) {
 
         if (h->g[idx].grid) {   /* check if this grid still has its space allocated */
             h->g[idx].swappable = 0;   /* mark grid in use flag */
@@ -178,7 +178,7 @@ float *load_grid(grid_heap *h, int idx) {
 
 
 int clear_grid(grid_heap *h, int idx) {
-    if ((idx < h->heap_size) && (h->g[idx].grid != NULL)) {
+    if ((idx < h->heap_size) && (idx >= 0) && (h->g[idx].grid != NULL)) {
         h->g[idx].swappable = 1;   /* mark grid as not needed */
         printf_dbg2("clear_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
         return 1;
@@ -191,7 +191,7 @@ int clear_grid(grid_heap *h, int idx) {
 
 
 int dirty_grid(grid_heap *h, int idx) {
-    if ((idx < h->heap_size) && (h->g[idx].grid != NULL)) {
+    if ((idx < h->heap_size)  && (idx >= 0) && (h->g[idx].grid != NULL)) {
         h->g[idx].swappable = 1;   /* mark grid as not needed */
         h->g[idx].dirty = 1;       /* mark grid to be saved before being reused */
         printf_dbg2("dirty_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
@@ -204,7 +204,7 @@ int dirty_grid(grid_heap *h, int idx) {
 
 
 void delete_grid(grid_heap *h, int idx) {
-    if (idx < h->heap_size) {
+    if (idx < h->heap_size && idx >= 0) {
         h->alloc_grids--;
         h->g[idx].next_grid = h->next_grid;
         h->next_grid = idx;

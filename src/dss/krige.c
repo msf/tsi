@@ -110,7 +110,7 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 			index = (int) general->close[j - 1];
 			x1 = general->x[index - 1];
 			y1 = general->y[index - 1];
-			z1 = general->z__[index - 1];
+			z1 = general->z[index - 1];
 			krige_vars->vra[j - 1] = general->vr[index - 1];
 			vrea[j - 1] = general->sec[index - 1];
 		} else {
@@ -144,7 +144,7 @@ int krige(int *ix, int *iy, int *iz, float *xx, float *yy, float *zz,
 				index = (int) general->close[i - 1];
 				x2 = general->x[index - 1];
 				y2 = general->y[index - 1];
-				z2 = general->z__[index - 1];
+				z2 = general->z[index - 1];
 			} else {
 				/* It is a previously simulated node (keep index for table
 				   look-up): */

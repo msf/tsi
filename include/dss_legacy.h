@@ -98,8 +98,7 @@ extern int picksup(int *, float *, int *, float *,
 			int *, int *, int *, int *);
 
 
-extern int readdata(float *,
-             double *,
+extern int readdata(double *,
              unsigned int ,
              general_vars_t *,
              search_vars_t *,

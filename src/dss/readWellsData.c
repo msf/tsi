@@ -3,11 +3,11 @@
 #include "dss.h"
 #include "memdebug.h"
 
-double getPosd(double x, double y, double z, int xlen, int xylen)
+int getIndex(float min, float siz, float loc)
 {
-	        return ((x-1) + (xlen * (y -1)) + (xylen * (z-1)));
+	return (int) ( ((loc - min) / siz) + .5);
 }
-
+	
 /* wellsData may have points of outsize the current grid size
  * so, we must know how many are inside the grid,
  * alocate arrays for those, and copy them!
@@ -15,10 +15,11 @@ double getPosd(double x, double y, double z, int xlen, int xylen)
  * all this should be done outside the dss, since its constant throughout the whole execution
  * 
  */
-int readWellsData(general_vars_t *general, double *wellsData, unsigned int wellsDataSize) 
+int readWellsData(general_vars_t * general, double * wellsData, unsigned int wellsDataSize) 
 {
 
-	double x, y, z;
+	int x, y, z;
+	float f;
 	double origVal;
 	unsigned int i,j,t;
 	unsigned int *temp;
@@ -37,16 +38,27 @@ int readWellsData(general_vars_t *general, double *wellsData, unsigned int wells
 	i = 0;
 	j = 0;
 	while( i < wellsDataSize) {
-		x = wellsData[i++];
-		y = wellsData[i++];
-		z = wellsData[i++];
-		origVal = wellsData[i++];
-		if( origVal < general->tmin ||
-			origVal > general->tmax) {
+		f = (float) wellsData[i++];
+		x = getIndex(general->xmn, general->xsiz, f); 
+		if( x < 0 || x >= general->nx) {
+			i += 3;
 			continue;
 		}
+		f = (float) wellsData[i++];
+		y = getIndex(general->ymn, general->ysiz, f);
+		if( y < 0 || y >= general->ny) {
+			i += 2;
+			continue;
+		}
+		f = (float) wellsData[i++];
+		z = getIndex(general->zmn, general->zsiz, f);
+		if( z < 0 || z >= general->nz) {
+			i++;
+			continue;
+		}
+		origVal = wellsData[i++];
 		
-		t = (unsigned int) getPosd(x,y,z,general->nx,general->nxy);
+		t = (unsigned int) getPos(x,y,z,general->nx,general->nxy);
 		if(t >= (unsigned int) general->nxyz) {
 			continue;
 		}
@@ -56,6 +68,7 @@ int readWellsData(general_vars_t *general, double *wellsData, unsigned int wells
 	}
 
 	/* j is the size of the WellsData */
+	printf("readWellsData: %d points\n",j);
 	general->wellsNPoints = j;
 	general->wellsDataVal = (double *) tsi_malloc(sizeof(double) * j);
 	general->wellsDataPos = (unsigned int *) tsi_malloc(sizeof(unsigned int) * j); 

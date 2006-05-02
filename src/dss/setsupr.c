@@ -75,7 +75,7 @@
 
 int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 		float *ysiz, int *nz, float *zmn, float *zsiz, int * nd,
-		float *x, float *y, float *z__, float *vr, float *tmp, int *nsec,
+		float *x, float *y, float *z, float *vr, float *tmp, int *nsec,
 		float *sec1, float *sec2, float *sec3, int *maxsbx, int *maxsby,
 		int *maxsbz, int *nisb, int *nxsup, float *xmnsup,
 		float * xsizsup, int *nysup, float *ymnsup, float *ysizsup,
@@ -101,7 +101,7 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	--sec1;
 	--tmp;
 	--vr;
-	--z__;
+	--z;
 	--y;
 	--x;
 
@@ -130,7 +130,7 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	for (i__ = 1; i__ <= i__1; ++i__) {
 		getindx(nxsup, xmnsup, xsizsup, &x[i__], &ix, &inflag);
 		getindx(nysup, ymnsup, ysizsup, &y[i__], &iy, &inflag);
-		getindx(nzsup, zmnsup, zsizsup, &z__[i__], &iz, &inflag);
+		getindx(nzsup, zmnsup, zsizsup, &z[i__], &iz, &inflag);
 		ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
 		tmp[i__] = (float) ii;
 		++nisb[ii];
@@ -142,7 +142,7 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	sortem(&one, nd,
                &tmp[1],
                &nsort, &x[1],
-               &y[1], &z__[1], &vr[1], &sec1[1], &sec2[1], &sec3[1]);
+               &y[1], &z[1], &vr[1], &sec1[1], &sec2[1], &sec3[1]);
 
 	/* Set up array nisb with the starting address of the block data: */
 

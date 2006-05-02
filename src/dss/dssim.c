@@ -155,7 +155,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	int in;
 	int ix, iz, iy;
 	float xp, xx, yy, zz;
-	int ind;
 	float vmy = 0, vms, sec2, sec3;
 	int nsec, nisb[125], ierr;
 	float cmean, gmean;
@@ -196,7 +195,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		setsupr(&general->nx, &general->xmn, &general->xsiz, &general->ny,
 				&general->ymn, &general->ysiz, &general->nz, &general->zmn,
 				&general->zsiz, &general->nd, general->x, general->y, 
-				general->z__, general->vr, general->wt, &nsec, general->sec,
+				general->z, general->vr, general->wt, &nsec, general->sec,
 				&sec2, &sec3, &five, &five, &five, nisb, &nxsup, &xmnsup,
 				&xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, &zmnsup, &zsizsup)
 			;
@@ -218,15 +217,25 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		sim[i] = general->nosvalue;
 	}
 
-	/* introduzir os dados dos poc,os (wells/harddata) na grid */
+	toSim = general->nxyz;
+	simulation->nsim = index = in = 0;
+
+	/* copy wells data to simulation grid */
 	for(i = 0; i < (int) general->wellsNPoints; i++) {
-		sim[general->wellsDataPos[i]] = (float) general->wellsDataVal[i];
+		in = general->wellsDataPos[i];
+		sim[in] = (float) general->wellsDataVal[i];
+
+		/* mark point has simulated */
+		order[in] = order[toSim];
+		order[toSim] = in;
+		toSim--;
 	}
 
 	/* codigo reescrito ..................................... FIM */
+
 /* !Assign a flag so that the node out of the mask boundaries does not get simulated: */
 	if (general->imask == 1) {
-		for (i = 1; ind <= general->nxyz; ++i) {
+		for (i = 1; i <= general->nxyz; ++i) {
 			if (mask_data[i] == 0) {
 				sim[i] = general->nosvalue;
 			}
@@ -235,10 +244,9 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
-	simulation->nsim = index = in = 0;
+	in = 0;
 	zmean = 0.f;
 	zvariance = 0.f;
-	toSim = general->nxyz;
 	while( toSim > 0 ) {
 		
 		if(toSim == (general->nxyz * 0.75))
@@ -259,7 +267,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		
 
 		if(index < 1)
-			printf("\tdssim(): ERROR, INDEX(%d) < 1\n", index);
+			printf("dssim(): ERROR, INDEX(%d) < 1\n", index);
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
 		/* if( sim[index] >= general->tmin &&
 		    sim[index] <= general->tmax) { */
@@ -269,11 +277,12 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			continue;
 		}
 
-		/* simulation */
+		/* get relative x,y,z from index */
 		iz = (index - 1) / general->nxy + 1;
 		iy = (index - (iz - 1) * general->nxy - 1) / general->nx + 1;
 		ix = index - (iz - 1) * general->nxy - (iy - 1) * general->nx;
 
+		/* getting absolute coords from relative coords */
 		xx = general->xmn + (float) (ix - 1) * general->xsiz;
 		yy = general->ymn + (float) (iy - 1) * general->ysiz;
 		zz = general->zmn + (float) (iz - 1) * general->zsiz;
@@ -286,14 +295,15 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			srchsupr(&xx, &yy, &zz, &search->radsqd, &covariance->isrot,
 					&five, krige_vars->rotmat, &nsbtosr, ixsbtosr, iysbtosr, 
 					izsbtosr, &search->noct, general->x, 
-					general->y, general->z__, general->wt, nisb, &nxsup, 
+					general->y, general->z, general->wt, nisb, &nxsup, 
 					&xmnsup, &xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, 
 					&zmnsup, &zsizsup, &search->nclose, general->close, 
 					&infoct);
 			if (search->nclose < search->ndmin) {
 				printf("dssim(): SKIP2  %d\n",index);
 				continue;
-			} else if (search->nclose > search->ndmax) {
+			}
+			if (search->nclose > search->ndmax) {
 				search->nclose = search->ndmax;
 			}
 		}

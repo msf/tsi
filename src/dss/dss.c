@@ -72,7 +72,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->general->maxdat = d->harddata_size / 4;
     d->general->x = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->y = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
-    d->general->z__ = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
+    d->general->z = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->vr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->wt = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->vrtr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
@@ -80,7 +80,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->general->sec = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     if (!d->general->x ||
         !d->general->y ||
-        !d->general->z__ ||
+        !d->general->z ||
         !d->general->vr ||
         !d->general->wt ||
         !d->general->vrtr ||
@@ -88,7 +88,9 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
         !d->general->sec)
         return NULL;
         
-    /* readWellsData */    
+    /* read data & readWellsData */    
+    readdata(d->harddata, d->harddata_size, d->general, d->search, d->simulation);
+	readWellsData(d->general, d->harddata, d->harddata_size);
 
     printf_dbg2("new_dss(): DSS engine started sucessfully.\n");
     return d;
@@ -96,11 +98,11 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
 
 
 
-int setup_dss(dss *d, float *currBAI) {
+int setup_dss(dss *d, int ktype) {
     printf_dbg2("setup_dss(): called\n");
     d->general->ktype = 1;
-    if (currBAI) d->general->ktype = 5;
-    readdata(currBAI, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
+    if (ktype != 1) 
+		d->general->ktype = 5;
 
     /* restore initial values */
     d->search->nclose =   0;
@@ -110,7 +112,7 @@ int setup_dss(dss *d, float *currBAI) {
     d->clookup->icvar =   d->clookup->icvar_bk;
     d->simulation->nsim = d->simulation->nsim_bk;
 
-    return readWellsData(d->general, d->harddata, d->harddata_size);
+    return  0;
 } /* setup_dss */
 
 
@@ -132,6 +134,14 @@ int run_dss(dss *d, float *AI) {
     d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
     mask = NULL;
+
+    /* restore initial values */
+    d->search->nclose =   0;
+    d->clookup->nodmax =  d->clookup->nodmax_bk;
+    d->clookup->ntry =    d->clookup->ntry_bk;
+    d->clookup->icmean =  d->clookup->icmean_bk;
+    d->clookup->icvar =   d->clookup->icvar_bk;
+    d->simulation->nsim = d->simulation->nsim_bk;
 
 /*
     test.general = tsi_malloc(sizeof(general_vars_t));
@@ -201,8 +211,16 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     d->clookup->iynode = (int *) load_grid(d->heap, d->iynode_idx);
     d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
-    mask = NULL;
+	mask = NULL;
+	d->general->ktype = 5;
 
+    /* restore initial values */
+    d->search->nclose =   0;
+    d->clookup->nodmax =  d->clookup->nodmax_bk;
+    d->clookup->ntry =    d->clookup->ntry_bk;
+    d->clookup->icmean =  d->clookup->icmean_bk;
+    d->clookup->icvar =   d->clookup->icvar_bk;
+    d->simulation->nsim = d->simulation->nsim_bk;
 
 
 /*
@@ -269,7 +287,7 @@ void delete_dss(dss *d) {
         if (d->general) {
             if (d->general->x) tsi_free(d->general->x);
             if (d->general->y) tsi_free(d->general->y);
-            if (d->general->z__) tsi_free(d->general->z__);
+            if (d->general->z) tsi_free(d->general->z);
             if (d->general->vr) tsi_free(d->general->vr);
             if (d->general->wt) tsi_free(d->general->wt);
             if (d->general->vrtr) tsi_free(d->general->vrtr);

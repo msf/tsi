@@ -21,7 +21,7 @@ typedef struct general_vars_type {
     int    maxdat;  /* harddata size... */
     float  *x,      /* same size as harddata */
            *y,      /* same size as harddata */
-           *z__,    /* same size as harddata */
+           *z,      /* same size as harddata */
            *vr,     /* same size as harddata */
            *wt,     /* same size as harddata */
            *vrtr,   /* same size as harddata */
@@ -211,8 +211,6 @@ struct dss_check {
 };
 
 dss *new_dss(registry *r, grid_heap *h, log_t *l);
-
-int setup_dss(dss *d, float *AI);
 
 int run_dss(dss *d, float *AI);
 
