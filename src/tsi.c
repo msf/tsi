@@ -508,11 +508,14 @@ int tsi_setup_iteration(tsi *t, int iteration)
 
 		//t->currBAI = load_grid(t->heap, t->currBAI_idx);
 		/* expand compressed correlations grid from previous iteration */
+		/* this now done at finish_iteration/distributed compare&update */
+		/*
 		t->currBCM_idx = new_grid(t->heap);
 		t->currBCM = load_grid(t->heap, t->currBCM_idx);
 		expand_correlations_grid(t->nextBCM_c, t->currBCM);
 		dirty_grid(t->heap, t->currBCM_idx);
 		delete_cmgrid(t->nextBCM_c);
+		*/
 	}
 	getCurrTime(&t3);
 
