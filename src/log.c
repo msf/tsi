@@ -30,7 +30,7 @@ log_t *new_log(registry *reg, int proc_id) {
 		return NULL;
 	}
 
-	sprintf(logName,"%s/tsi-proc-%d.log", get_string(k),proc_id);
+	sprintf(logName,"%stsi-proc-%d.log", get_string(k),proc_id);
 
 	new_log->verbose = 0;
 	k = get_key(reg, "GLOBAL", "VERBOSE");

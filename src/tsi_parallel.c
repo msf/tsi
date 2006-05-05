@@ -288,7 +288,6 @@ int tsi_compare_parallel_v2(tsi *t)
 } /* tsi_compare_parallel_v2 */
 
 
-
 /* totally sincronous distributed compate & update */
 int tsi_compare_parallel_v3(tsi *t)
 {
@@ -324,135 +323,73 @@ int tsi_compare_parallel_v3(tsi *t)
 	smallBCM = (float *) malloc( size_per_rank * sizeof(float));
 	smallBAI = (float *) malloc( size_per_rank * sizeof(float));
 	if(rest > 0)
-	//	log_message(t->l, 0, "compare_parallel_v3: WE HAVE REST!");
+		log_message(t->l, 0, "compare_parallel_v3: WE HAVE REST!");
 
 
-	/*
-	 * circular send & recieve of parcels of BCM + BAI */
-	/* total DATA through network: grid_size * 2 * sizeof(float) */
-	/* the last node in group also works the "rest" */
+	/* 
+	   circular send & recieve of parcels of BCM + BAI 
+	   total DATA through network: grid_size * 2 * sizeof(float) 
+	   the last node in group also works the "rest" 
+	 */
 
 	to = t->proc_id;
 	from = t->proc_id;
 
 	to = (to + 1) % clustersize;
-	from = ((from  - 1) + clustersize ) % clustersize;
+	from = (from  + clustersize - 1) % clustersize;
 	start = to * size_per_rank;
 
 	while(to != t->proc_id) {
 
-		if (t->proc_id % 2 == 1) { /* if odd: first send, then recv */
+		ret = MPI_Sendrecv(BCM + start, size_per_rank, MPI_FLOAT, to, to,
+				smallBCM, size_per_rank, MPI_FLOAT, from, t->proc_id,
+				MPI_COMM_WORLD, &stat);
+		if( ret != MPI_SUCCESS) {
+			log_string(t->l, "tsi_compare_parallel(): mpi_sendrecv error!\n");
+			return 1;
+		}
+		ret = MPI_Sendrecv(BAI + start, size_per_rank, MPI_FLOAT, to, to+1,
+				smallBAI, size_per_rank, MPI_FLOAT, from, t->proc_id+1,
+				MPI_COMM_WORLD, &stat);
+		if( ret != MPI_SUCCESS) {
+			log_string(t->l, "tsi_compare_parallel(): mpi_sendrecv error!\n");
+			return 1;
+		}
 
-			ret = MPI_Send(BCM+start, size_per_rank, MPI_FLOAT, to, to+1, MPI_COMM_WORLD);
+		i = t->proc_id * size_per_rank;
+		local_compare_update( BCM + i, BAI + i, smallBCM, smallBAI, size_per_rank);
+
+		if( to == (clustersize - 1) && rest != 0) { /* last gets the rest */
+			i = start +  size_per_rank;
+			ret = MPI_Send(BCM + i, rest, MPI_FLOAT, to, to, MPI_COMM_WORLD);
 			if( ret != MPI_SUCCESS) {
 				log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
 				return 1;
 			}
-			ret = MPI_Send(BAI+start, size_per_rank, MPI_FLOAT, to, to+2, MPI_COMM_WORLD);
+			ret = MPI_Send(BAI + i, rest, MPI_FLOAT, to, to+1, MPI_COMM_WORLD);
 			if( ret != MPI_SUCCESS) {
 				log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
 				return 1;
-			}
-			if( to == (clustersize - 1) && rest != 0) { /* last gets the rest */
-				i = start +  size_per_rank;
-				ret = MPI_Send(BCM + i, rest, MPI_FLOAT, to, to+1, MPI_COMM_WORLD);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
-					return 1;
-				}
-				ret = MPI_Send(BAI + i, rest, MPI_FLOAT, to, to+2, MPI_COMM_WORLD);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
-					return 1;
-				}
-			}
-
-			ret = MPI_Recv( smallBCM, size_per_rank, MPI_FLOAT, from, t->proc_id+1, MPI_COMM_WORLD, &stat);
-			if( ret != MPI_SUCCESS) {
-				log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-				return 1;
-			}
-			ret = MPI_Recv( smallBAI, size_per_rank, MPI_FLOAT, from, t->proc_id+2, MPI_COMM_WORLD, &stat);
-			if( ret != MPI_SUCCESS) {
-				log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-				return 1;
-			}
-			i = t->proc_id * size_per_rank;
-			local_compare_update( BCM+i, BAI+i, smallBCM, smallBAI, size_per_rank);
-
-			if( t->proc_id == (clustersize -1)  && rest != 0) {/* last gets the rest */
-				i += size_per_rank;
-				ret = MPI_Recv(smallBCM, rest, MPI_FLOAT, from, t->proc_id+1, MPI_COMM_WORLD, &stat);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-					return 1;
-				}
-				ret = MPI_Recv(smallBAI, rest, MPI_FLOAT, from, t->proc_id+2, MPI_COMM_WORLD, &stat);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-					return 1;
-				}
-				local_compare_update(BCM + i,BAI + i, smallBCM, smallBAI, rest);
-			}
-
-
-		} else { /* even: first recv, then send */
-
-			ret = MPI_Recv(smallBCM, size_per_rank, MPI_FLOAT, from, t->proc_id+1, MPI_COMM_WORLD, &stat);
-			if( ret != MPI_SUCCESS) {
-				log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-				return 1;
-			}
-			ret = MPI_Recv(smallBAI, size_per_rank, MPI_FLOAT, from, t->proc_id+2, MPI_COMM_WORLD, &stat);
-			if( ret != MPI_SUCCESS) {
-				log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-				return 1;
-			}
-			i = t->proc_id * size_per_rank;
-			local_compare_update( BCM+i, BAI+i, smallBCM, smallBAI, size_per_rank);
-			if( t->proc_id == (clustersize -1) && rest != 0) {/* last gets the rest */
-				i += size_per_rank;
-				ret = MPI_Recv(smallBCM, rest, MPI_FLOAT, from, t->proc_id+1, MPI_COMM_WORLD, &stat);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-					return 1;
-				}
-				ret = MPI_Recv(smallBAI, rest, MPI_FLOAT, from, t->proc_id+2, MPI_COMM_WORLD, &stat);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
-					return 1;
-				}
-				local_compare_update(BCM + i, BAI + i, smallBCM, smallBAI, rest);
-			}
-
-			ret = MPI_Send(BCM+start, size_per_rank, MPI_FLOAT, to, to+1, MPI_COMM_WORLD);
-			if( ret != MPI_SUCCESS) {
-				log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
-				return 1;
-			}
-			ret = MPI_Send(BAI+start, size_per_rank, MPI_FLOAT, to, to+2, MPI_COMM_WORLD);
-			if( ret != MPI_SUCCESS) {
-				log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
-				return 1;
-			}
-			if( to != (clustersize - 1) && rest != 0) {/* last gets the rest */
-				i = start +  size_per_rank;
-				ret = MPI_Send(BCM + i, rest, MPI_FLOAT, to, to+1, MPI_COMM_WORLD);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
-					return 1;
-				}
-				ret = MPI_Send(BAI + i, rest, MPI_FLOAT, to, to+2, MPI_COMM_WORLD);
-				if( ret != MPI_SUCCESS) {
-					log_string(t->l, "tsi_compare_parallel(): mpi_send error!\n");
-					return 1;
-				}
 			}
 		}
-		
+		if( t->proc_id == (clustersize -1)  && rest != 0) {/* last gets the rest */
+			i = (t->proc_id *size_per_rank ) + size_per_rank;
+			ret = MPI_Recv(smallBCM, rest, MPI_FLOAT, from, t->proc_id, MPI_COMM_WORLD, &stat);
+			if( ret != MPI_SUCCESS) {
+				log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
+				return 1;
+			}
+			ret = MPI_Recv(smallBAI, rest, MPI_FLOAT, from, t->proc_id+1, MPI_COMM_WORLD, &stat);
+			if( ret != MPI_SUCCESS) {
+				log_string(t->l, "tsi_compare_parallel(): mpi_recv error!\n");
+				return 1;
+			}
+			local_compare_update( BCM + i, BAI + i, smallBCM, smallBAI, rest);
+		}
+
 		/* step to next round */
 		to = (to + 1) % clustersize;
-		from = ((from  - 1) + clustersize ) % clustersize;
+		from = (from  + clustersize - 1) % clustersize;
 		start = to * size_per_rank;
 	} 
 
@@ -488,9 +425,9 @@ int tsi_compare_parallel_v3(tsi *t)
 
 	free(smallBCM);
 	free(smallBAI);
-//	log_message(t->l,0,"tsi_compare_parallel_v3() finished");
-    dirty_grid(t->heap, t->nextBAI_idx);
-    dirty_grid(t->heap, t->nextBCM_idx);
+	//	log_message(t->l,0,"tsi_compare_parallel_v3() finished");
+	dirty_grid(t->heap, t->nextBAI_idx);
+	dirty_grid(t->heap, t->nextBCM_idx);
 
 #endif /* TSI_MPI */
 	return 0;

@@ -280,7 +280,7 @@ tsi *new_tsi(registry *reg) {
 
 	/* start grid heap */
 	printf_dbg2("new_tsi(%d): starting heap\n", t->proc_id);
-	kpath = get_key(reg, "GLOBAL", "TMP_PATH");
+	kpath = get_key(reg, "HEAP", "TMP_PATH");
 	if (kpath)
 		t->heap = new_heap(t->n_procs, t->proc_id, heap_size, swap_thr, usefs, get_string(kpath), t->even_size);
 	else
@@ -495,7 +495,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	/* prepare simulations */
 	log_separator(t->l);
 	log_iteration_number(t->l, iteration);
-	log_message(t->l, 0, "tsi_setup_iteration() setup [Co]-Direct Sequential Simulation");
+	log_message(t->l, 0, "tsi_setup_iteration() setup Direct Sequential [Co]-Simulation");
 
 	if (iteration == 0) { /* first iteration */
 		t->currBAI_idx = -1; 
