@@ -46,9 +46,12 @@ tsi *new_tsi(registry *reg) {
 	t->heap = NULL;
 
 	/* set a starting point for the rand() */
-	lTime = time(NULL);
-	timeSeed = (unsigned int) lTime / 2;
+	fp = open_file("/dev/random");
+	fread(&timeSeed,sizeof(unsigned int), 1, fp);
+	close_file(fp);
+
 	srandom(timeSeed);
+	printf_dbg("new_tsi: seed : %u\n",timeSeed);
 
 	t->empty_path = 0; 
 
