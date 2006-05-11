@@ -1,4 +1,5 @@
 #include "dss.h"
+#include "dss_legacy.h"
 
 #undef PROFILE
 

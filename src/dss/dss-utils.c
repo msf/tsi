@@ -11,3 +11,7 @@ inline int getPos(int x, int y, int z, int xlen, int xylen)
 }
 
 
+int getIndex(float min, float siz, float loc)
+{
+	return (int) ( ((loc - min) / siz) + .5);
+}

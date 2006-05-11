@@ -10,15 +10,13 @@
 #include "dss_legacy.h"
 #include "tsi_io.h"
 
-double * load_harddata_file(TSI_FILE *, char *, unsigned int *);
+float * load_harddata_file(char *, unsigned int *);
 
 dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     dss *d;
     reg_key *k, *kpath;
     /* auxiliar variables for harddata */
-    TSI_FILE *fp;
     char filename[512];
-    char hdbuf[64];
 
     printf_dbg2("new_dss(): called\n");
     /* object space allocation */
@@ -41,7 +39,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->heap = h;
 	d->l = l;
 
-    printf_dbg2(d->l,"new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
+    printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, r)){
 		printf("new_dss(): ERROR loaging dss configs\n");
 		return NULL;
@@ -53,23 +51,20 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     kpath = NULL;
     if ((kpath = get_key(r, "HARDDATA", "PATH")) == NULL)
         kpath = get_key(r, "GLOBAL", "INPUT_PATH");
-    if ((k = get_key(r, "HARDDATA", "FILENAME")) == NULL) return NULL;
+    if ((k = get_key(r, "HARDDATA", "FILENAME")) == NULL) 
+		return NULL;
     if (kpath)
         sprintf(filename, "%s%s", get_string(kpath), get_string(k));
     else
         sprintf(filename, "%s", get_string(k));
-    if ((fp = open_file(filename)) == NULL) {
-        printf("new_dss(): ERROR - Can't open Hard Data file: %s\n", get_string(k));
-        return NULL;
-    }
-    if ((d->harddata = load_harddata_file(fp, hdbuf, &d->harddata_size)) == NULL) {
+
+    if ((d->harddata = load_harddata_file(filename, &d->harddata_size)) == NULL) {
         printf("new_dss(): ERROR - failed to load harddata file!\n");
         return NULL;
     }
-    close_file(fp);
 
     /* ugly hack for "readdata" */
-    d->general->maxdat = d->harddata_size / 4;
+    d->general->maxdat = d->harddata_size / d->general->nvari;
     d->general->x = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->y = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->z = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
@@ -90,7 +85,6 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
         
     /* read data & readWellsData */    
     readdata(d->harddata, d->harddata_size, d->general, d->search, d->simulation);
-	readWellsData(d->general, d->harddata, d->harddata_size);
 
     printf_dbg2("new_dss(): DSS engine started sucessfully.\n");
     return d;
@@ -119,8 +113,6 @@ int setup_dss(dss *d, int ktype) {
 
 int run_dss(dss *d, float *AI) {
     int *order, *mask;
-    struct dss_check test;
-    simulation_vars_t *x;
 
     printf_dbg2("run_dss(): called\n");
     d->covtab_idx = new_grid(d->heap);
@@ -144,6 +136,8 @@ int run_dss(dss *d, float *AI) {
     d->simulation->nsim = d->simulation->nsim_bk;
 
 /*
+    struct dss_check test;
+    simulation_vars_t *x;
     test.general = tsi_malloc(sizeof(general_vars_t));
     memcpy(test.general, d->general, sizeof(general_vars_t));
     test.search = tsi_malloc(sizeof(search_vars_t));
@@ -196,9 +190,7 @@ int run_dss(dss *d, float *AI) {
 
 
 int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
-    int *order, *mask, i;
-    struct dss_check test;
-    general_vars_t *x;
+    int *order, *mask;
 
     printf_dbg2("run_codss(): called\n");
     d->covtab_idx = new_grid(d->heap);
@@ -224,6 +216,9 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
 
 
 /*
+ 	int i;
+    struct dss_check test;
+    general_vars_t *x;
     test.general = tsi_malloc(sizeof(general_vars_t));
     memcpy(test.general, d->general, sizeof(general_vars_t));
     test.search = tsi_malloc(sizeof(search_vars_t));
@@ -293,8 +288,6 @@ void delete_dss(dss *d) {
             if (d->general->vrtr) tsi_free(d->general->vrtr);
             if (d->general->vrgtr) tsi_free(d->general->vrgtr);
             if (d->general->sec) tsi_free(d->general->sec);
-			if (d->general->wellsDataVal) tsi_free(d->general->wellsDataVal);
-			if (d->general->wellsDataPos) tsi_free(d->general->wellsDataPos);
             tsi_free(d->general);
         }
         if (d->search) tsi_free(d->search);
@@ -312,30 +305,43 @@ void delete_dss(dss *d) {
         }
         if (d->clookup) tsi_free(d->clookup);
         if (d->krige) tsi_free(d->krige);
+		if (d->harddata) tsi_free(d->harddata);
         tsi_free(d);
     }
 } /* delete_dss */
 
 
 
-double *load_harddata_file(TSI_FILE *fp, char *buf, unsigned int *size) {
-    double x, y, z, val, *ret;
+float *load_harddata_file(char *filename,  unsigned int *size) {
+    float x, y, z, val;
     int i;
+	char line[256];
+	float *buf;
+	TSI_FILE *fp;
 
-	i = *size;
-	if(fscanf(fp,"%lf %lf %lf %lf", &x, &y, &z, &val) != EOF) {
-        (*size)++;
-		ret = load_harddata_file(fp, buf, size);
-        if ( ret ) {
-            ret[i]   = x;
-            ret[i+1] = y;
-            ret[i+2] = z;
-            ret[i+3] = val;
-            return ret;
-        } else
-            return NULL;
+    if ((fp = open_file(filename)) == NULL) {
+        printf("new_dss(): ERROR - Can't open Hard Data file: %s\n", filename);
+        return NULL;
     }
-    *size *= 4;
-    return (double *) tsi_malloc(*size * sizeof(double));
+	
+	/* first find out how many values */
+	i = 0;
+	while(fgets(line, 255, fp) != NULL)
+		i++;
+	*size = i * 4;
+	printf_dbg("read_harddata_file(): %d lines\n",i);
+	buf = (float *) tsi_malloc(sizeof(float) * i * 4); // 4 values per line
+	fseek(fp, 0, SEEK_SET); // back to start of file
+	
+	i = 0;
+	while(fscanf(fp,"%f %f %f %f", &x, &y, &z, &val) != EOF) {
+		buf[i++] = x;
+		buf[i++] = y;
+		buf[i++] = z;
+		buf[i++] = val;
+	}
+
+    close_file(fp);
+	return buf;
 } /* load_harddata_file */
 

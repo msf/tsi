@@ -1,12 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "dss.h"
+#include "dss_legacy.h"
 #include "memdebug.h"
 
-int getIndex(float min, float siz, float loc)
-{
-	return (int) ( ((loc - min) / siz) + .5);
-}
 	
 /* wellsData may have points of outsize the current grid size
  * so, we must know how many are inside the grid,
@@ -15,20 +12,20 @@ int getIndex(float min, float siz, float loc)
  * all this should be done outside the dss, since its constant throughout the whole execution
  * 
  */
-int readWellsData(general_vars_t * general, double * wellsData, unsigned int wellsDataSize) 
+int readWellsData(general_vars_t * general, float * wellsData, unsigned int wellsDataSize) 
 {
 
 	int x, y, z;
 	float f;
-	double origVal;
+	float origVal;
 	unsigned int i,j,t;
 	unsigned int *temp;
-	double *vals;
+	float *vals;
 
 	t = wellsDataSize / general->nvari;
 	
 	temp = (unsigned int *) tsi_malloc(sizeof(unsigned int) * t);
-	vals = (double *) tsi_malloc(sizeof(double) * t);		
+	vals = (float *) tsi_malloc(sizeof(float) * t);		
 
 	if( wellsDataSize % general->nvari ) {
 		printf("readWellsData: ERROR: incorrect number of values\n");
@@ -70,9 +67,9 @@ int readWellsData(general_vars_t * general, double * wellsData, unsigned int wel
 	/* j is the size of the WellsData */
 	printf("readWellsData: %d points\n",j);
 	general->wellsNPoints = j;
-	general->wellsDataVal = (double *) tsi_malloc(sizeof(double) * j);
+	general->wellsDataVal = (float *) tsi_malloc(sizeof(float) * j);
 	general->wellsDataPos = (unsigned int *) tsi_malloc(sizeof(unsigned int) * j); 
-	memcpy(general->wellsDataVal, vals, sizeof(double) * j);
+	memcpy(general->wellsDataVal, vals, sizeof(float) * j);
 	memcpy(general->wellsDataPos, temp, sizeof(unsigned int) * j);
 	tsi_free(vals);
 	tsi_free(temp);

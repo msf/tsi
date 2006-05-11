@@ -45,7 +45,7 @@
  */
 
 
-int readdata(double *hard_data,
+int readdata(float *hard_data,
              unsigned int  hard_data_size,
 	     general_vars_t * general, 
 	     search_vars_t * search,
@@ -64,7 +64,7 @@ int readdata(double *hard_data,
 	double ss; /* weighted variance */
 	double w, cp;
 	int nt;
-	float var[4], vrg, twt;
+	float vrg, twt;
 	int iend, ierr;
 	unsigned int nelem;
 	double oldcp;
@@ -72,6 +72,8 @@ int readdata(double *hard_data,
 	float vvarg;
 	int icolvr, icolwt, istart;
 
+	float *var;
+	
 	/* Parameter adjustments */
 	--hard_data;
 
@@ -88,9 +90,12 @@ int readdata(double *hard_data,
 		general->itrans = 0;
 		search->sstrat = 1;
 	}
+	
+	var = (float *) tsi_malloc(sizeof(float)*general->nvari);
 	general->nd = 0;
 	av = 0;
 	ss = 0;
+	
 	/* !Establish the reference histogram for the simulation (provided that */
 	/* !we have data, and we are transforming the data): */
 	if (general->itrans == 1) {
@@ -102,6 +107,7 @@ int readdata(double *hard_data,
 			icolwt = general->iwt;
 		}
 		/* !Now, read in the actual data: */
+
 		nt = 0;
 		general->ntr = 0;
 		twt = 0;
@@ -197,7 +203,8 @@ int readdata(double *hard_data,
 		general->nd = 0;
 		nt = 0;
 		nelem = 0;
-        printf_dbg2("readdata(): read wells data, pass2\n");
+		printf_dbg2("readdata(): ivrl: %d, ixl: %d, iyl: %d, izl: %d\n",
+				general->ivrl,general->ixl,general->iyl,general->izl);
 		while(nelem < hard_data_size) {
 
 			for (j = 1; j <= general->nvari; ++j) {
@@ -244,12 +251,16 @@ int readdata(double *hard_data,
 			twt += general->wt[general->nd];
 			av += var[general->ivrl - 1] * general->wt[general->nd];
 			ss += var[general->ivrl - 1] * var[general->ivrl - 1] * general->wt[general->nd];
+			printf_dbg2("readdata: Wells Point: (%f, %f, %f) = %f\n",
+					general->x[general->nd], general->y[general->nd], general->z[general->nd], general->vr[general->nd]);
 			++general->nd;
 		}
 		
 		if (general->imask == 1) {
 			fprintf(stderr,"imaks = 1\n");
 		}
+
+		tsi_free(var);
 
         printf_dbg2("readdata(): calc. vmedexp, vvarexp\n");
 		simulation->vmedexp = 0;

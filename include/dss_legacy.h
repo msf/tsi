@@ -62,6 +62,7 @@ extern inline int getPos(int, int, int, int, int);
 extern int gauinv(double *, float *, int *);
 
 extern int getindx(int *, float *, float *, float *, int *, int *);
+extern int getIndex(float min, float siz, float loc);
 
 extern int krige(int *, int *, int *, float * , float *, float *,
 		int *, float *, float *, float *, float *, float *,
@@ -98,13 +99,13 @@ extern int picksup(int *, float *, int *, float *,
 			int *, int *, int *, int *);
 
 
-extern int readdata(double *,
+extern int readdata(float *,
              unsigned int ,
              general_vars_t *,
              search_vars_t *,
              simulation_vars_t *);	
 
-extern int readWellsData(general_vars_t *, double *, unsigned int);
+extern int readWellsData(general_vars_t *, float *, unsigned int);
 
 extern int readparam(float *,
               float *, 

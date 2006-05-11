@@ -30,7 +30,7 @@ typedef struct general_vars_type {
 	
     /* new wells hard data containers */
     unsigned int wellsNPoints, *wellsDataPos; 
-    double *wellsDataVal;
+    float *wellsDataVal;
 
     /* acorni data */
     int    *ixv;
@@ -197,7 +197,7 @@ typedef struct dss_type {
     krige_vars_t            *krige;
 
     /* harddata */
-    double *harddata;
+    float *harddata;
     unsigned int    harddata_size;
 } dss;
 
