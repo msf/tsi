@@ -85,6 +85,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
         
     /* read data & readWellsData */    
     readdata(d->harddata, d->harddata_size, d->general, d->search, d->simulation);
+	readWellsData(d->general, d->harddata, d->harddata_size);
 
     printf_dbg2("new_dss(): DSS engine started sucessfully.\n");
     return d;
@@ -288,6 +289,8 @@ void delete_dss(dss *d) {
             if (d->general->vrtr) tsi_free(d->general->vrtr);
             if (d->general->vrgtr) tsi_free(d->general->vrgtr);
             if (d->general->sec) tsi_free(d->general->sec);
+			if (d->general->wellsDataPos) tsi_free(d->general->wellsDataPos);
+			if (d->general->wellsDataVal) tsi_free(d->general->wellsDataVal);
             tsi_free(d->general);
         }
         if (d->search) tsi_free(d->search);
@@ -328,9 +331,9 @@ float *load_harddata_file(char *filename,  unsigned int *size) {
 	i = 0;
 	while(fgets(line, 255, fp) != NULL)
 		i++;
-	*size = i * 4;
+	*size = i * 4; // 4 values per line
 	printf_dbg("read_harddata_file(): %d lines\n",i);
-	buf = (float *) tsi_malloc(sizeof(float) * i * 4); // 4 values per line
+	buf = (float *) tsi_malloc(sizeof(float) * *size);
 	fseek(fp, 0, SEEK_SET); // back to start of file
 	
 	i = 0;

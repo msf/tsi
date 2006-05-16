@@ -146,7 +146,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	unsigned int toSim;
 	int i;
 
-	float i1,i2,i3,t1,t2; 	/* used to copy wells data */
 
 	/* Local variables */
 	float xsizsup, ysizsup, zsizsup;
@@ -222,7 +221,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	simulation->nsim = index = in = 0;
 
 	/* copy wells data to simulation grid */
-/*
 	for(i = 0; i < (int) general->wellsNPoints; i++) {
 		in = general->wellsDataPos[i];
 		sim[in] = (float) general->wellsDataVal[i];
@@ -232,101 +230,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		order[toSim] = in;
 		toSim--;
 	}
-*/
 
-	/* copy wells data to simulation grid */
-	for(i = 0; i < general->nd; i++) {
-
-		/* get relative x, y, z  from absolute x,y,z in wells */
-		ix = getIndex(general->xmn, general->xsiz, general->x[i]); 
-//		printf_dbg2("Wells Xcoord: %d, Xmin: %f, Xpos: %f\n",ix,general->xmn,general->x[i]);
-		if( ix < 0 || ix >= general->nx) {
-			continue;
-		}
-		iy = getIndex(general->ymn, general->ysiz, general->y[i]);
-//		printf_dbg2("Wells Ycoord: %d, Ymin: %f, Ypos: %f\n",iy,general->ymn,general->y[i]);
-		if( iy < 0 || iy >= general->ny) {
-			continue;
-		}
-		iz = getIndex(general->zmn, general->zsiz, general->z[i]);
-//		printf_dbg2("Wells Zcoord: %d, Zmin: %f, Zpos: %f\n",iz,general->zmn,general->z[i]);
-		if( iz < 0 || iz >= general->nz) {
-			continue;
-		}
-
-		index = getPos(ix, iy, iz, general->nx, general->nxy);
-
-//		printf_dbg2("Wells: (%d,%d,%d) - %d\n",ix,iy,iz,index);
-
-		/* check absolute rounding */
-		xx = general->xmn + (float) (ix * general->xsiz);
-		yy = general->ymn + (float) (iy * general->ysiz);
-		zz = general->zmn + (float) (iz * general->zsiz);
-
-		i1 = xx - general->x[i];
-		i2 = yy - general->y[i];
-		i3 = zz - general->z[i];
-		t1 = fabs(i1) + fabs(i2) + fabs(i3);
-
-		if (search->sstrat == 1) {
-			/* to assign a data value to the simulation grid
-			 * we copy the index for the general-vr 
-			 * which contains the real data value.
-			 *
-			 * this allows us to select the best (closer) data value
-			 * from various contending data values for a single
-			 * data grid point.
-			 */
-			if (sim[index] == general->nosvalue) {
-//				printf_dbg2("saving Wells point %d\n",index);
-				sim[index] = (float) i;
-			} else {
-//				printf_dbg2("got allready data for %d\n",index);
-				/* data allready assigned to this pos,
-				 * check which is closer */
-				in = (int) sim[index];
-				i1 = xx - general->x[in];
-				i2 = yy - general->y[in];
-				i3 = zz - general->z[in];
-				t2 = fabs(i1) + fabs(i2) + fabs(i3);
-
-				if (t1 < t2) {
-					sim[index] = (float) i;
-				}
-			}
-		}
-		
-		if (search->sstrat == 0 && t1 < 1e-4 ) {
-			/* mark node has simulated */
-			order[index] = order[toSim];
-			order[toSim--] = index;
-			simulation->nsim++;
-		}
-	}
-	/**
-	 * general-vr is the array with the real (wells) values.
-	 * sim[i] contains the index for the corresponding data in general-vr 
-	 * - just check if sim[i] contains a valid index for general-vr
-	 *   and assign data.
-	 */
-	general->wellsNPoints = 0;
-	general->wellsDataVal = (float *) tsi_malloc(sizeof(float) * general->nd);
-	general->wellsDataPos = (int *) tsi_malloc(sizeof(int) * general->nd);
-						
-	for(i = 1; i < general->nxyz; i++) {
-		in = (int) sim[i];
-		if(in >= 0 && in < general->nd) {
-			printf_dbg2("Wells: sim[%d] = %f\n",i,general->vr[in]);
-			sim[i] = general->vr[in];
-
-			general->wellsDataPos[general->wellsNPoints] = i;
-			general->wellsDataVal[general->wellsNPoints++] = general->vr[in];
-			/* mark i has simulated */
-			order[i] = order[toSim];
-			order[toSim--] = i;
-			simulation->nsim++;
-		}
-	}
 	printf_dbg2("wellsNPoints: %d\tgeneral->nd: %d\n",general->wellsNPoints,general->nd);
 
 	/* codigo reescrito ..................................... FIM */
@@ -517,15 +421,13 @@ L9999:
 	ierr = 0;
 	for(i = 0; i < general->wellsNPoints; i++) {
 		in = general->wellsDataPos[i];
-		i1 = sim[in] - general->wellsDataVal[i];
-		if(i1 != 0) {
-			printf_dbg("sim[%d] - wellsData = %f\n",in,i1);
+		simval = sim[in] - general->wellsDataVal[i];
+		if(simval != 0) {
+			printf_dbg("sim[%d] - wellsData = %f\n",in,simval);
 			ierr++;
 		}
 	}	
 	printf_dbg("dssim(): sim grid disrespects %d wells data points\n",ierr);
-	tsi_free(general->wellsDataPos);
-	tsi_free(general->wellsDataVal);
 
 	/* !Return to the main program: */
 	return 0;
