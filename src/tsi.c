@@ -524,7 +524,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
 
 	/* prepare seismic inversion (new set of layers) */
 	log_message(t->l, 0, "tsi_setup_iteration() setup Seismic Inversion");
-	cmg = load_cmgrid(t->si_eng);
+	cmg = get_cmgrid(t->si_eng);
 	delete_cmgrid(cmg);   /* conflict with store??? */
 	if (t->proc_id == t->root_id) {
 		cmg = new_cmgrid(t->si_eng, 0);    /* generate new set of layers */
@@ -788,7 +788,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			//t->nextBCM_idx = t->cm_idx;
 			t->ai_idx = t->cm_idx = -1;  /* free aux grids */
 
-			cmg = load_cmgrid(t->si_eng);
+			cmg = get_cmgrid(t->si_eng);
 			t->nextBCM_c = clone_cmgrid(cmg);
 
 		} else {               /* compare all values */
@@ -803,7 +803,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 			getCurrTime(&t4);
 			/* update  nextBAI and nextBCM */
-			result = tsi_compare(t->grid_size, t->ai, load_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
+			result = tsi_compare(t->grid_size, t->ai, get_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
 			getCurrTime(&t5);
 			//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
 			delete_grid(t->heap, t->ai_idx);

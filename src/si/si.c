@@ -25,7 +25,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l) {
     }
     s->reg = r;
     s->heap = h;
-	s->l = l;
+    s->l = l;
     s->cmg = NULL;
 
     /* get grid parameters */
@@ -170,6 +170,8 @@ cm_grid *new_cmgrid(si *s, int empty) {
     g->nlayers = 0;
     g->layer_size = NULL;
     g->cg = NULL;
+    g->cg_idx = -1;
+    g->heap = s->heap;
     g->nxy = s->xsize * s->ysize;
     if (empty) return g;
 
@@ -327,9 +329,30 @@ int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
 
 
 
-cm_grid *load_cmgrid(si *s) {
+cm_grid *get_cmgrid(si *s) {
     printf_dbg2("\tload_cmgrid(): called\n");
     return s->cmg;
+} /* get_cmgrid */
+
+
+
+int load_cmgrid(cm_grid *g) {
+    printf_dbg2("\tload_cmgrid(): called\n");
+    return 0;
+} /* load_cmgrid */
+
+
+
+int clear_cmgrid(cm_grid *g) {
+    printf_dbg2("\tclear_cmgrid(): called\n");
+    return 0;
+} /* load_cmgrid */
+
+
+
+int dirty_cmgrid(cm_grid *g) {
+    printf_dbg2("\tdirty_cmgrid(): called\n");
+    return 0;
 } /* load_cmgrid */
 
 

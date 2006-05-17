@@ -10,6 +10,8 @@ typedef struct cm_grid_type {
     int nxy;          /* size of each xy grid */
     int *layer_size;  /* size of each layer */
     float *cg;        /* compressed correlations grid */
+    int cg_idx;
+    grid_heap *heap;
 } cm_grid;
 
 
@@ -45,6 +47,7 @@ typedef struct si_type {
 } si;
 
 
+/* SI methods */
 si *new_si(registry *r, grid_heap *h, log_t *l);
 
 int setup_si(si *s);
@@ -53,12 +56,23 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY);
 
 void delete_si(si *s);
 
+cm_grid *get_cmgrid(si *s);
 
-cm_grid *new_cmgrid(si *s, int empty);
+int store_cmgrid(si *s, cm_grid *g);
+
+
+/* compressed correlations grid methods */
+cm_grid *new_cmgrid(si *s, int empty_flag);
+
+void delete_cmgrid(cm_grid *g);
+
+int load_cmgrid(cm_grid *g);
+
+int dirty_cmgrid(cm_grid *g);
+
+int clear_cmgrid(cm_grid *g);
 
 int build_cmgrid(cm_grid *g, int nlayers, int *layer_size);
-
-cm_grid *load_cmgrid(si *s);
 
 cm_grid *clone_cmgrid(cm_grid *g);
 
@@ -66,11 +80,7 @@ int get_nlayers(cm_grid *g);
 
 int *get_layers(cm_grid *g);
 
-int store_cmgrid(si *s, cm_grid *g);
-
-void delete_cmgrid(cm_grid *g);
-
 void print_layers(cm_grid *g);
 
-#endif /* _SI_H */
 
+#endif /* _SI_H */
