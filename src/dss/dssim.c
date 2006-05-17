@@ -218,7 +218,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	}
 
 	toSim = general->nxyz;
-	simulation->nsim = index = in = 0;
+	index = in = 0;
 
 	/* copy wells data to simulation grid */
 	for(i = 0; i < (int) general->wellsNPoints; i++) {
@@ -248,6 +248,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			general->nxyz, general->nd, toSim, general->nxyz - general->nd);
 	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
+	ierr = 0;
 	in = 0;
 	zmean = 0.f;
 	zvariance = 0.f;
@@ -275,12 +276,14 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
 		/* if( sim[index] >= general->tmin &&
 		    sim[index] <= general->tmax) { */
+		/*
 		 if (sim[index] > general->nosvalue + 1e-20f || 
 				 sim[index] < general->nosvalue * 2.f) {
-			++simulation->nsim;
+			++ierr;
 			printf("dssim(): ERROR: index(%d) allready has valid data: %f\n",index,sim[index]);
 			continue;
 		}
+		*/
 
 		/* get relative x,y,z from index */
 		iz = (index - 1) / general->nxy + 1;
@@ -305,6 +308,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 					&zmnsup, &zsizsup, &search->nclose, general->close, 
 					&infoct);
 			if (search->nclose < search->ndmin) {
+				ierr++;
 				printf("dssim(): SKIP2  %d\n",index);
 				continue;
 			}
@@ -349,11 +353,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 					general, search, simulation,
 					covariance, covtable_lookup, krige_vars);
 
+			/* this was used when dss did more than one simulation */
+			/*
 			if (simulation->nsim > 0) {
 				if (covtable_lookup->icmean == 1) {
 					cmean -= zmean / simulation->nsim - simulation->vmedexp;
 				}
-				/* Computing 2nd power */
+				// Computing 2nd power
 				d__1 = zmean / simulation->nsim;
 				cpdev = zvariance / simulation->nsim - d__1 * d__1;
 				if (cpdev > 0.f) {
@@ -363,6 +369,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 					}
 				}
 			}
+			*/
 		}
 		general->ktype = kinicial;
 		/* !Calculo do equivalente valor gaussiano        (SDSIM) */
@@ -375,8 +382,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			goto L9999;
 		}
 		for (i = 1; i < general->nd; ++i) {
-			if (cmean >= general->vrtr[i - 1] && cmean < general->vrtr[i])
-			{
+			if (cmean >= general->vrtr[i - 1] && cmean < general->vrtr[i]) {
 				vmy = general->vrgtr[i - 1] + (cmean - general->vrtr[i - 1]) * 
 					(general->vrgtr[i] - general->vrgtr[i - 1]) / (general->vrtr[i] - general->vrtr[i - 1]);
 				break;
@@ -409,14 +415,16 @@ L9999:
 			sim[index] = general->tmax;
 		}
 		/* !Condicionamento as medias locais */
-		zmean += sim[index];
-		/* Computing 2nd power */
+		/* used only when doing more than 1 simulation */
+		/*
+		zmean += sim[index]; 
 		r__1 = sim[index];
 		zvariance += r__1 * r__1;
+		*/
 	
 	}	/* !END MAIN LOOP OVER NODES: */
 
-	printf_dbg("dssim(): DEBUG: SKIP points: %d\n",simulation->nsim);
+	printf_dbg("dssim(): DEBUG: SKIP points: %d\n",ierr);
 
 	ierr = 0;
 	for(i = 0; i < general->wellsNPoints; i++) {

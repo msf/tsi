@@ -13,7 +13,7 @@
 
 TSI_FILE *open_file(char *filename) {
     TSI_FILE *fp;
-    fp = fopen(filename, "r+b");
+    fp = fopen(filename, "r+");
     return fp;
 } /* open_file */
 
@@ -21,7 +21,7 @@ TSI_FILE *open_file(char *filename) {
 
 TSI_FILE *create_file(char *filename) {
     TSI_FILE *fp;
-    fp = fopen(filename, "w+b");
+    fp = fopen(filename, "w+");
     return fp;
 } /* create_file */
 
