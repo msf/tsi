@@ -5,14 +5,16 @@
 
 
 typedef struct grid_type {
-    TSI_FILE *fp;       /* file where the grid is stored */
+    char *filename;    /* filename to use when creating file */
+    TSI_FILE *fp;      /* file where the grid is stored */
 
-    float *grid,    /* alligned grid */
-          *pointer; /* original grid pointer */
+    float *grid,       /* alligned grid */
+          *pointer;    /* original grid pointer */
 
-    int swappable,  /* swappable flag. set to null when grid is in use */
-        dirty,      /* dirty grid flag. set to null if grid contents are disposable */
-        next_grid;  /* next free grid on stack */
+    int swappable,     /* swappable flag. set to null when grid is in use */
+        dirty,         /* dirty grid flag. set to null if grid contents are disposable */
+        next_grid;     /* next free grid on stack */
+    unsigned int size; /* new size if different from default */
 } grid;
 
 
@@ -59,5 +61,8 @@ void delete_heap(grid_heap *h);
 
 /* print heap data */
 void print_heap_data(grid_heap *h);
+
+/* set a grid size different from default */
+void set_grid_size(grid_heap *h, int idx, unsigned int size);
 
 #endif /* _GRID_HEAP_H */

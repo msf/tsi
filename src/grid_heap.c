@@ -55,7 +55,10 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
             else
                 sprintf(filename, "/tmp/tsi_grid.node%d.%d", rank, i);
             printf_dbg2("new_heap(): filename string >%s<\n", filename);
-            h->g[i].fp = create_file(filename);
+            //h->g[i].fp = create_file(filename);
+            h->g[i].fp = NULL;
+            h->g[i].filename = strdup(filename);
+            /*
             if (!h->g[i].fp) {
                 printf_dbg2("new_heap(): failed to open grid file!\n");
                 delete_heap(h);
@@ -88,6 +91,7 @@ int new_grid(grid_heap *h) {
         g = h->g + idx;
         h->next_grid = g->next_grid;   /* update free grids stack */
         g->dirty = 1;    /* mark new grid to prevent being cleared and overwritten */
+        g->size = 0;     /* reset size to default */
 
         printf_dbg2("new_grid(): grid %d, next %d\n", idx, h->next_grid);
         printf_dbg2("new_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
@@ -98,6 +102,16 @@ int new_grid(grid_heap *h) {
 
     return idx;
 } /* new_grid */
+
+
+
+void set_grid_size(grid_heap *h, int idx, unsigned int size)
+{
+    if (h->g[idx].size) {
+        printf_dbg("set_grid_size(): re-sizing grid!!!");
+    }
+    h->g[idx].size = size;
+}
 
 
 
@@ -135,7 +149,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* dump j grid */
             h->writes++;
             printf_dbg2("load_grid(): swapping dirty grid %d to disk\n", j);
-            if (!dump_binary_grid(h->g[j].fp, h->g[j].grid, h->grid_size)) {
+            if (!dump_binary_grid(h->g[j].fp, h->g[j].grid, (h->g[j].size ? h->g[j].size : h->grid_size))) {
                 printf_dbg2("load_grid(): failed to dump grid %d\n", j);
                 return NULL;
             }
@@ -163,7 +177,7 @@ float *load_grid(grid_heap *h, int idx) {
             /* load grid */
             h->reads++;
             printf_dbg2("load_grid(): loading grid %d to memory\n", idx);
-            if (!load_binary_grid(h->g[idx].fp, h->g[idx].grid, h->grid_size)) {
+            if (!load_binary_grid(h->g[idx].fp, h->g[idx].grid, (h->g[j].size ? h->g[j].size : h->grid_size))) {
                  printf_dbg2("load_grid(): failed to load grid %d\n", idx);
                  return NULL;
             }
@@ -210,6 +224,8 @@ void delete_grid(grid_heap *h, int idx) {
         h->next_grid = idx;
         h->g[idx].swappable = 1;
         h->g[idx].dirty = 0;
+        close_file(h->g[idx].fp);
+        h->g[idx].fp = create_file(h->g[idx].filename);
         printf_dbg2("delete_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
     } else {
         printf_dbg2("delete_grid(): requested grid %d is off range\n", idx);
@@ -225,6 +241,7 @@ void delete_heap(grid_heap *h) {
         if (h->g) {
             for (i = 0; i < h->heap_size; i++) {
                 if (h->g[i].fp) close_file(h->g[i].fp);
+                if (h->g[i].filename) free(h->g[i].filename);
                 //if (h->g[i].grid) free(h->g[i].grid);
                 if (h->g[i].grid) tsi_free(h->g[i].grid);
             }
