@@ -84,7 +84,8 @@ int new_grid(grid_heap *h) {
     if (h->alloc_grids < h->heap_size) {       /* check if there are any grids available */
 
         h->alloc_grids++;        /* increase the number of allocated grids */
-        if (h->alloc_grids > h->max_grids) h->max_grids = h->alloc_grids;
+        if (h->alloc_grids > h->max_grids) 
+			h->max_grids = h->alloc_grids;
         idx = h->next_grid;      /* get index from free grids stack */
 
         g = h->g + idx;
@@ -223,8 +224,11 @@ void delete_grid(grid_heap *h, int idx) {
         h->next_grid = idx;
         h->g[idx].swappable = 1;
         h->g[idx].dirty = 0;
-        close_file(h->g[idx].fp);
-        h->g[idx].fp = create_file(h->g[idx].filename);
+		if (h->use_fs) {
+			if(h->g[idx].fp)
+				close_file(h->g[idx].fp);
+			h->g[idx].fp = create_file(h->g[idx].filename);
+		}
         printf_dbg2("delete_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
     } else {
         printf_dbg2("delete_grid(): requested grid %d is off range\n", idx);
