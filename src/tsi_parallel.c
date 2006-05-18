@@ -136,10 +136,17 @@ int tsi_is_best_parallel(tsi *t) {
 
 int tsi_compare_parallel(tsi *t) 
 {
+#ifdef TSI_MPI
 	//return tsi_compare_parallel_v1(t);
 	//return tsi_compare_parallel_v2(t);
 	return tsi_compare_parallel_v3(t);
-
+#else
+	t->nextBCM_idx = new_grid(t->heap);
+    t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+	expand_correlations_grid(t->nextBCM_c, t->nextBCM);
+	delete_cmgrid(t->nextBCM_c);
+	return 0;
+#endif /* TSI_MPI */
 }
 
 

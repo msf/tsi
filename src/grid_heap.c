@@ -55,10 +55,9 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
             else
                 sprintf(filename, "/tmp/tsi_grid.node%d.%d", rank, i);
             printf_dbg2("new_heap(): filename string >%s<\n", filename);
-            //h->g[i].fp = create_file(filename);
-            h->g[i].fp = NULL;
+            h->g[i].fp = create_file(filename);
             h->g[i].filename = strdup(filename);
-            /*
+            
             if (!h->g[i].fp) {
                 printf_dbg2("new_heap(): failed to open grid file!\n");
                 delete_heap(h);
