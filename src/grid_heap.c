@@ -194,7 +194,7 @@ float *load_grid(grid_heap *h, int idx) {
 int clear_grid(grid_heap *h, int idx) {
     if ((idx < h->heap_size) && (idx >= 0) && (h->g[idx].grid != NULL)) {
         h->g[idx].swappable = 1;   /* mark grid as not needed */
-        printf_dbg2("clear_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
+        printf_dbg2("clear_grid(): idx=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
         return 1;
     } else {
         printf_dbg2("clear_grid(): requested grid %d is off range or empty\n", idx);
@@ -208,7 +208,7 @@ int dirty_grid(grid_heap *h, int idx) {
     if ((idx < h->heap_size)  && (idx >= 0) && (h->g[idx].grid != NULL)) {
         h->g[idx].swappable = 1;   /* mark grid as not needed */
         h->g[idx].dirty = 1;       /* mark grid to be saved before being reused */
-        printf_dbg2("dirty_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
+        printf_dbg2("dirty_grid(): idx=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
     } else {
         printf_dbg2("dirty_grid(): requested grid %d is off range or empty\n", idx);
     }
