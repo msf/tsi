@@ -118,7 +118,7 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 
 	/* Check for "zero" distance, return with cmax if so: */
 
-	hsqd = sqdist(x1, y1, z1, x2, y2, z2, irot, maxrot, &rotmat[
+	hsqd = sqdist(*x1, *y1, *z1, *x2, *y2, *z2, *irot, *maxrot, &rotmat[
 			rotmat_offset]);
 	if ((float) hsqd < 1e-10f) {
 		*cova = *cmax;
@@ -138,7 +138,7 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 			/* Computing MIN */
 			i__2 = *irot + is - 1;
 			ir = MIN(i__2, *maxrot); /* min(i__2,*maxrot); */
-			hsqd = sqdist(x1, y1, z1, x2, y2, z2, &ir, maxrot, &rotmat[
+			hsqd = sqdist(*x1, *y1, *z1, *x2, *y2, *z2, ir, *maxrot, &rotmat[
 					rotmat_offset]);
 		}
 		h = (float) sqrt(hsqd);

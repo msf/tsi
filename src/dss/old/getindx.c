@@ -9,13 +9,6 @@
 
 
 /* ----------------------------------------------------------------------- */
-/*     Gets the coordinate index location of a point within a grid */
-/*     *********************************************************** */
-
-/* n       number of "nodes" or "cells" in this coordinate direction */
-/* min     origin at the center of the first cell */
-/* siz     size of the cells */
-/* loc     location of the point being considered */
 /* index   output index within [1,n] */
 /* inflag  true if the location is actually in the grid (false otherwise */
 /*         e.g., if the location is outside then index will be set to */

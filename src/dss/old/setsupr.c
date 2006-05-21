@@ -1,4 +1,5 @@
 #include "dss.h"
+#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -61,7 +62,7 @@
 
 /** funcoes utilizadas
  * sortem
- * getindx
+ * getIndex
  */
 
 /** CUBOS utilizados
@@ -75,7 +76,7 @@
 
 int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 		float *ysiz, int *nz, float *zmn, float *zsiz, int * nd,
-		float *x, float *y, float *z__, float *vr, float *tmp, int *nsec,
+		float *x, float *y, float *z, float *vr, float *tmp, int *nsec,
 		float *sec1, float *sec2, float *sec3, int *maxsbx, int *maxsby,
 		int *maxsbz, int *nisb, int *nxsup, float *xmnsup,
 		float * xsizsup, int *nysup, float *ymnsup, float *ysizsup,
@@ -85,10 +86,10 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
         int one = 1;
 
 	/* System generated locals */
-	int i__1;
+	int t;
 
 	/* Local variables */
-	int i__, ii, ix, iy, iz, nsort;
+	int i, ii, ix, iy, iz, nsort;
 	int inflag;
 
 
@@ -101,7 +102,7 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	--sec1;
 	--tmp;
 	--vr;
-	--z__;
+	--z;
 	--y;
 	--x;
 
@@ -118,21 +119,22 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 
 	/* Initialize the extra super block array to zeros: */
 
-	i__1 = *nxsup * *nysup * *nzsup;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-		nisb[i__] = 0;
+	t = *nxsup * *nysup * *nzsup;
+	for (i = 1; i <= t; ++i) {
+		nisb[i] = 0;
 	}
 
 	/* Loop over all the data assigning the data to a super block and */
 	/* accumulating how many data are in each super block: */
 
-	i__1 = *nd;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-		getindx(nxsup, xmnsup, xsizsup, &x[i__], &ix, &inflag);
-		getindx(nysup, ymnsup, ysizsup, &y[i__], &iy, &inflag);
-		getindx(nzsup, zmnsup, zsizsup, &z__[i__], &iz, &inflag);
-		ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
-		tmp[i__] = (float) ii;
+	t = *nd;
+	for (i = 1; i <= t; ++i) {
+		ix = getindx(xmnsup, xsizsup, x[i]);
+		iy = getindx(ymnsup, ysizsup, y[i]);
+		iz = getindx(zmnsup, zsizsup, z[i]);
+		ii = getPos(ix, iy, iz, *nxsup, (*nxsup) * (*nysup));
+		//ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
+		tmp[i] = (float) ii;
 		++nisb[ii];
 	}
 
@@ -142,13 +144,13 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 	sortem(&one, nd,
                &tmp[1],
                &nsort, &x[1],
-               &y[1], &z__[1], &vr[1], &sec1[1], &sec2[1], &sec3[1]);
+               &y[1], &z[1], &vr[1], &sec1[1], &sec2[1], &sec3[1]);
 
 	/* Set up array nisb with the starting address of the block data: */
 
-	i__1 = *nxsup * *nysup * *nzsup - 1;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-		nisb[i__ + 1] = nisb[i__] + nisb[i__ + 1];
+	t = *nxsup * *nysup * *nzsup - 1;
+	for (i = 1; i <= t; ++i) {
+		nisb[i + 1] = nisb[i] + nisb[i + 1];
 	}
 
 	/* Finished: */

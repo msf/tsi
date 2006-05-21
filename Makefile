@@ -13,7 +13,7 @@ LDFLAGS := -lm -lc -lpthread -lstdc++ -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
 #OPTS	+= -march=pentium-m
 #OPTS	+= -m32
-OPTS	+= -DTSI_DEBUG
+OPTS	+= -DTSI_DEBUG -g
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
@@ -24,7 +24,7 @@ OPTS	+= -DTSI_DEBUG
 #OPTS   += -falign-functions  -falign-jumps -falign-loops  -falign-labels
 #OPTS   += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
 DEBUG   := -g -ggdb
-DEBUG	+= -m32
+#DEBUG	+= -m32
 #DEBUG  += -pg
 DEBUG	+= -Wall -std=gnu99 -DTSI_DEBUG2
 #DEBUG  += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic

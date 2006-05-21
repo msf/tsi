@@ -20,7 +20,7 @@
 /** Funcoes utilizadas
  * sortem()
  * gauinv()
- * getindx()
+ * getIndex()
  */
 
 /** CUBOS utilizados
@@ -328,10 +328,10 @@ int readdata(float *hard_data,
 		if (general->ktype == 2 || general->ktype == 3) {
 			/*
 			for (i = 0; i < general->nd; ++i) {
-				getindx(&general->nx, &general->xmn, &general->xsiz, &general->x[i], &ix, &testind);
-				getindx(&general->ny, &general->ymn, &general->ysiz, &general->y[i], &iy, &testind);
-				getindx(&general->nz, &general->zmn, &general->zsiz, &general->z[i], &iz, &testind);
-				index = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+				ix = getIndex(general->xmn, general->xsiz, general->x[i]);
+				iy = getIndex(general->ymn, general->ysiz, general->y[i]);
+				iz = getIndex(general->zmn, general->zsiz, general->z[i]);
+				index  = getPos(ix, iy, iz, general->nx, general->nxy);g
 				general->sec[i] = lvm[index];
 			}
 			*/

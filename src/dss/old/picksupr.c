@@ -1,4 +1,5 @@
 #include "dss.h"
+#include "dss_legacy.h"
 
 #undef PROFILE
 
@@ -105,16 +106,10 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 										if (i1 != 0 && j1 != 0 && k1 != 0 && 
 												i2 != 0 && j2 != 0 && k2 != 0)
 										{
-											xdis = (float) (i1 - i2) * .5f * *
-												xsizsup + xo;
-											ydis = (float) (j1 - j2) * .5f * *
-												ysizsup + yo;
-											zdis = (float) (k1 - k2) * .5f * *
-												zsizsup + zo;
-											hsqd = sqdist(&c_b2, &c_b2, &
-													c_b2, &xdis, &ydis, &zdis,
-													irot, maxrot, &rotmat[
-													rotmat_offset]);
+											xdis = (float) (i1 - i2) * .5f * *xsizsup + xo;
+											ydis = (float) (j1 - j2) * .5f * *ysizsup + yo;
+											zdis = (float) (k1 - k2) * .5f * *zsizsup + zo;
+											hsqd = sqdist(0, 0, 0, xdis, ydis, zdis, *irot, *maxrot, &rotmat[rotmat_offset]);
 											if (hsqd < shortest) {
 												shortest = hsqd;
 											}

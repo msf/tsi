@@ -26,25 +26,32 @@ extern double powint(float *, float *, float *, float *, float *, float *);
 
 extern double backtr(float *, int *, float *, float *, float *, float *, int *, float *, int *, float *);
 
-extern int cova3(float *,
-          float *,
-          float *,
-          float *,
-          float *,
-		  float *,
-          int *,
-          int *,
+/*
+extern float cova3(float x1, float y1, float z1,
+          float x2 , float y2, float z2,
           int *,
           float *,
           int *,
           float *,
           float *,
-          int *,
-          int *,
           double *,
-          float *,
           float *);
-
+*/
+extern int cova3(float *, float *, float *,
+          float *, float *, float *,
+           int *,
+          int *,
+          int *,
+           float *,
+           int *,
+           float *,
+           float *,
+          int *,
+          int *,
+           double *,
+          float *,
+		  float *);
+ 
 extern int covtable(int *, float *,
 	     general_vars_t *,
 	     search_vars_t *,
@@ -61,7 +68,6 @@ extern inline int getPos(int, int, int, int, int);
 
 extern int gauinv(double *, float *, int *);
 
-extern int getindx(int *, float *, float *, float *, int *, int *);
 extern int getIndex(float min, float siz, float loc);
 
 extern int krige(int *, int *, int *, float * , float *, float *,
@@ -152,18 +158,11 @@ extern int sortemi(int *, int *,
 extern int sort_permute_float(int , int , float *, float *);
 extern int sort_permute_int(int , int , float *, int *);
 
-extern double sqdist(float *,
-              float *,
-              float *,
-              float *,
-              float *,
-              float *,
-              int *,
-              int *,
-              double *);
+extern double sqdist(float , float , float ,
+              float , float , float ,
+              int , int , double *); 
 
-
-extern int srchnod(int *, int *, int *, float *,
+extern int srchnod(int , int , int , float *,
 		general_vars_t *, 
 		search_vars_t *, 
 		covtable_lookup_vars_t *);

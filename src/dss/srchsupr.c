@@ -52,6 +52,7 @@
 /** funcoes utilizadas
  * sortem
  * sqdist
+ * getIndex
  */
 
 /** CUBOS utilizados
@@ -108,9 +109,9 @@ int srchsupr(float *xloc, float *yloc, float *zloc,
 	--close;
 
 	/* Function Body */
-	getindx(nxsup, xmnsup, xsizsup, xloc, &ix, &inflag);
-	getindx(nysup, ymnsup, ysizsup, yloc, &iy, &inflag);
-	getindx(nzsup, zmnsup, zsizsup, zloc, &iz, &inflag);
+	ix = getIndex(*xmnsup, *xsizsup, *xloc);
+	iy = getIndex(*ymnsup, *ysizsup, *yloc);
+	iz = getIndex(*zmnsup, *zsizsup, *zloc);
 
 	/* Loop over all the possible Super Blocks: */
 
@@ -147,8 +148,8 @@ int srchsupr(float *xloc, float *yloc, float *zloc,
 
 			/* Check squared distance: */
 
-			hsqd = sqdist(xloc, yloc, zloc, &x[i], &y[i], &z[i], 
-					irot, maxrot, &rotmat[rotmat_offset]);
+			/* FIXME: ?loc nao devem ser pointrs */
+			hsqd = sqdist(*xloc, *yloc, *zloc, x[i], y[i], z[i], *irot, *maxrot, &rotmat[rotmat_offset]);
 			if ((float) hsqd > *radsqd) {
 				continue;
 			}

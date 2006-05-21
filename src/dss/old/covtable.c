@@ -1,7 +1,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "dss.h"
+#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -78,10 +80,10 @@ int covtable(int *order, float * tmp,
         int five = 5;
 
 	/* System generated locals */
-	int i__1, i__2, i__3;
+int i1, i2, i3;
 
 	/* Local variables */
-	int i__, j, k, ic, jc, kc, il, ix, iy, iz;
+	int i, j, k, ic, jc, kc, il, ix, iy, iz;
 	float xx, yy, zz;
 	int loc;
 	double hsqd;
@@ -91,12 +93,12 @@ int covtable(int *order, float * tmp,
 	--order;
 
 	/* Function Body */
-	i__1 = (general->nx-1)/2;
-	covtable_lookup->nctx = i__1; /* min(i__1,i__2);*/
-	i__1 = (general->ny-1)/2;
-	covtable_lookup->ncty = i__1; /* min(i__1,i__2); */
-	i__1 = (general->nz-1)/2;
-	covtable_lookup->nctz = i__1; /* min(i__1,i__2); */
+	i1 = (general->nx-1)/2;
+	covtable_lookup->nctx = i1; /* min(i1,i2);*/
+	i1 = (general->ny-1)/2;
+	covtable_lookup->ncty = i1; /* min(i1,i2); */
+	i1 = (general->nz-1)/2;
+	covtable_lookup->nctz = i1; /* min(i1,i2); */
 
 	/* NOTE: If dynamically allocating memory, and if there is no shortage */
 	/*       it would a good idea to go at least as far as the radius and */
@@ -105,36 +107,34 @@ int covtable(int *order, float * tmp,
 
 	/* Initialize the covariance subroutine and cbb at the same time: */
 	/*    printf("Calling cova3\n"); */
-	cova3(&c_b2, &c_b2, &c_b2, &c_b2, &c_b2, &c_b2, &one, covariance->nst, &four,
-			covariance->c0, covariance->it, covariance->cc, covariance->aa, &one, 
-			&five, krige_vars->rotmat, &covariance->cmax, &krige_vars->cbb);
+	krige_vars->cbb = cova3(0, 0, 0, 0, 0, 0, covariance->nst,
+			covariance->c0, covariance->it, covariance->cc, covariance->aa, 
+			krige_vars->rotmat, &covariance->cmax);
 	/* 		Now, set up the table and keep track of the node offsets that are */
 	/* 		within the search radius: */
 	/*    printf("loop 1/3\n"); */
  
 
 	covtable_lookup->nlooku = 0;
-	i__1 = covtable_lookup->nctx;
-	for (i__ = -covtable_lookup->nctx; i__ <= i__1; ++i__) {
-		xx = i__ * general->xsiz;
-		ic = covtable_lookup->nctx + 1 + i__;
-		i__2 = covtable_lookup->ncty;
-		for (j = -covtable_lookup->ncty; j <= i__2; ++j) {
+	i1 = covtable_lookup->nctx;
+	for (i = -covtable_lookup->nctx; i <= i1; ++i) {
+		xx = i * general->xsiz;
+		ic = covtable_lookup->nctx + 1 + i;
+		i2 = covtable_lookup->ncty;
+		for (j = -covtable_lookup->ncty; j <= i2; ++j) {
 			yy = j * general->ysiz;
 			jc = covtable_lookup->ncty + 1 + j;
-			i__3 = covtable_lookup->nctz;
-			for (k = -covtable_lookup->nctz; k <= i__3; ++k) {
+			i3 = covtable_lookup->nctz;
+			for (k = -covtable_lookup->nctz; k <= i3; ++k) {
 				zz = k * general->zsiz;
 				kc = covtable_lookup->nctz + 1 + k;
 
-				cova3(&c_b2, &c_b2, &c_b2, &xx, &yy, &zz, &one, 
-						covariance->nst, &four, covariance->c0, covariance->it, 
-						covariance->cc, covariance->aa, &one, &five, 
-						krige_vars->rotmat, &covariance->cmax, 
-						&covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)]);
+				covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] = cova3(0, 0 , 0, xx, yy, zz, 
+						covariance->nst, covariance->c0, covariance->it, 
+						covariance->cc, covariance->aa,
+						krige_vars->rotmat, &covariance->cmax);
 
-				hsqd = sqdist(&c_b2, &c_b2, &c_b2, &xx, &yy, &zz, &
-						covariance->isrot, &five, krige_vars->rotmat);
+				hsqd = sqdist(0, 0, 0, xx, yy, zz, covariance->isrot, 5, krige_vars->rotmat);
 
 				if ((float) hsqd <= search->radsqd) {
 					++covtable_lookup->nlooku;
@@ -158,8 +158,8 @@ int covtable(int *order, float * tmp,
   /*	sortemi(&one, &covtable_lookup->nlooku, &tmp[1], &one, &order[1], &c__, &d__, &e, &f, &g, &h__); */
 	sort_permute_int(one, covtable_lookup->nlooku, &tmp[1], &order[1]);
 
-	i__1 = covtable_lookup->nlooku;  
-	for (il = 1; il <= i__1; ++il) {
+	i1 = covtable_lookup->nlooku;  
+	for (il = 1; il <= i1; ++il) {
 		loc = order[il];
 
 		iz = (loc - 1) / (general->nxy) + 1;

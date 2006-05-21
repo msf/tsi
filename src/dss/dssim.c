@@ -72,7 +72,6 @@
 /*   srchnd           Search for nearby simulated grid nodes */
 /*   sqdist           computes anisotropic squared distance */
 /*   sortem           sorts multiple arrays in ascending order (separate) */
-/*   cova3            Calculates the covariance given a variogram model */
 /*   krige            Sets up and solves either the SK or OK system */
 /*   ksol             Linear system solver using Gaussian elimination */
 /* Concepts taken from F. Alabert and E. Isaaks */
@@ -316,7 +315,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				search->nclose = search->ndmax;
 			}
 		}
-		srchnod(&ix, &iy, &iz, &sim[1], general, search, covtable_lookup);
+		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = general->ktype;
 		if (general->ktype == 5 && bestAICube[index] == general->nosvalue) {

@@ -57,7 +57,7 @@
 
 
 
-int srchnod(int *ix, int *iy, int *iz, float *sim,
+int srchnod(int ix, int iy, int iz, float *sim,
 		general_vars_t * general,
 		search_vars_t * search,
 		covtable_lookup_vars_t * covtable_lookup)
@@ -85,9 +85,9 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 		if (covtable_lookup->ncnode == covtable_lookup->nodmax) {
 			return 0;
 		}
-		i = *ix + (covtable_lookup->ixnode[il - 1] - covtable_lookup->nctx - 1);
-		j = *iy + (covtable_lookup->iynode[il - 1] - covtable_lookup->ncty - 1);
-		k = *iz + (covtable_lookup->iznode[il - 1] - covtable_lookup->nctz - 1);
+		i = ix + (covtable_lookup->ixnode[il - 1] - covtable_lookup->nctx - 1);
+		j = iy + (covtable_lookup->iynode[il - 1] - covtable_lookup->ncty - 1);
+		k = iz + (covtable_lookup->iznode[il - 1] - covtable_lookup->nctz - 1);
 		if (i < 1 || j < 1 || k < 1) {
 			continue;
 		}
@@ -98,9 +98,9 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 		if (sim[ind] > general->nosvalue) {
 			/* Check the number of data already taken from this octant: */
 			if (search->noct > 0) {
-				idx = *ix - i;
-				idy = *iy - j;
-				idz = *iz - k;
+				idx = ix - i;
+				idy = iy - j;
+				idz = iz - k;
 				if (idz > 0) {
 					iq = 4;
 					if (idx <= 0 && idy > 0) {
@@ -131,12 +131,9 @@ int srchnod(int *ix, int *iy, int *iz, float *sim,
 			}
 			++covtable_lookup->ncnode;
 			covtable_lookup->icnode[covtable_lookup->ncnode - 1] = il;
-			covtable_lookup->cnodex[covtable_lookup->ncnode - 1] = general->xmn + (float) (i 
-					- 1) * general->xsiz;
-			covtable_lookup->cnodey[covtable_lookup->ncnode - 1] = general->ymn + (float) (j - 
-					1) * general->ysiz;
-			covtable_lookup->cnodez[covtable_lookup->ncnode - 1] = general->zmn + (float) (k - 
-					1) * general->zsiz;
+			covtable_lookup->cnodex[covtable_lookup->ncnode - 1] = general->xmn + (float) (i - 1) * general->xsiz;
+			covtable_lookup->cnodey[covtable_lookup->ncnode - 1] = general->ymn + (float) (j - 1) * general->ysiz;
+			covtable_lookup->cnodez[covtable_lookup->ncnode - 1] = general->zmn + (float) (k - 1) * general->zsiz;
 			covtable_lookup->cnodev[covtable_lookup->ncnode - 1] = sim[ind];
 		}
 	}
