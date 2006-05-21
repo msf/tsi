@@ -5,16 +5,18 @@
 
 
 typedef struct grid_type {
-    char *filename;    /* filename to use when creating file */
-    TSI_FILE *fp;      /* file where the grid is stored */
-
     float *grid,       /* alligned grid */
           *pointer;    /* original grid pointer */
 
     int swappable,     /* swappable flag. set to null when grid is in use */
         dirty,         /* dirty grid flag. set to null if grid contents are disposable */
-        next_grid;     /* next free grid on stack */
+        next_grid,     /* next free grid on stack */
+		valid;
     unsigned int size; /* new size if different from default */
+
+    char *filename;    /* filename to use when creating file */
+    TSI_FILE *fp;      /* file where the grid is stored */
+
 } grid;
 
 

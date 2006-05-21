@@ -79,9 +79,9 @@ void log_iteration_number(log_t *l, int iterNum)
 {
 	l->simulNum = 0;
 	l->iterNum = iterNum;
-	fprintf(l->logFile, "(%d,%d,-) - starting Iteration: %2d\n", l->procID,l->iterNum, iterNum);
+	fprintf(l->logFile, "(%d,%d,-) - starting Iteration: %d\n", l->procID,l->iterNum, iterNum);
 	if(l->verbose){
-		printf("(%d,%d,-) - starting Iteration: %2d\n", l->procID, l->iterNum, iterNum);
+		printf("(%d,%d,-) - starting Iteration: %d\n", l->procID, l->iterNum, iterNum);
 		fflush(stdout);
 	}
 	fflush(l->logFile);
@@ -90,9 +90,9 @@ void log_iteration_number(log_t *l, int iterNum)
 void log_simulation_number(log_t *l, int simulNum)
 {
 	l->simulNum = simulNum;
-	fprintf(l->logFile, "(%d,%d,%d) - starting simulation: %2d\n", l->procID, l->iterNum, l->simulNum, l->simulNum);
+	fprintf(l->logFile, "(%d,%d,%d) - starting simulation: %d\n", l->procID, l->iterNum, l->simulNum, l->simulNum);
 	if(l->verbose) {
-		printf("(%d,%d,%d) - starting simulation: %2d\n", l->procID, l->iterNum, l->simulNum, l->simulNum);
+		printf("(%d,%d,%d) - starting simulation: %d\n", l->procID, l->iterNum, l->simulNum, l->simulNum);
 		fflush(stdout);
 	}
 	fflush(l->logFile);
