@@ -56,7 +56,6 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 {
         /* Table of constant values */
 
-        float c_b2 = 0.f;
 
 	/* System generated locals */
 	int rotmat_dim1, rotmat_offset, t1, t2, t3;

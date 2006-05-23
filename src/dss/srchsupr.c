@@ -89,7 +89,6 @@ int srchsupr(float *xloc, float *yloc, float *zloc,
 	int ix, iy, iz, nt;
 	double hsqd;
 	int isup, nums, inoct[8], ixsup, iysup, izsup;
-	int inflag;
 
 
 	/* Determine the super block location of point being estimated: */

@@ -138,9 +138,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		covtable_lookup_vars_t	*	covtable_lookup,
 		krige_vars_t			*	krige_vars)
 {
-	/* System generated locals */
-	float r__1;
-	double d__1;
 
 	unsigned int toSim;
 	int i;
@@ -158,7 +155,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	int nsec, nisb[125], ierr;
 	float cmean, gmean;
 
-	float cpdev;
 	double zmean;
 	int index, nxsup, nysup, nzsup;
 	int infoct;

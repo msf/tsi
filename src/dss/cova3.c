@@ -7,6 +7,7 @@
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 #define TRUE (1)
 #define FALSE (0)
+#define PI	3.14159265
 
 
 /* ----------------------------------------------------------------------- */
@@ -72,21 +73,26 @@
  * cova3d_1
  */
 
+/* these variables used to be passed has arguments, but have _allways_ these values */
+int ivarg = 1;
+int maxnst = 4;
+int irot = 1;
+int maxrot = 5;
 
-int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
-		int *ivarg, int *nst, int *maxnst, float *c0, int *it, float *cc,
-		float *aa, int *irot, int *maxrot, double *rotmat, float *cmax,
-		float *cova)
+float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
+		int *nst, float *c0, int *it, float *cc,
+		float *aa, double *rotmat, float *cmax)
 /* Calculate the maximum covariance value (used for zero distances and */
 /* for power model covariance): */
 {
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset, i__1, i__2;
+	int rotmat_dim1, rotmat_offset, temp, temp2;
 	float r__1;
 	double d__1, d__2;
 
 
 	/* Local variables */
+	float cova;
 	float h, hr;
 	int ir, is, ist;
 	double hsqd;
@@ -99,15 +105,15 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 	--it;
 	--cc;
 	--aa;
-	rotmat_dim1 = *maxrot;
+	rotmat_dim1 = maxrot;
 	rotmat_offset = 1 + (rotmat_dim1 << 2);
 	rotmat -= rotmat_offset;
 
 	/* Function Body */
-	istart = (*ivarg - 1) * *maxnst + 1;
-	*cmax = c0[*ivarg];
-	i__1 = nst[*ivarg];
-	for (is = 1; is <= i__1; ++is) {
+	istart = (ivarg - 1) * maxnst + 1;
+	*cmax = c0[ivarg];
+	temp = nst[ivarg];
+	for (is = 1; is <= temp; ++is) {
 		ist = istart + is - 1;
 		if (it[ist] == 4) {
 			*cmax += 999.f;
@@ -118,28 +124,26 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 
 	/* Check for "zero" distance, return with cmax if so: */
 
-	hsqd = sqdist(*x1, *y1, *z1, *x2, *y2, *z2, *irot, *maxrot, &rotmat[
-			rotmat_offset]);
+	hsqd = sqdist(x1, y1, z1, x2, y2, z2, irot, maxrot, &rotmat[rotmat_offset]);
 	if ((float) hsqd < 1e-10f) {
-		*cova = *cmax;
-		return 0;
+		cova = *cmax;
+		return cova;
 	}
 
 	/* Loop over all the structures: */
 
-	*cova = 0.f;
-	i__1 = nst[*ivarg];
-	for (is = 1; is <= i__1; ++is) {
+	cova = 0.f;
+	temp = nst[ivarg];
+	for (is = 1; is <= temp; ++is) {
 		ist = istart + is - 1;
 
 		/* Compute the appropriate distance: */
 
 		if (ist != 1) {
 			/* Computing MIN */
-			i__2 = *irot + is - 1;
-			ir = MIN(i__2, *maxrot); /* min(i__2,*maxrot); */
-			hsqd = sqdist(*x1, *y1, *z1, *x2, *y2, *z2, ir, *maxrot, &rotmat[
-					rotmat_offset]);
+			temp2 = irot + is - 1;
+			ir = MIN(temp2, maxrot); /* min(temp2,maxrot); */
+			hsqd = sqdist(x1, y1, z1, x2, y2, z2, ir, maxrot, &rotmat[rotmat_offset]);
 		}
 		h = (float) sqrt(hsqd);
 
@@ -148,39 +152,39 @@ int cova3(float *x1, float *y1, float *z1, float *x2, float *y2, float *z2,
 		if (it[ist] == 1) {
 			hr = h / aa[ist];
 			if (hr < 1.f) {
-				*cova += cc[ist] * (1.f - hr * (1.5f - hr * .5f * hr));
+				cova += cc[ist] * (1.f - hr * (1.5f - hr * .5f * hr));
 			}
 
 			/* Exponential Variogram Model? */
 
 		} else if (it[ist] == 2) {
-			*cova += cc[ist] * exp(h * -3.f / aa[ist]);
+			cova += cc[ist] * exp(h * -3.f / aa[ist]);
 
 			/* Gaussian Variogram Model? */
 
 		} else if (it[ist] == 3) {
 			/* Computing 2nd power */
 			r__1 = h / aa[ist];
-			*cova += cc[ist] * exp(r__1 * r__1 * -3.f);
+			cova += cc[ist] * exp(r__1 * r__1 * -3.f);
 
 			/* Power Variogram Model? */
 
 		} else if (it[ist] == 4) {
 			d__1 = (double) h;
 			d__2 = (double) aa[ist];
-			*cova = *cova + *cmax - cc[ist] * pow(d__1, d__2);
+			cova += *cmax - cc[ist] * pow(d__1, d__2);
 
 			/* Hole Effect Model? */
 
 		} else if (it[ist] == 5) {
 			/*                 d = 10.0 * aa(ist) */
 			/*                 cova = cova + cc(ist)*exp(-3.0*h/d)*cos(h/aa(ist)*PI) */
-			*cova += cc[ist] * cos(h / aa[ist] * 3.14159265f);
+			cova += cc[ist] * cos(h / aa[ist] * PI );
 		}
 	}
 
 	/* Finished: */
 
-	return 0;
+	return cova;
 } /* cova3_ */
 

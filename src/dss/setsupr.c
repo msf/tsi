@@ -90,7 +90,6 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 
 	/* Local variables */
 	int i, ii, ix, iy, iz, nsort;
-	int inflag;
 
 
 	/* Establish the number and size of the super blocks: */
@@ -129,9 +128,9 @@ int setsupr(int *nx, float *xmn, float *xsiz, int *ny, float *ymn,
 
 	t = *nd;
 	for (i = 1; i <= t; ++i) {
-		ix = getindx(xmnsup, xsizsup, x[i]);
-		iy = getindx(ymnsup, ysizsup, y[i]);
-		iz = getindx(zmnsup, zsizsup, z[i]);
+		ix = getIndex(*xmnsup, *xsizsup, x[i]);
+		iy = getIndex(*ymnsup, *ysizsup, y[i]);
+		iz = getIndex(*zmnsup, *zsizsup, z[i]);
 		ii = getPos(ix, iy, iz, *nxsup, (*nxsup) * (*nysup));
 		//ii = ix + (iy - 1) * *nxsup + (iz - 1) * *nxsup * *nysup;
 		tmp[i] = (float) ii;

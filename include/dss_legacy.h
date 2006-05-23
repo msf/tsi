@@ -26,7 +26,6 @@ extern double powint(float *, float *, float *, float *, float *, float *);
 
 extern double backtr(float *, int *, float *, float *, float *, float *, int *, float *, int *, float *);
 
-/*
 extern float cova3(float x1, float y1, float z1,
           float x2 , float y2, float z2,
           int *,
@@ -36,7 +35,7 @@ extern float cova3(float x1, float y1, float z1,
           float *,
           double *,
           float *);
-*/
+/*
 extern int cova3(float *, float *, float *,
           float *, float *, float *,
            int *,
@@ -51,6 +50,7 @@ extern int cova3(float *, float *, float *,
            double *,
           float *,
 		  float *);
+*/
  
 extern int covtable(int *, float *,
 	     general_vars_t *,

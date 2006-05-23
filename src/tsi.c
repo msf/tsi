@@ -50,7 +50,8 @@ tsi *new_tsi(registry *reg) {
 	fread(&timeSeed,sizeof(unsigned int), 1, fp);
 	close_file(fp);
 
-	srandom(timeSeed);
+//	srandom(timeSeed);
+	srandom(7919);
 	printf_dbg("new_tsi: seed : %u\n",timeSeed);
 
 	t->empty_path = 0; 
