@@ -8,6 +8,12 @@
 #define FALSE (0)
 
 
+float gcum(float );
+
+int locate(float *xx, int n, int is, int ie, float x);
+
+float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float power);
+
 /* -----------------------------------------------------------------------
  *
  * Evaluate the standard normal cdf given a normal deviate x.  gcum is 
@@ -15,7 +21,7 @@
  * accurate only to about 5 decimal places. 
  *
  * ----------------------------------------------------------------------- */
-double gcum(float z)
+float gcum(float z)
 {
 	/* System generated locals */
 	/* float ret_val; */
@@ -26,7 +32,7 @@ double gcum(float z)
 	double t;
     double zd;
         
-        zd = z;
+    zd = (double) z;
         
 
 	if (zd < 0) {   /* unpredictable branch */
@@ -48,7 +54,7 @@ double gcum(float z)
 			ret_val = 1;
 		}
 	}
-	return ( ret_val);
+	return (float)ret_val;
 
 } /* gcum_ */
 
@@ -64,25 +70,26 @@ double gcum(float z)
  *
  * Bisection Concept From "Numerical Recipes", Press et. al. 1986  pp 90. 
  * ----------------------------------------------------------------------- */
-int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
+int locate(float *xx, int n, int is, int ie, float x)
 {
 	int jl, jm, ju;
 
+	int i;
 
 	/* Initialize lower and upper methods: */
 
 	/* Parameter adjustments */
 	--xx;
-
+	i = is;
 	/* Function Body */
-	if (*is <= 0) {
-		*is = 1;
+	if (i <= 0) {
+		i = 1;
 	}
-	jl = *is - 1;
-	ju = *ie;
-	if (xx[*n] <= *x) {
-		*j = *ie;
-		return 0;
+	jl = i - 1;
+	ju = ie;
+	if (xx[n] <= x) {
+		/* out of range */
+		return ie;
 	}
 
 	/* If we are not done then compute a midpoint: */
@@ -90,16 +97,15 @@ int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
 		jm = (ju + jl) / 2;
 
 		/* Replace the lower or upper limit with the midpoint: */
-		if ((xx[*ie] > xx[*is]) == (*x > xx[jm])) {
+		if ((xx[ie] > xx[i]) == (x > xx[jm])) {
 			jl = jm;
 		} else {
 			ju = jm;
 		}
 	}
 
-	/* Return with the array index: */
-	*j = jl;
-	return 0;
+	/* Return the array index: */
+	return jl;
 } /* locate_ */
 
 
@@ -112,22 +118,19 @@ int locate(float *xx, int *n, int *is, int *ie, float *x, int *j)
  *                 for a value of x and a power pow. 
  *
  * ----------------------------------------------------------------------- */
-double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
-		float *xval, float *power)
+float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float power)
 {
 	/* System generated locals */
-	float ret_val;
+	double ret_val;
 
 	/* Builtin functions */
 
-	if (*xhigh - *xlow < 1e-20f) {
-		ret_val = (double) ((*yhigh + *ylow) / 2.f);
+	if ((xhigh - xlow) < 1e-20f) {
+		ret_val = (double) ((yhigh + ylow) / 2.f);
 	} else {
-		ret_val = (double) (*ylow + (*yhigh - *ylow) *
-				(float) pow((double) ((*xval - *xlow) / (*xhigh - *xlow)),
-							(double) (*power)));
+		ret_val = (double) (ylow + (yhigh - ylow) * pow((double) ((xval - xlow) / (xhigh - xlow)), (double) (power)));
 	}
-	return ret_val;
+	return (float)ret_val;
 
 } /* powint_ */
 
@@ -157,23 +160,19 @@ double powint(float *xlow, float *xhigh, float *ylow, float *yhigh,
  *
  *
  * ----------------------------------------------------------------------- */
-double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin, 
-		float *zmax, int *ltail, float *ltpar, int *utail, float *utpar)
+float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float zmax,
+		int ltail, float ltpar, int utail, float utpar)
 {
-        /* Table of constant values */
-        float c_b2 = 0;
-        float c_b3 = 1;
-        int one = 1;
 
 	/* System generated locals */
 	int i__1, i__2;
-	float ret_val;
 	double d__1, d__2;
 
 	/* Local variables */
 	int j;
 	float cpow, cdfhi, cdfbt, cdflo;
 	double lambda;
+	float ret_val;
 
 	float a, b;
 	/* parameter(EPSLON=1.0e-20) */
@@ -185,51 +184,49 @@ double backtr(float *vrgs, int *nt, float *vr, float *vrg, float *zmin,
 	--vrg;
 	--vr;
 
-	b = *vrgs;
+	b = vrgs;
 	/* Function Body */
-	if (*vrgs <= vrg[1]) {
+	if (vrgs <= vrg[1]) {
 		ret_val = vr[1];
 		a = vrg[1];
 		cdflo = (float) gcum(a);
 		cdfbt = (float) gcum(b);
-		if (*ltail == 1) {
-			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &c_b3);
-		} else if (*ltail == 2) {
-			cpow = 1 / *ltpar;
-			ret_val = powint(&c_b2, &cdflo, zmin, &vr[1], &cdfbt, &cpow);
+		if (ltail == 1) {
+			ret_val = powint(0, cdflo, zmin, vr[1], cdfbt, 1);
+		} else if (ltail == 2) {
+			cpow = 1 / ltpar;
+			ret_val = powint(0, cdflo, zmin, vr[1], cdfbt, cpow);
 		}
 
 		/* Value in the upper tail?     1=linear, 2=power, 4=hyperbolic: */
 
-	} else if (*vrgs >= vrg[*nt]) {
-		ret_val = vr[*nt];
-		a = vrg[*nt];
+	} else if (vrgs >= vrg[nt]) {
+		ret_val = vr[nt];
+		a = vrg[nt];
 		cdfhi = (float) gcum(a);
 		cdfbt = (float) gcum(b);
-		if (*utail == 1) {
-			ret_val = powint(&cdfhi, &c_b3, &vr[*nt], zmax, &cdfbt, &c_b3);
-		} else if (*utail == 2) {
-			cpow = 1.f / *utpar;
-			ret_val = powint(&cdfhi, &c_b3, &vr[*nt], zmax, &cdfbt, &cpow);
-		} else if (*utail == 4) {
-			d__1 = (double) vr[*nt];
-			d__2 = (double) (*utpar);
+		if (utail == 1) {
+			ret_val = powint(cdfhi, 1, vr[nt], zmax, cdfbt, 1);
+		} else if (utail == 2) {
+			cpow = 1.f / utpar;
+			ret_val = powint(cdfhi, 1, vr[nt], zmax, cdfbt, cpow);
+		} else if (utail == 4) {
+			d__1 = (double) vr[nt];
+			d__2 = (double) (utpar);
 			lambda =  pow(d__1, d__2) * (1 - gcum(a));
 			d__1 = (double) (lambda / (1 - gcum(b)));
-			d__2 = (double) (1 / *utpar);
-			ret_val = pow(d__1, d__2);
+			d__2 = (double) (1 / utpar);
+			ret_val = (float) pow(d__1, d__2);
 		}
 	} else {
 
 		/* Value within the transformation table: */
 
-		locate(&vrg[1], nt, &one, nt, vrgs, &j);
-		/* Computing MAX */
-		/* Computing MIN */
-		i__2 = *nt - 1;
+		j = locate(&vrg[1], nt, 1, nt, vrgs);
+		i__2 = nt - 1;
 		i__1 = MIN(i__2,j); /* min(i__2,j) */
 		j = MAX(i__1,1); /* max(i__1,1); */
-		ret_val = powint(&vrg[j], &vrg[j + 1], &vr[j], &vr[j + 1], vrgs, & c_b3);
+		ret_val = powint( vrg[j], vrg[j + 1], vr[j], vr[j + 1], vrgs, 1);
 	}
 	return ret_val;
 } /* backtr_ */

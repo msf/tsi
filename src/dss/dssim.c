@@ -343,8 +343,9 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				clcorr = bestCorrCube[ix + (iy - 1) * general->nx + (iz - 1) * general->nxy];
 			}
 				
-			krige(&ix, &iy, &iz, &xx, &yy, &zz, &lktype, &gmean, &cmean, 
-					&cstdev, &bestAICube[1], &clcorr,
+			krige(ix, iy, iz, xx, yy, zz, lktype, gmean, 
+					&cmean, &cstdev, // this are the output vars of krige
+					&bestAICube[1], clcorr,
 					general, search, simulation,
 					covariance, covtable_lookup, krige_vars);
 
@@ -391,10 +392,9 @@ L9999:
 			gauinv(&p, &xp, &ierr);
 			xp = xp * cstdev + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
-			simval = backtr(&xp, &general->ntr, general->vrtr, 
-					general->vrgtr, &general->zmin, &general->zmax, 
-					&general->ltail, &general->ltpar, &general->utail, 
-					&general->utpar);
+			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,
+					general->zmin, general->zmax, general->ltail, general->ltpar,
+					general->utail, general->utpar);
 			vms += simval;
 		}
 		vms /= covtable_lookup->ntry;

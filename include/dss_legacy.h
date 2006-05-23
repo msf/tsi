@@ -7,24 +7,9 @@
 #define EQUAL(f1,f2) (f1 > f2 ? 0 : (f2 - f1) < ZERO_THRESHOLD)
 #define ZERO(f) (f < ZERO_THRESHOLD ? f > (-ZERO_THRESHOLD) : 0)
 
-/* Original DSS functions */
-//#define GETINDX(n, mn, sz, loc, ix) ((*(ix) = (int)((*(loc) - *(mn))/(*(sz)) + 1.5)) < 1 ? !(*(ix) = 1) : (*(ix) > *(n) ? !(*(ix) = *(n)) : 1))
-
-
 /* DSS legacy functions */
 
-extern double acorni(int *);
-
-extern int *new_acorni(int );
-
-
-extern double gcum(float );
-
-extern int locate(float *, int *, int *, int *, float *, int *);
-
-extern double powint(float *, float *, float *, float *, float *, float *);
-
-extern double backtr(float *, int *, float *, float *, float *, float *, int *, float *, int *, float *);
+extern float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float zmax, int ltail, float ltpar, int utail, float utpar);
 
 extern float cova3(float x1, float y1, float z1,
           float x2 , float y2, float z2,
@@ -70,8 +55,8 @@ extern int gauinv(double *, float *, int *);
 
 extern int getIndex(float min, float siz, float loc);
 
-extern int krige(int *, int *, int *, float * , float *, float *,
-		int *, float *, float *, float *, float *, float *,
+extern int krige(int , int , int , float , float , float ,
+		int , float , float *, float *, float *, float ,
 		general_vars_t *,
 		search_vars_t *,
 		simulation_vars_t *,
