@@ -81,7 +81,7 @@ int maxrot = 5;
 
 float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 		int *nst, float *c0, int *it, float *cc,
-		float *aa, double *rotmat, float *cmax)
+		float *aa, double rotmat[][][], float *cmax)
 /* Calculate the maximum covariance value (used for zero distances and */
 /* for power model covariance): */
 {
@@ -105,9 +105,7 @@ float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 	--it;
 	--cc;
 	--aa;
-	rotmat_dim1 = maxrot;
-	rotmat_offset = 1 + (rotmat_dim1 << 2);
-	rotmat -= rotmat_offset;
+
 
 	/* Function Body */
 	istart = (ivarg - 1) * maxnst + 1;
@@ -124,7 +122,7 @@ float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 
 	/* Check for "zero" distance, return with cmax if so: */
 
-	hsqd = sqdist(x1, y1, z1, x2, y2, z2, irot, maxrot, &rotmat[rotmat_offset]);
+	hsqd = sqdist(x1, y1, z1, x2, y2, z2, 1, rotmat);
 	if ((float) hsqd < 1e-10f) {
 		cova = *cmax;
 		return cova;
@@ -143,7 +141,7 @@ float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 			/* Computing MIN */
 			temp2 = irot + is - 1;
 			ir = MIN(temp2, maxrot); /* min(temp2,maxrot); */
-			hsqd = sqdist(x1, y1, z1, x2, y2, z2, ir, maxrot, &rotmat[rotmat_offset]);
+			hsqd = sqdist(x1, y1, z1, x2, y2, z2, ir, rotmat);
 		}
 		h = (float) sqrt(hsqd);
 

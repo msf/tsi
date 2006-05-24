@@ -20,7 +20,6 @@
 /*   xloc,yloc,zloc   location of point being estimated/simulated */
 /*   radsqd           squared search radius */
 /*   irot             index of the rotation matrix for searching */
-/*   MAXROT           size of rotation matrix arrays */
 /*   rotmat           rotation matrices */
 /*   nsbtosr          Number of super blocks to search */
 /*   ixsbtosr         X offsets for super blocks to search */
@@ -66,7 +65,7 @@
 
 int srchsupr(float *xloc, float *yloc, float *zloc,
              float *radsqd,
-		     int *irot, int *maxrot, double *rotmat,
+		     int *irot, double rotmat[][][],
              int *nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
              int *noct,
              float *x, float *y, float *z,
@@ -94,9 +93,6 @@ int srchsupr(float *xloc, float *yloc, float *zloc,
 	/* Determine the super block location of point being estimated: */
 
 	/* Parameter adjustments */
-	rotmat_dim1 = *maxrot;
-	rotmat_offset = 1 + (rotmat_dim1 << 2);
-	rotmat -= rotmat_offset;
 	--ixsbtosr;
 	--iysbtosr;
 	--izsbtosr;
@@ -148,7 +144,7 @@ int srchsupr(float *xloc, float *yloc, float *zloc,
 			/* Check squared distance: */
 
 			/* FIXME: ?loc nao devem ser pointrs */
-			hsqd = sqdist(*xloc, *yloc, *zloc, x[i], y[i], z[i], *irot, *maxrot, &rotmat[rotmat_offset]);
+			hsqd = sqdist(*xloc, *yloc, *zloc, x[i], y[i], z[i], *irot, rotmat);
 			if ((float) hsqd > *radsqd) {
 				continue;
 			}

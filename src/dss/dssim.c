@@ -176,13 +176,12 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 	/* Function Body */
 	for (i = 1; i <= covariance->nst[0]; ++i) {
-		setrot(&covariance->ang1[i - 1], &covariance->ang2[i - 1],
-				&covariance->ang3[i - 1], &covariance->anis1[i - 1],
-				&covariance->anis2[i - 1], &i, &five, krige_vars->rotmat);
+		setrot(covariance->ang1[i - 1], covariance->ang2[i - 1], covariance->ang3[i - 1],
+				covariance->anis1[i - 1], covariance->anis2[i - 1], i, krige_vars->rotmat);
 	}
 	covariance->isrot = 5;
-	setrot(&search->sang1, &search->sang2, &search->sang3,
-			&search->sanis1, &search->sanis2, &covariance->isrot, &five, 
+	setrot(search->sang1, search->sang2, search->sang3,
+			search->sanis1, search->sanis2, covariance->isrot, 
 			krige_vars->rotmat);
 	/* !Set up the super block search: */
 	if (search->sstrat == 0) {
@@ -194,8 +193,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				&sec2, &sec3, &five, &five, &five, nisb, &nxsup, &xmnsup,
 				&xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, &zmnsup, &zsizsup)
 			;
-		picksup(&nxsup, &xsizsup, &nysup, &ysizsup, &nzsup, &zsizsup,
-				&covariance->isrot, &five, krige_vars->rotmat, &search->radsqd,
+		picksup(nxsup, xsizsup, nysup, ysizsup, nzsup, zsizsup,
+				covariance->isrot, krige_vars->rotmat, search->radsqd,
 				&nsbtosr, ixsbtosr, iysbtosr, izsbtosr);
 	}
 
@@ -296,7 +295,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* !simulated grid nodes: */
 		if (search->sstrat == 0) {
 			srchsupr(&xx, &yy, &zz, &search->radsqd, &covariance->isrot,
-					&five, krige_vars->rotmat, &nsbtosr, ixsbtosr, iysbtosr, 
+					krige_vars->rotmat, &nsbtosr, ixsbtosr, iysbtosr, 
 					izsbtosr, &search->noct, general->x, 
 					general->y, general->z, general->wt, nisb, &nxsup, 
 					&xmnsup, &xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, 

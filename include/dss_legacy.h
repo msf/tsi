@@ -11,15 +11,9 @@
 
 extern float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float zmax, int ltail, float ltpar, int utail, float utpar);
 
-extern float cova3(float x1, float y1, float z1,
-          float x2 , float y2, float z2,
-          int *,
-          float *,
-          int *,
-          float *,
-          float *,
-          double *,
-          float *);
+float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
+		int *nst, float *c0, int *it, float *cc,
+		float *aa, double rotmat[][][], float *cmax);
 /*
 extern int cova3(float *, float *, float *,
           float *, float *, float *,
@@ -85,10 +79,10 @@ extern int krige5(int *, int *, int *, float * , float *, float *,
 
 extern int ksol(int *, int *, int *, double *, double *, double *, int *);
 
-extern int picksup(int *, float *, int *, float *,
-			int *, float *, int *, int *, double *, float *, 
-			int *, int *, int *, int *);
-
+int picksup(int nxsup, float xsizsup, int nysup, float ysizsup,
+		int nzsup, float zsizsup, int irot,
+		double rotmat[][][], float radsqd, int *nsbtosr, int * ixsbtosr,
+		int *iysbtosr, int *izsbtosr);
 
 extern int readdata(float *,
              unsigned int ,
@@ -121,8 +115,8 @@ extern int dssim(float *,
 		  krige_vars_t *);
 
 
-extern int setrot(float *, float *, float *, float *, float *
-			, int *, int *, double *);
+extern int setrot(float , float , float , float , float, 
+		int, double rotmat[5][3][3]);
 
 extern int setsupr(int *, float *, float *, int *,
 			float *, float *, int *, float *, float *, int *, float *, 
@@ -145,7 +139,7 @@ extern int sort_permute_int(int , int , float *, int *);
 
 extern double sqdist(float , float , float ,
               float , float , float ,
-              int , int , double *); 
+              int , double rotmat[5][3][3]); 
 
 extern int srchnod(int , int , int , float *,
 		general_vars_t *, 
@@ -154,7 +148,7 @@ extern int srchnod(int , int , int , float *,
 
 extern int srchsupr(float *xloc, float *yloc, float *zloc,
              float *radsqd,
-		     int *irot, int *maxrot, double *rotmat,
+		     int *irot, double rotmat[][][],
              int *nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
              int *noct,
              float *x, float *y, float *z,

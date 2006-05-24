@@ -62,10 +62,9 @@
 
 double sqdist(float x1, float y1, float z1, 
 		float x2, float y2, float z2, 
-		int ind, int maxrot, double *rotmat)
+		int ind, double rotmat[5][3][3])
 {
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset;
 	double ret_val;
 
 	/* Local variables */
@@ -76,19 +75,25 @@ double sqdist(float x1, float y1, float z1,
 	/* Compute component distance vectors and the squared distance: */
 
 	/* Parameter adjustments */
-	rotmat_dim1 = maxrot;
-	rotmat_offset = 1 + (rotmat_dim1 << 2);
-	rotmat -= rotmat_offset;
+	ind--;
 
 	/* Function Body */
 	dx = (double) (x1 - x2);
 	dy = (double) (y1 - y2);
 	dz = (double) (z1 - z2);
+
 	ret_val = 0.f;
-	for (i = 1; i <= 3; ++i) {
-		cont = rotmat[ind + (i + 3) * rotmat_dim1] * dx + rotmat[ind + (
-				i + 6) * rotmat_dim1] * dy + rotmat[ind + (i + 9) * 
-			rotmat_dim1] * dz;
+
+	if(ind < 0 || ind > 4) {
+		fprintf(stderr,"sqdist() - ERROR, invalid rotation matrix: %d, only 0-4 (1-5) are valid\n",ind);
+		return ret_val;
+	}
+
+	for (i = 0; i < 3; ++i) {
+		cont =  rotmat[ind][i][0] * dx;
+		cont += rotmat[ind][i][1] * dy;
+		cont += rotmat[ind][i][2] * dz;
+		
 		ret_val += cont * cont;
 	}
 	return ret_val;

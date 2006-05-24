@@ -21,7 +21,6 @@
 /*   nysup,ysizsup    Definition of the Y super block grid */
 /*   nzsup,zsizsup    Definition of the Z super block grid */
 /*   irot             index of the rotation matrix for searching */
-/*   MAXROT           size of rotation matrix arrays */
 /*   rotmat           rotation matrices */
 /*   radsqd           squared search radius */
 
@@ -49,9 +48,9 @@
  */
 
 
-int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
-		int *nzsup, float *zsizsup, int *irot, int * maxrot,
-		double *rotmat, float *radsqd, int *nsbtosr, int * ixsbtosr,
+int picksup(int nxsup, float xsizsup, int nysup, float ysizsup,
+		int nzsup, float zsizsup, int irot,
+		double rotmat[][][], float radsqd, int *nsbtosr, int * ixsbtosr,
 		int *iysbtosr, int *izsbtosr)
 {
         /* Table of constant values */
@@ -67,31 +66,25 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 	double hsqd;
 	float xdis, ydis, zdis;
 
-#ifdef PROFILE
-	profile.picksup++;
-#endif
 
 	/* MAIN Loop over all possible super blocks: */
 
 	/* Parameter adjustments */
-	rotmat_dim1 = *maxrot;
-	rotmat_offset = 1 + (rotmat_dim1 << 2);
-	rotmat -= rotmat_offset;
 	--ixsbtosr;
 	--iysbtosr;
 	--izsbtosr;
 
 	/* Function Body */
 	*nsbtosr = 0;
-	t1 = *nxsup - 1;
-	for (t = -(*nxsup - 1); t <= t1; ++t) {
-		t2 = *nysup - 1;
-		for (j = -(*nysup - 1); j <= t2; ++j) {
-			t3 = *nzsup - 1;
-			for (k = -(*nzsup - 1); k <= t3; ++k) {
-				xo = (float) t * *xsizsup;
-				yo = (float) j * *ysizsup;
-				zo = (float) k * *zsizsup;
+	t1 = nxsup - 1;
+	for (t = -(nxsup - 1); t <= t1; ++t) {
+		t2 = nysup - 1;
+		for (j = -(nysup - 1); j <= t2; ++j) {
+			t3 = nzsup - 1;
+			for (k = -(nzsup - 1); k <= t3; ++k) {
+				xo = (float) t * xsizsup;
+				yo = (float) j * ysizsup;
+				zo = (float) k * zsizsup;
 
 				/* Find the closest distance between the corners of the super blocks: */
 
@@ -105,10 +98,10 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 										if (i1 != 0 && j1 != 0 && k1 != 0 && 
 												i2 != 0 && j2 != 0 && k2 != 0)
 										{
-											xdis = (float) (i1 - i2) * .5f * *xsizsup + xo;
-											ydis = (float) (j1 - j2) * .5f * *ysizsup + yo;
-											zdis = (float) (k1 - k2) * .5f * *zsizsup + zo;
-											hsqd = sqdist(0, 0, 0, xdis, ydis, zdis, *irot, *maxrot, &rotmat[rotmat_offset]);
+											xdis = (float) (i1 - i2) * .5f * xsizsup + xo;
+											ydis = (float) (j1 - j2) * .5f * ysizsup + yo;
+											zdis = (float) (k1 - k2) * .5f * zsizsup + zo;
+											hsqd = sqdist(0, 0, 0, xdis, ydis, zdis, irot, rotmat);
 											if (hsqd < shortest) {
 												shortest = hsqd;
 											}
@@ -122,7 +115,7 @@ int picksup(int *nxsup, float *xsizsup, int *nysup, float *ysizsup,
 
 				/* Keep this super block if it is close enoutgh: */
 
-				if ((float) shortest <= *radsqd) {
+				if ((float) shortest <= radsqd) {
 					++(*nsbtosr);
 					ixsbtosr[*nsbtosr] = t;
 					iysbtosr[*nsbtosr] = j;

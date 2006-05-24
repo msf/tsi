@@ -165,7 +165,7 @@ typedef struct covtable_lookup_vars_type {
 
 
 typedef struct krige_vars_type {
-    double rotmat[45], /* was [5][3][3] */
+    double rotmat[5][3][3], /* was [5][3][3] */
            r__[129],
            rr[129],
            s[129],

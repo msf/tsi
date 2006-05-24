@@ -130,7 +130,7 @@ int covtable(int *order, float * tmp,
 						covariance->cc, covariance->aa,
 						krige_vars->rotmat, &covariance->cmax);
 
-				hsqd = sqdist(0, 0, 0, xx, yy, zz, covariance->isrot, 5, krige_vars->rotmat);
+				hsqd = sqdist(0, 0, 0, xx, yy, zz, covariance->isrot, krige_vars->rotmat);
 
 				if ((float) hsqd <= search->radsqd) {
 					++covtable_lookup->nlooku;
