@@ -15,7 +15,7 @@
 /* the nearby nodes that have been simulated. */
 
 /* INPUT VARIABLES: */
-/*   ix,iy,iz        index of the point currently being simulated */
+/*   *ix,*iy,iz        index of the point currently being simulated */
 /*   sim             the realization so far */
 /*   nodmax          the maximum number of nodes that we want */
 /*   nlooku          the number of nodes in the look up table */
@@ -62,11 +62,10 @@ int srchnod(int ix, int iy, int iz, float *sim,
 		search_vars_t * search,
 		covtable_lookup_vars_t * covtable_lookup)
 {
-	/* System generated locals */
-	int i1;
 
 	/* Local variables */
 	int i, j, k, il, iq, ind, idx, idy, idz, ninoct[8];
+	int nctx, ncty, nctz;
 
 
 	/* Consider all the nearby nodes until enough have been found: */
@@ -76,24 +75,29 @@ int srchnod(int ix, int iy, int iz, float *sim,
 	/* Function Body */
 	covtable_lookup->ncnode = 0;
 	if (search->noct > 0) {
-		for (i = 1; i <= 8; ++i) {
-			ninoct[i - 1] = 0;
-		}
+		for(i= 0; i < 8; i++)
+			ninoct[i] = 0;
 	}
-	i1 = covtable_lookup->nlooku;
-	for (il = 2; il <= i1; ++il) {
+	
+	nctx = ix - covtable_lookup->nctx - 1;
+	ncty = iy - covtable_lookup->ncty - 1;
+	nctz = iz - covtable_lookup->nctz - 1;
+	for (il = 1; il < covtable_lookup->nlooku; ++il) {
 		if (covtable_lookup->ncnode == covtable_lookup->nodmax) {
 			return 0;
 		}
-		i = ix + (covtable_lookup->ixnode[il - 1] - covtable_lookup->nctx - 1);
-		j = iy + (covtable_lookup->iynode[il - 1] - covtable_lookup->ncty - 1);
-		k = iz + (covtable_lookup->iznode[il - 1] - covtable_lookup->nctz - 1);
-		if (i < 1 || j < 1 || k < 1) {
+		i = nctx + covtable_lookup->ixnode[il];
+		if( i < 1 || i > general->nx)
 			continue;
-		}
-		if (i > general->nx || j > general->ny || k > general->nz) {
+		
+		j = ncty + covtable_lookup->iynode[il];
+		if( j < 1 || j > general->ny )
 			continue;
-		}
+
+		k = nctz + covtable_lookup->iznode[il];
+		if( k < 1 || k > general->nz )
+			continue;
+
 		ind = i + (j - 1) * general->nx + (k - 1) * general->nxy;
 		if (sim[ind] > general->nosvalue) {
 			/* Check the number of data already taken from this octant: */
@@ -102,39 +106,39 @@ int srchnod(int ix, int iy, int iz, float *sim,
 				idy = iy - j;
 				idz = iz - k;
 				if (idz > 0) {
-					iq = 4;
+					iq = 3;
 					if (idx <= 0 && idy > 0) {
+						iq = 0;
+					}
+					else if (idx > 0 && idy >= 0) {
 						iq = 1;
 					}
-					if (idx > 0 && idy >= 0) {
+					else if (idx < 0 && idy <= 0) {
 						iq = 2;
 					}
-					if (idx < 0 && idy <= 0) {
-						iq = 3;
-					}
 				} else {
-					iq = 8;
+					iq = 7;
 					if (idx <= 0 && idy > 0) {
+						iq = 4;
+					}
+					else if (idx > 0 && idy >= 0) {
 						iq = 5;
 					}
-					if (idx > 0 && idy >= 0) {
+					else if (idx < 0 && idy <= 0) {
 						iq = 6;
 					}
-					if (idx < 0 && idy <= 0) {
-						iq = 7;
-					}
 				}
-				++ninoct[iq - 1];
-				if (ninoct[iq - 1] > search->noct) {
+				++ninoct[iq];
+				if (ninoct[iq] > search->noct) {
 					continue;
 				}
 			}
+			covtable_lookup->icnode[covtable_lookup->ncnode] = il +1;
+			covtable_lookup->cnodex[covtable_lookup->ncnode] = general->xmn + (float) (i - 1) * general->xsiz;
+			covtable_lookup->cnodey[covtable_lookup->ncnode] = general->ymn + (float) (j - 1) * general->ysiz;
+			covtable_lookup->cnodez[covtable_lookup->ncnode] = general->zmn + (float) (k - 1) * general->zsiz;
+			covtable_lookup->cnodev[covtable_lookup->ncnode] = sim[ind];
 			++covtable_lookup->ncnode;
-			covtable_lookup->icnode[covtable_lookup->ncnode - 1] = il;
-			covtable_lookup->cnodex[covtable_lookup->ncnode - 1] = general->xmn + (float) (i - 1) * general->xsiz;
-			covtable_lookup->cnodey[covtable_lookup->ncnode - 1] = general->ymn + (float) (j - 1) * general->ysiz;
-			covtable_lookup->cnodez[covtable_lookup->ncnode - 1] = general->zmn + (float) (k - 1) * general->zsiz;
-			covtable_lookup->cnodev[covtable_lookup->ncnode - 1] = sim[ind];
 		}
 	}
 	/* 	Return to calling program: */
