@@ -146,19 +146,18 @@ extern int srchnod(int , int , int , float *,
 		search_vars_t *, 
 		covtable_lookup_vars_t *);
 
-extern int srchsupr(float *xloc, float *yloc, float *zloc,
-             float *radsqd,
-		     int *irot, double rotmat[][][],
-             int *nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
-             int *noct,
+extern int srchsupr(float xloc, float yloc, float zloc,
+             float radsqd,
+		     int irot, double rotmat[][][],
+             int nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
+             int noct,
              float *x, float *y, float *z,
              float *tmp,
              int *nisb,
-             int *nxsup, float *xmnsup, float *xsizsup,
-             int *nysup, float *ymnsup, float *ysizsup,
-             int *nzsup, float *zmnsup, float *zsizsup,
-             int *nclose, float *close,
-             int *infoct);
+             int nxsup, float xmnsup, float xsizsup,
+             int nysup, float ymnsup, float ysizsup,
+             int nzsup, float zmnsup, float zsizsup,
+             int *nclose, float *close);
 
 
 #endif /* _DSS_LEGACY_H */

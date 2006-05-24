@@ -294,13 +294,14 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* !we'll only keep the closest "ndmax" data, and look for previously */
 		/* !simulated grid nodes: */
 		if (search->sstrat == 0) {
-			srchsupr(&xx, &yy, &zz, &search->radsqd, &covariance->isrot,
-					krige_vars->rotmat, &nsbtosr, ixsbtosr, iysbtosr, 
-					izsbtosr, &search->noct, general->x, 
-					general->y, general->z, general->wt, nisb, &nxsup, 
-					&xmnsup, &xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, 
-					&zmnsup, &zsizsup, &search->nclose, general->close, 
-					&infoct);
+			srchsupr(xx, yy, zz, search->radsqd, covariance->isrot,
+					krige_vars->rotmat, nsbtosr, ixsbtosr, iysbtosr, 
+					izsbtosr, search->noct, general->x, 
+					general->y, general->z, general->wt, nisb,
+					nxsup, xmnsup, xsizsup,
+					nysup, ymnsup, ysizsup,
+					nzsup, zmnsup, zsizsup,
+					&search->nclose, general->close);
 			if (search->nclose < search->ndmin) {
 				ierr++;
 				printf("dssim(): SKIP2  %d\n",index);
