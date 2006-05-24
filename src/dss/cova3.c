@@ -81,7 +81,7 @@ int maxrot = 5;
 
 float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 		int *nst, float *c0, int *it, float *cc,
-		float *aa, double rotmat[][][], float *cmax)
+		float *aa, double rotmat[5][3][3], float *cmax)
 /* Calculate the maximum covariance value (used for zero distances and */
 /* for power model covariance): */
 {

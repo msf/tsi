@@ -65,7 +65,7 @@
 
 int srchsupr(float xloc, float yloc, float zloc,
              float radsqd,
-		     int irot, double rotmat[][][],
+		     int irot, double rotmat[5][3][3],
              int nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
              int noct,
              float *x, float *y, float *z,

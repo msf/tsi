@@ -6,8 +6,8 @@ COMPILER := mpicc
 COMPILER := gcc
 
 # Default settings for gcc
-CC      := gcc
-CPP     := g++
+CC      := gcc#-3.4
+CPP     := g++#-3.4
 CFLAGS  := -pipe 
 LDFLAGS := -lm -lc -lpthread -lstdc++ -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 

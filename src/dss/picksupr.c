@@ -50,7 +50,7 @@
 
 int picksup(int nxsup, float xsizsup, int nysup, float ysizsup,
 		int nzsup, float zsizsup, int irot,
-		double rotmat[][][], float radsqd, int *nsbtosr, int * ixsbtosr,
+		double rotmat[5][3][3], float radsqd, int *nsbtosr, int * ixsbtosr,
 		int *iysbtosr, int *izsbtosr)
 {
         /* Table of constant values */

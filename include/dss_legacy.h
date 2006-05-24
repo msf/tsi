@@ -13,7 +13,7 @@ extern float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float
 
 float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 		int *nst, float *c0, int *it, float *cc,
-		float *aa, double rotmat[][][], float *cmax);
+		float *aa, double rotmat[5][3][3], float *cmax);
 /*
 extern int cova3(float *, float *, float *,
           float *, float *, float *,
@@ -81,7 +81,7 @@ extern int ksol(int *, int *, int *, double *, double *, double *, int *);
 
 int picksup(int nxsup, float xsizsup, int nysup, float ysizsup,
 		int nzsup, float zsizsup, int irot,
-		double rotmat[][][], float radsqd, int *nsbtosr, int * ixsbtosr,
+		double rotmat[5][3][3], float radsqd, int *nsbtosr, int * ixsbtosr,
 		int *iysbtosr, int *izsbtosr);
 
 extern int readdata(float *,
@@ -148,7 +148,7 @@ extern int srchnod(int , int , int , float *,
 
 extern int srchsupr(float xloc, float yloc, float zloc,
              float radsqd,
-		     int irot, double rotmat[][][],
+		     int irot, double rotmat[5][3][3],
              int nsbtosr, int *ixsbtosr, int *iysbtosr, int *izsbtosr,
              int noct,
              float *x, float *y, float *z,
