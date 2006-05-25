@@ -38,6 +38,8 @@
 #include <math.h>
 #include "dss.h"
 #include "dss_legacy.h"
+#include "stdlib.h"
+#include "memdebug.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -64,13 +66,15 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	int i, j;
 	float x1, y1, z1, x2, y2, z2;
 	int na, ii, jj, kk, in, ix1, iy1, iz1, ix2, iy2, iz2, ind, neq;
-	float cov, vrea[129];
+	float cov;
 	float edmin, edmax;
 	int index;
 	float sfmin, sfmax;
 	int ising;
 	int first;
 	float sumwts;
+
+	double *rp, *ap, *sp;   //LPL test...
 
 
 	/* Parameter adjustments */
@@ -82,6 +86,24 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	/* Function Body */
 	first = FALSE;
 	na = search->nclose + covtable_lookup->ncnode;
+
+	if (na > krige_vars->last_na) {
+		krige_vars->last_na = na;
+		printf_dbg("\tkrige(): na=%d\n", na);
+		if (krige_vars->rr) tsi_free(krige_vars->rr);
+		if (krige_vars->r__) tsi_free(krige_vars->r__);
+		if (krige_vars->s) tsi_free(krige_vars->s);
+		if (krige_vars->a) tsi_free(krige_vars->a);
+		if (krige_vars->vra) tsi_free(krige_vars->vra);
+		if (krige_vars->vrea) tsi_free(krige_vars->vrea);
+		krige_vars->rr =   (double *) tsi_malloc(8 + na * sizeof(double));
+		krige_vars->r__ =  (double *) tsi_malloc(8 + na * sizeof(double));
+		krige_vars->s =    (double *) tsi_malloc(8 + na * sizeof(double));
+		krige_vars->a =    (double *) tsi_malloc(16 + na * na * sizeof(double));
+		krige_vars->vra =  (float *)  tsi_malloc(na * sizeof(float));
+		krige_vars->vrea = (float *)  tsi_malloc(na * sizeof(float));
+	}
+
 	neq = na;
 	if (lktype == 1) {
 		neq += 1;
@@ -106,7 +128,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			y1 = general->y[index - 1];
 			z1 = general->z[index - 1];
 			krige_vars->vra[j - 1] = general->vr[index - 1];
-			vrea[j - 1] = general->sec[index - 1];
+			krige_vars->vrea[j - 1] = general->sec[index - 1];
 		} else {
 			/* It is a previously simulated node (keep index for table look-up): */
 			index = j - search->nclose;
@@ -120,13 +142,13 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			iz1 = iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
 			index = ix1 + (iy1 - 1) * general->nx + (iz1 - 1) * general->nxy;
 			if(general->ktype == 5)
-				vrea[j - 1] = bestAICube[index];
+				krige_vars->vrea[j - 1] = bestAICube[index];
 		}
 		if (lktype == 0) {
 			krige_vars->vra[j - 1] -= gmean;
 		}
 		if (lktype == 2) {
-			krige_vars->vra[j - 1] -= vrea[j - 1];
+			krige_vars->vra[j - 1] -= krige_vars->vrea[j - 1];
 		}
 		if (lktype >= 4) {
 			krige_vars->vra[j - 1] -= simulation->vmedexp;
@@ -219,7 +241,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		i1 = na;
 		for (i = 1; i <= i1; ++i) {
 			++in;
-			krige_vars->a[in - 1] = vrea[i - 1];
+			krige_vars->a[in - 1] = krige_vars->vrea[i - 1];
 			if (krige_vars->a[in - 1] < edmin) {
 				edmin = krige_vars->a[in - 1];
 			}
@@ -268,7 +290,15 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		krige_vars->s[0] = krige_vars->r__[0] / krige_vars->a[0];
 		ising = 0;
 	} else {
-		ksol(&one, &neq, &one, krige_vars->a, krige_vars->r__, krige_vars->s, & ising);
+		//ksol(&one, &neq, &one, krige_vars->a, krige_vars->r__, krige_vars->s, & ising);
+		ap = krige_vars->a;
+		rp = krige_vars->r__;
+		sp = krige_vars->s;
+		ap--;
+		rp--;
+		sp--;
+		ising = ksol(1, neq, 1, ap, rp, sp);
+		//ising = ksol_opt(neq, ap, rp, sp);
 	}
 	/* 		Write a warning if the matrix is singular: */
 	if (ising != 0) {
@@ -335,4 +365,3 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	/* Finished Here: */
 	return 0;
 } /* krige_ */
-

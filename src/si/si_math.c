@@ -163,6 +163,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
     struct timeval t1, t2;
 
     printf_dbg2("make_correlations_grid(): called\n");
+    load_cmgrid(s->cmg);
     getCurrTime(&t1);
     corr_grid = s->cmg->cg;   /* compressed grid */
     nlayers = s->cmg->nlayers;
@@ -217,7 +218,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
     //expand_correlations_grid(s->cmg, CM);
     getCurrTime(&t2);
 	log_action_time(s->l, 2, "make_correlations_grid() cpuTime",getElapsedTime(&t1,&t2));
-	
+    dirty_cmgrid(s->cmg);
     return 1;
 } /* make_correlations_grid */
 
@@ -229,6 +230,7 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
     float *t;
 
     printf_dbg2("expand_correlations_grid(): called\n");
+    load_cmgrid(cmg);
     nxy = cmg->nxy;
     z = 0;
     for (i = 0; i < cmg->nlayers; i++) {
@@ -241,6 +243,7 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
         }
         z += n;
     }
+    clear_cmgrid(cmg);
     printf_dbg2("expand_correlations_grid(): finished\n");
     return 0;
 } /* expand_correlations_grid */

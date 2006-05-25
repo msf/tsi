@@ -64,41 +64,41 @@
 
 
 
-int ksol(int *nright, int *neq, int *nsb, double *a, double *r, double *s,
-		int *ising)
+int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
 {
 	/* System generated locals */
-	int i__1;
-	double d__1;
+	int i1;
+	double d1;
 
 	/* Local variables */
-	int i__, j, k, m1;
+	int i, j, k, m1, ising;
 	double ak, ap;
-	int ii, ij = 0, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, 
-			   ijm;
+	int ii, ij, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, ijm;
 	double tol, piv;
 
 
 	/* If there is only one equation then set ising and return: */
 
 	/* Parameter adjustments */
-	--s;
-	--r;
-	--a;
+	//--s;
+	//--r;
+	//--a;
 
 	/* Function Body */
-	if (*neq <= 1) {
-		*ising = -1;
-		return 0;
+	if (neq <= 1) {
+		ising = -1;
+		return ising;
 	}
 
 	/* Initialize: */
 
+	ij = 0;
 	tol = 1e-7f;
-	*ising = 0;
-	nn = *neq * (*neq + 1) / 2;
-	nm = *nsb * *neq;
-	m1 = *neq - 1;
+	ising = 0;
+	nn = neq * (neq + 1) / 2;
+	nm = nsb * neq;
+	m1 = neq - 1;
+	//m1 = neq;
 	kk = 0;
 
 	/* Start triangulation: */
@@ -107,31 +107,31 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r, double *s,
 		kk += k;
 		ak = a[kk];
 		if (fabs(ak) < tol) {
-			*ising = k;
-			return 0;
+			ising = k;
+			return ising;
 		}
 		km1 = k - 1;
-		for (iv = 1; iv <= *nright; ++iv) {
+		for (iv = 1; iv <= nright; ++iv) {
 			nm1 = nm * (iv - 1);
 			ii = kk + nn * (iv - 1);
 			piv = 1.f / a[ii];
 			lp = 0;
-			for (i__ = k; i__ <= m1; ++i__) {
+			for (i = k; i <= m1; ++i) {
 				ll = ii;
-				ii += i__;
+				ii += i;
 				ap = a[ii] * piv;
 				++lp;
 				ij = ii - km1;
-				for (j = i__; j <= m1; ++j) {
+				for (j = i; j <= m1; ++j) {
 					ij += j;
 					ll += j;
 					a[ij] -= ap * a[ll];
 				}
 				/* optimizacoes. */
-				i__1 = lp + nm1;
+				i1 = lp + nm1;
 				/* fim das opts */
-				for (llb = k; llb <= nm; llb += *neq) {
-					in = llb + i__1;
+				for (llb = k; llb <= nm; llb += neq) {
+					in = llb + i1;
 					ll1 = llb + nm1;
 					r[in] -= ap * r[ll1];
 				}
@@ -141,34 +141,34 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r, double *s,
 
 	/* Error checking - singular matrix: */
 
-	ijm = ij - nn * (*nright - 1);
-	if ((d__1 = a[ijm], fabs(d__1)) < tol) {
-		*ising = *neq;
-		return 0;
+	ijm = ij - nn * (nright - 1);
+	if ((d1 = a[ijm], fabs(d1)) < tol) {
+		ising = neq;
+		return ising;
 	}
 
 	/* Finished triangulation, start solving back: */
 
-	for (iv = 1; iv <= *nright; ++iv) {
+	for (iv = 1; iv <= nright; ++iv) {
 		nm1 = nm * (iv - 1);
 		ij = ijm + nn * (iv - 1);
 		piv = 1.f / a[ij];
-		for (llb = *neq; llb <= nm; llb += *neq) {
+		for (llb = neq; llb <= nm; llb += neq) {
 			ll1 = llb + nm1;
 			s[ll1] = r[ll1] * piv;
 		}
-		i__ = *neq;
+		i = neq;
 		kk = ij;
 		for (ii = 1; ii <= m1; ++ii) {
-			kk -= i__;
+			kk -= i;
 			piv = 1.f / a[kk];
-			--i__;
-			for (llb = i__; llb <= nm; llb += *neq) {
+			--i;
+			for (llb = i; llb <= nm; llb += neq) {
 				ll1 = llb + nm1;
 				in = ll1;
 				ap = r[in];
 				ij = kk;
-				for (j = i__; j <= m1; ++j) {
+				for (j = i; j <= m1; ++j) {
 					ij += j;
 					++in;
 					ap -= a[ij] * s[in];
@@ -180,7 +180,133 @@ int ksol(int *nright, int *neq, int *nsb, double *a, double *r, double *s,
 
 	/* Finished solving back, return: */
 
-	return 0;
+	return ising;
 } /* ksol_ */
 
 
+
+int ksol_opt(int neq, double *a, double *r, double *s)
+{
+	/* System generated locals */
+	int i1;
+	double d1;
+
+	/* Local variables */
+	int i, j, k, m1, ising;
+	double ak, ap;
+	int ii, ij, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, ijm;
+	double tol, piv;
+
+
+	/* If there is only one equation then set ising and return: */
+
+	/* Parameter adjustments */
+	//--s;
+	//--r;
+	//--a;
+
+	/* Function Body */
+	if (neq <= 1) {
+		ising = -1;
+		return ising;
+	}
+
+	/* Initialize: */
+
+	ij = 0;
+	tol = 1e-7;
+	ising = 0;
+	nn = neq * (neq + 1) / 2;
+	//nm = nsb * neq;
+	m1 = neq - 1;
+	kk = 0;
+
+	/* Start triangulation: */
+
+	for (k = 1; k <= m1; ++k) {
+		kk += k;
+		ak = a[kk];
+		if (fabs(ak) < tol) {
+			ising = k;
+			return ising;
+		}
+		km1 = k - 1;
+		//for (iv = 1; iv <= nright; ++iv) {
+
+			//nm1 = nm * (iv - 1);
+			//ii = kk + nn * (iv - 1);
+			ii = kk;
+			piv = 1.f / a[ii];
+			lp = 0;
+			for (i = k; i <= m1; ++i) {
+				ll = ii;
+				ii += i;
+				ap = a[ii] * piv;
+				++lp;
+				ij = ii - km1;
+				for (j = i; j <= m1; ++j) {
+					ij += j;
+					ll += j;
+					a[ij] -= ap * a[ll];
+				}
+				/* optimizacoes. */
+				i1 = lp; //+ nm1;
+				/* fim das opts */
+				//for (llb = k; llb <= nm; llb += neq) {
+				for (llb = k; llb <= neq; llb += neq) {
+					in = llb + i1;
+					//ll1 = llb + nm1;
+					//r[in] -= ap * r[ll1];
+					r[in] -= ap * r[llb];
+				}
+			}
+
+		//}
+	}
+
+	/* Error checking - singular matrix: */
+
+	ijm = ij; //- nn * (nright - 1);
+	if ((d1 = a[ijm], fabs(d1)) < tol) {
+		ising = neq;
+		return ising;
+	}
+
+	/* Finished triangulation, start solving back: */
+
+	//for (iv = 1; iv <= nright; ++iv) {
+		//nm1 = nm * (iv - 1);
+		ij = ijm + nn * (iv - 1);
+		piv = 1.f / a[ij];
+		//for (llb = neq; llb <= nm; llb += neq) {
+		for (llb = neq; llb <= neq; llb += neq) {
+			//ll1 = llb + nm1;
+			//s[ll1] = r[ll1] * piv;
+			s[ll1] = r[llb] * piv;
+		}
+		i = neq;
+		kk = ij;
+		for (ii = 1; ii <= m1; ++ii) {
+			kk -= i;
+			piv = 1.f / a[kk];
+			--i;
+			//for (llb = i; llb <= nm; llb += neq) {
+			for (llb = i; llb <= neq; llb += neq) {
+				ll1 = llb; //+ nm1;
+				in = ll1;
+				ap = r[in];
+				ij = kk;
+				for (j = i; j <= m1; ++j) {
+					ij += j;
+					++in;
+					ap -= a[ij] * s[in];
+				}
+				s[ll1] = ap * piv;
+			}
+		}
+	//}
+
+	/* Finished solving back, return: */
+
+	return ising;
+} /* ksol_opt */

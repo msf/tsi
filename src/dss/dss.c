@@ -38,6 +38,14 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->reg = r;
     d->heap = h;
 	d->l = l;
+	
+    d->krige->rr = NULL;
+    d->krige->r__ = NULL;
+    d->krige->s = NULL;
+    d->krige->a = NULL;
+    d->krige->vra = NULL;
+    d->krige->vrea = NULL;
+    d->krige->last_na = 0;    
 
     printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, r)){
@@ -307,7 +315,15 @@ void delete_dss(dss *d) {
             tsi_free(d->covariance);
         }
         if (d->clookup) tsi_free(d->clookup);
-        if (d->krige) tsi_free(d->krige);
+        if (d->krige) {
+            if (d->krige->rr) tsi_free(d->krige->rr);
+            if (d->krige->r__) tsi_free(d->krige->r__);
+            if (d->krige->s) tsi_free(d->krige->s);
+            if (d->krige->a) tsi_free(d->krige->a);
+            if (d->krige->vra) tsi_free(d->krige->vra);
+            if (d->krige->vrea) tsi_free(d->krige->vrea);            
+            tsi_free(d->krige);
+        }
 		if (d->harddata) tsi_free(d->harddata);
         tsi_free(d);
     }

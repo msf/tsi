@@ -50,7 +50,7 @@ tsi *new_tsi(registry *reg) {
 	fread(&timeSeed,sizeof(unsigned int), 1, fp);
 	close_file(fp);
 
-//	srandom(timeSeed);
+	//srandom(timeSeed);
 	srandom(7919);
 	printf_dbg("new_tsi: seed : %u\n",timeSeed);
 
@@ -612,9 +612,9 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 		printf_dbg("tsi_dss() - coDSS ended, grids curr* grids cleared\n");
 	}
 
-	TSI_FILE *fp;
-
 	/*
+	   TSI_FILE *fp;
+
 	   printf_dbg("DSS(%d,%d,%d) DUMPING AI!\n",t->proc_id,iteration,simulation);
 	   fp = create_file("AI.out");
 	   write_ascii_grid_file(fp, t->ai, t->grid_size);
@@ -797,16 +797,31 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			printf_dbg2("tsi_eval_best_corr(%d,%d,%d): loading nextBAI + nextBCM\n", t->proc_id, iteration, simulation);
 			t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
 			//t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+
 			if (!t->nextBAI /*|| !t->nextBCM*/) {
 				printf_dbg("tsi_eval_best_corr(%d,%d,%d): failed to load nextBAI or nextBCM!", t->proc_id);
 				return 0;
 			}
-
+                        //////////////////////////////////////////////////////// TODO
+			/**/
+			printf_dbg2("loading CM grid from SI");
+                        load_cmgrid(get_cmgrid(t->si_eng));
+			printf_dbg2("loading nextBCM");
+                        load_cmgrid(t->nextBCM_c);
+                        /**/
 			getCurrTime(&t4);
 			/* update  nextBAI and nextBCM */
 			result = tsi_compare(t->grid_size, t->ai, get_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
 			getCurrTime(&t5);
 			//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
+			//////////////////////////////////////////////////////// TODO
+                        /**/
+			//delete_cmgrid(get_cmgrid(t->si_eng));
+			printf_dbg2("clearing CM grid");
+			clear_cmgrid(get_cmgrid(t->si_eng));
+			printf_dbg2("clearing nextBCM");
+			dirty_cmgrid(t->nextBCM_c);
+			/**/
 			delete_grid(t->heap, t->ai_idx);
 			t->ai_idx = t->cm_idx = -1;
 

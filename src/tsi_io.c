@@ -161,6 +161,7 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
 /************************* EVAL *********************************************/
 
 int dump_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
+    printf_dbg2("\tdump_binary_grid(): %d\n", grid_size);
     if (fseek(fp, (long) 0, SEEK_SET)) 
 		return 0;
 	if ( write_float(fp, grid, grid_size) < grid_size)
@@ -170,6 +171,7 @@ int dump_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 } /* write_grid_file */
 
 int load_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
+    printf_dbg2("\tload_binary_grid(): %d\n", grid_size);
     if (fseek(fp, (long) 0, SEEK_SET)) return 0;
 	if ( read_float(fp, grid, grid_size) < grid_size)
 		return 0;

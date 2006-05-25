@@ -91,7 +91,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l) {
         return NULL;
     }
     
-	/* layers data */
+    /* layers data */
     if ((k = get_key(r, "CORR", "RANDOM_LAYERS")) == NULL) {
        printf_dbg("\tnew_si: failed to get random layers flag from the registry! Using defaults.\n");
        s->random = 1;
@@ -191,11 +191,13 @@ cm_grid *new_cmgrid(si *s, int empty) {
         g->layer_size += x;
 
         //if ((g->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float))) == NULL) {
-        if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+        //if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+        if ((g->cg_idx = new_grid(g->heap)) == -1) {
             printf_dbg2("new_cmgrid: failed to allocate cg array\n");
             delete_cmgrid(g);
             return NULL;
         }
+        set_grid_size(g->heap, g->cg_idx, g->nxy*g->nlayers);
         return g;
     }
 
@@ -216,11 +218,13 @@ cm_grid *new_cmgrid(si *s, int empty) {
         }
         for (i = 0; i < g->nlayers; i++) g->layer_size[i] = s->min_size;
         //if ((g->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float))) == NULL) {
-        if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+        //if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+        if ((g->cg_idx = new_grid(g->heap)) == -1) {
             printf_dbg2("new_cmgrid: failed to allocate cg array\n");
             delete_cmgrid(g);
             return NULL;
         }
+        set_grid_size(g->heap, g->cg_idx, g->nxy*g->nlayers);
         return g;
     }
 
@@ -290,7 +294,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
 		printf_dbg2("\tnew_cmgrid: failed to allocate layers array\n");
 		delete_cmgrid(g);
 		return NULL;
-	}
+    }
     g->nlayers = sum;
 	
     x = 0;
@@ -301,11 +305,13 @@ cm_grid *new_cmgrid(si *s, int empty) {
     tsi_free(temp);
 
     //if ((g->cg = (float *) memalign(16,g->nlayers * g->nxy * sizeof(float))) == NULL) {
-    if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+    //if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
+    if ((g->cg_idx = new_grid(g->heap)) == -1) {
         printf_dbg2("\tnew_cmgrid: failed to allocate cg array\n");
         delete_cmgrid(g);
         return NULL;
     }
+    set_grid_size(g->heap, g->cg_idx, g->nxy*g->nlayers);
     return g;
 } /* new_cmgrid */
 
@@ -314,23 +320,25 @@ cm_grid *new_cmgrid(si *s, int empty) {
 int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
     printf_dbg2("\tbuild_cmgrid(): called\n");
     if (g == NULL) {
-        printf_dbg2("\tbuild_cmgrid: unexpected NULL for cm_grid\n");
+        printf_dbg("\tbuild_cmgrid: unexpected NULL for cm_grid\n");
         return 0;
     }
     g->nlayers = nlayers;
     g->layer_size = layers;
     //if ((g->cg = (float *) memalign(16, nlayers * g->nxy * sizeof(float))) == NULL) {
-    if ((g->cg = (float *) tsi_malloc(nlayers * g->nxy * sizeof(float))) == NULL) {
+    //if ((g->cg = (float *) tsi_malloc(nlayers * g->nxy * sizeof(float))) == NULL) {
+    if ((g->cg_idx = new_grid(g->heap)) == -1) {
         printf_dbg2("\tbuild_cmgrid: failed to allocate cg array\n");
         return 0;
     }
+    set_grid_size(g->heap, g->cg_idx, g->nxy*g->nlayers);
     return 1;
 } /* build_cmgrid */
 
 
 
 cm_grid *get_cmgrid(si *s) {
-    printf_dbg2("\tload_cmgrid(): called\n");
+    printf_dbg2("\tget_cmgrid(): called\n");
     return s->cmg;
 } /* get_cmgrid */
 
@@ -338,6 +346,10 @@ cm_grid *get_cmgrid(si *s) {
 
 int load_cmgrid(cm_grid *g) {
     printf_dbg2("\tload_cmgrid(): called\n");
+    if ((g->cg = load_grid(g->heap, g->cg_idx)) == NULL) {
+        printf_dbg("\tload_cmgrid: failed to load cg grid\n");
+        return 1;
+    }
     return 0;
 } /* load_cmgrid */
 
@@ -345,29 +357,44 @@ int load_cmgrid(cm_grid *g) {
 
 int clear_cmgrid(cm_grid *g) {
     printf_dbg2("\tclear_cmgrid(): called\n");
+    clear_grid(g->heap, g->cg_idx);
     return 0;
-} /* load_cmgrid */
+} /* clear_cmgrid */
 
 
 
 int dirty_cmgrid(cm_grid *g) {
     printf_dbg2("\tdirty_cmgrid(): called\n");
+    dirty_grid(g->heap, g->cg_idx);
     return 0;
-} /* load_cmgrid */
+} /* dirty_cmgrid */
 
 
 
 cm_grid *clone_cmgrid(cm_grid *g) {
     cm_grid *clone;
 
+    printf_dbg2("\tclone_cmgrid(): called\n");
     clone = (cm_grid *) tsi_malloc(sizeof(cm_grid));
     clone->nlayers = g->nlayers;
     clone->nxy = g->nxy;
+    clone->heap = g->heap;
     clone->layer_size = (int *) tsi_malloc(g->nlayers * sizeof(int));
     //clone->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float));
-    clone->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float));
+    //clone->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float));
+    clone->cg_idx = new_grid(clone->heap);
+    if (clone->cg_idx < 0) {
+        printf_dbg("clone_cmgrid(): failed to allocate grid for the clone\n");
+        delete_cmgrid(clone);
+        return NULL;
+    }
+    set_grid_size(clone->heap, clone->cg_idx, clone->nxy*clone->nlayers);
     memcpy(clone->layer_size, g->layer_size, g->nlayers * sizeof(int));
+    load_cmgrid(g);
+    load_cmgrid(clone);
     memcpy(clone->cg, g->cg, g->nlayers * g->nxy * sizeof(float));
+    clear_cmgrid(g);
+    dirty_cmgrid(clone);
     return clone;
 } /* clone_cmgrid */
 
@@ -402,7 +429,8 @@ void delete_cmgrid(cm_grid *g) {
     if (g) {
         if (g->layer_size) tsi_free(g->layer_size);
         //if (g->cg) free(g->cg);
-        if (g->cg) tsi_free(g->cg);
+        //if (g->cg) tsi_free(g->cg);
+        if (g->cg_idx > -1) delete_grid(g->heap, g->cg_idx);
         tsi_free(g);
     }
 } /* delete_cmgrid */

@@ -7,7 +7,7 @@
 #include "si.h"
 #include "log.h"
 
-#define TSI_VERSION		"v5.2"
+#define TSI_VERSION		"v5.3"
 
 #define CARTESIAN_FILE  0
 #define TSI_ASCII_FILE  1
