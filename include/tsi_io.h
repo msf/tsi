@@ -49,9 +49,9 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
 
 
 /* read/write floats in binary format */
-int read_float(TSI_FILE *fp, float *grid, unsigned int nelems);
+unsigned int read_float(TSI_FILE *fp, float *grid, unsigned int nelems);
 
-int write_float(TSI_FILE *fp, float *grid, unsigned int nelems);
+unsigned int write_float(TSI_FILE *fp, float *grid, unsigned int nelems);
 
 int dump_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
 

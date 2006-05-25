@@ -16,7 +16,6 @@ si *new_si(registry *r, grid_heap *h, log_t *l) {
     TSI_FILE *fp;
     char filename[512];
     int i;
-    char buf[64];
 
     printf_dbg("\tnew_si(): called\n");
     s = (si *) tsi_malloc(sizeof(si));
@@ -181,7 +180,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
         n = s->zsize / s->min_number;
         x = s->zsize % s->min_number;
 
-        if ((g->layer_size = (int *) tsi_malloc(sizeof(int) * s->min_number)) == NULL) {
+        if ((g->layer_size = (unsigned int *) tsi_malloc(sizeof(unsigned int) * s->min_number)) == NULL) {
             printf_dbg2("new_cmgrid: failed to allocate layers array");
             delete_cmgrid(g);
             return NULL;
@@ -211,7 +210,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
     } else if (delta == 0) {
         /* all layers must be of min_size */
         g->nlayers = s->min_number;
-        if ((g->layer_size = (int *) tsi_malloc(sizeof(int) * g->nlayers)) == NULL) {
+        if ((g->layer_size = (unsigned int *) tsi_malloc(sizeof(unsigned int) * g->nlayers)) == NULL) {
             printf_dbg2("new_cmgrid: failed to allocate layers array");
             delete_cmgrid(g);
             return NULL;
@@ -290,7 +289,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
             sum++;
 
     /* this is the number of layers we are going to return */
-    if ((g->layer_size = (int *) tsi_malloc(sizeof(int) * sum)) == NULL) {
+    if ((g->layer_size = (unsigned int *) tsi_malloc(sizeof(unsigned int) * sum)) == NULL) {
 		printf_dbg2("\tnew_cmgrid: failed to allocate layers array\n");
 		delete_cmgrid(g);
 		return NULL;
@@ -317,7 +316,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
 
 
 
-int build_cmgrid(cm_grid *g, int nlayers, int *layers) {
+int build_cmgrid(cm_grid *g, unsigned int nlayers, unsigned int *layers) {
     printf_dbg2("\tbuild_cmgrid(): called\n");
     if (g == NULL) {
         printf_dbg("\tbuild_cmgrid: unexpected NULL for cm_grid\n");
@@ -379,7 +378,7 @@ cm_grid *clone_cmgrid(cm_grid *g) {
     clone->nlayers = g->nlayers;
     clone->nxy = g->nxy;
     clone->heap = g->heap;
-    clone->layer_size = (int *) tsi_malloc(g->nlayers * sizeof(int));
+    clone->layer_size = (unsigned int *) tsi_malloc(g->nlayers * sizeof(unsigned int));
     //clone->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float));
     //clone->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float));
     clone->cg_idx = new_grid(clone->heap);
@@ -400,7 +399,7 @@ cm_grid *clone_cmgrid(cm_grid *g) {
 
 
 
-int get_nlayers(cm_grid *g) {
+unsigned int get_nlayers(cm_grid *g) {
     printf_dbg2("\tget_nlayers(): called\n");
     if (g) return g->nlayers;
     return 0;
@@ -408,7 +407,7 @@ int get_nlayers(cm_grid *g) {
 
 
 
-int *get_layers(cm_grid *g) {
+unsigned int *get_layers(cm_grid *g) {
     printf_dbg2("\tget_layers(): called\n");
     if (g) return g->layer_size;
     return NULL;
@@ -438,7 +437,7 @@ void delete_cmgrid(cm_grid *g) {
 
 
 void print_layers(cm_grid *g) {
-    int i;
+    unsigned int i;
     for (i = 0; i < g->nlayers; i++)
          printf_dbg("layer[%d] = %d\n",i,g->layer_size[i]);
 } /* print_layers*/

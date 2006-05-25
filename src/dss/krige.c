@@ -47,7 +47,6 @@
 
 /* Table of constant values */
 
-static int one = 1;
 
 int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		int lktype, float gmean, float *cmean, float * cstdev, 

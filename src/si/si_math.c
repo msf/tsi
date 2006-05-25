@@ -71,9 +71,8 @@ int make_reflections_grid(si *s, float *AI, float *RG)
  * creates a syntetic seismic grid.
  */
 int make_synthetic_grid(si *s, float *RG, float *SY) {
-    int x, y, z, nxy, nxyz, px, z_;
+    int x, y, z, nxy, nxyz;
     int wavelet_spots;
-    float *wvals, wval;
     int j, it;
     struct timeval t1, t2;
     unsigned int aux;
@@ -117,6 +116,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
 */
 
 /*
+    float *wvals, wval;
     it = 0;
     wvals = s->values + wavelet_spots;
     for (j = -wavelet_spots + 1; j <= wavelet_spots; j++) {
@@ -159,7 +159,8 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 
     float r, *corr_grid;
 
-    int n, nlayers, *layer_size;
+	unsigned int nlayers, *layer_size;
+    int n;
     struct timeval t1, t2;
 
     printf_dbg2("make_correlations_grid(): called\n");

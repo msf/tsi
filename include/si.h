@@ -6,9 +6,9 @@
 #include "grid_heap.h"
 
 typedef struct cm_grid_type {
-    int nlayers;      /* number of layers */
-    int nxy;          /* size of each xy grid */
-    int *layer_size;  /* size of each layer */
+    unsigned int nxy;          /* size of each xy grid */
+    unsigned int nlayers;      /* number of layers */
+    unsigned int *layer_size;  /* size of each layer */
     float *cg;        /* compressed correlations grid */
     int cg_idx;
     grid_heap *heap;
@@ -72,13 +72,13 @@ int dirty_cmgrid(cm_grid *g);
 
 int clear_cmgrid(cm_grid *g);
 
-int build_cmgrid(cm_grid *g, int nlayers, int *layer_size);
+int build_cmgrid(cm_grid *g, unsigned int nlayers, unsigned int *layer_size);
 
 cm_grid *clone_cmgrid(cm_grid *g);
 
-int get_nlayers(cm_grid *g);
+unsigned int get_nlayers(cm_grid *g);
 
-int *get_layers(cm_grid *g);
+unsigned int *get_layers(cm_grid *g);
 
 void print_layers(cm_grid *g);
 

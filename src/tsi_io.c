@@ -37,7 +37,7 @@ int close_file(TSI_FILE *fp) {
 int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
     char header[64];
     char tsi_h[] = "TSI";
-    int err, type, x1, y1, z1, nl, i;
+    int type, x1, y1, z1;
     unsigned int grid_size;
 
     /* load file header */
@@ -128,13 +128,12 @@ int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 
 
 int read_gslib_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
-    unsigned int i;
     char str[64];
 
     /* ignore header */
-    if (fgets(str, 64, fp) < 0) return 0;
-    if (fgets(str, 64, fp) < 0) return 0;
-    if (fgets(str, 64, fp) < 0) return 0;
+    if (fgets(str, 64, fp) == NULL) return 0;
+    if (fgets(str, 64, fp) == NULL) return 0;
+    if (fgets(str, 64, fp) == NULL) return 0;
 
     return read_cartesian_grid(fp, grid, grid_size);
 } /* read_gslib_grid */
@@ -142,7 +141,7 @@ int read_gslib_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 
 
 int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc) {
-    unsigned int i, grid_size;
+    unsigned int grid_size;
 
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
     if (desc) {
@@ -181,26 +180,26 @@ int load_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 
 
 
-int read_float(TSI_FILE *fp, float *grid, unsigned int nelems)
+unsigned int read_float(TSI_FILE *fp, float *grid, unsigned int nelems)
 {
-    int err;
+    unsigned int err;
 
     err = fread(grid, sizeof(float), nelems, fp);
     if (err < nelems) {
-	fprintf(stderr,"read_binary: fread returned %d\n", err);
+	fprintf(stderr,"read_binary: fread returned %u of %u\n", err, nelems);
     }
     return err;
 } /* read_float */
 
 
 
-int write_float(TSI_FILE *fp, float *grid, unsigned int nelems)
+unsigned int write_float(TSI_FILE *fp, float *grid, unsigned int nelems)
 {
-	int err;
+	unsigned int err;
 
 	err = fwrite(grid, sizeof(float), nelems, fp);
 	if (err < nelems) {
-		fprintf(stderr,"write_binary: fwrite returned %d\n",err);
+		fprintf(stderr,"write_binary: fwrite returned %u of %u\n",err,nelems);
 	}
 
 	return err;
