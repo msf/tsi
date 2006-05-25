@@ -86,7 +86,7 @@ float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 /* for power model covariance): */
 {
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset, temp, temp2;
+	int temp, temp2;
 	float r__1;
 	double d__1, d__2;
 

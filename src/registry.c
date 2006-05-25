@@ -43,7 +43,8 @@ registry *new_registry (char *filename) {
 int merge_registry(registry **r, char *filename)
 {
     FILE *f;
-    char c, state, buf[1024];
+    char state, buf[1024];
+	int c;
     int i, nl;
     registry *section, *reg;
     reg_key *key;
@@ -55,7 +56,8 @@ int merge_registry(registry **r, char *filename)
     nl = 1;
 
     if ((f = fopen(filename, "r")) != NULL) {
-        while((c = fgetc(f)) != EOF) {
+		c = fgetc(f);
+        while(c != EOF) {
             switch(state) {
                 case IDLE:  /* parser waiting for something... */
                     if (c == '#')
@@ -175,6 +177,8 @@ int merge_registry(registry **r, char *filename)
                     /* do nothing */
                     break;
             } /* switch */
+			/* get next char */
+			c = fgetc(f);
         } /* while */
         /* parse file */
     }

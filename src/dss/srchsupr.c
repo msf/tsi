@@ -79,7 +79,7 @@ int srchsupr(float xloc, float yloc, float zloc,
 	/* Table of constant values */
 
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset, i1, i2;
+	int i1;
 
 	/* Local variables */
 	int i, j, na, ii, iq, h;

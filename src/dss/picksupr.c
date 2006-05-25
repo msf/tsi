@@ -57,7 +57,7 @@ int picksup(int nxsup, float xsizsup, int nysup, float ysizsup,
 
 
 	/* System generated locals */
-	int rotmat_dim1, rotmat_offset, t1, t2, t3;
+	int t1, t2, t3;
 
 	/* Local variables */
 	double shortest;

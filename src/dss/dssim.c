@@ -157,7 +157,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 	double zmean;
 	int index, nxsup, nysup, nzsup;
-	int infoct;
 	float cstdev;
 	int lktype;
 	float xmnsup, ymnsup, zmnsup, clcorr;
