@@ -50,7 +50,7 @@ tsi *new_tsi(registry *reg) {
 	fp = open_file("/dev/random");
 	fread(&timeSeed,sizeof(unsigned int), 1, fp);
 	close_file(fp);
-	timeSeed = 7919; /* used to get a deterministic behavior */
+	//timeSeed = 7919; /* used to get a deterministic behavior */
 
 	srandom(timeSeed);
 	printf_dbg("new_tsi: seed : %u\n",timeSeed);

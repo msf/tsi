@@ -43,17 +43,17 @@ int delete_tsi_parallel(tsi *t) {
     int mpi_flag = 0;
 
     if (MPI_Initialized(&mpi_flag) != MPI_SUCCESS) {
-        log_message(t->log, "delete_tsi_parallel(): failed to detect MPI status!\n");
+        log_message(t->l, 0, "delete_tsi_parallel(): failed to detect MPI status!\n");
         return -1;
     } else if (mpi_flag) {
         printf_dbg("delete_tsi_parallel(): entering MPI_Barrier\n");    
         if (MPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) {
-            log_message(t->log, "delete_tsi_parallel(): MPI_Barrier failed!\n");    
+            log_message(t->l, 0, "delete_tsi_parallel(): MPI_Barrier failed!\n");    
             return -1;
         }
 		printf("delete_tsi_parallel() calling MPI_Finalize()\n");
         if (MPI_Finalize() != MPI_SUCCESS) {
-            log_message(t->log, "delete_tsi_parallel(): MPI_Finalize failed!\n");
+            log_message(t->l, 0, "delete_tsi_parallel(): MPI_Finalize failed!\n");
             return -1;
         } 
 		printf_dbg("delete_tsi_parallel(): MPI FINISHED OK\n");
@@ -76,7 +76,7 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
 
     printf_dbg("tsi_set_layers_parallel(%d): starting broadcast of the number of layers\n", t->proc_id);
     if (MPI_Bcast(&nlayers, 1, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
-        log_message(t->log, "tsi_set_layers_parallel: failed to broadcast nlayers\n");
+        log_message(t->l, 0, "tsi_set_layers_parallel: failed to broadcast nlayers\n");
         return 1;
     }
 
@@ -84,19 +84,19 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
     if (t->proc_id == t->root_id) {
         printf_dbg("tsi_set_layers_parallel(%d): broadcast layers array\n", t->proc_id);
         if (MPI_Bcast(layers_size, nlayers, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
-            log_message(t->log, "tsi_set_layers_parallel: failed to broadcast layers array\n");
+            log_message(t->l, 0, "tsi_set_layers_parallel: failed to broadcast layers array\n");
             return 1;
         }
         printf_dbg("tsi_set_layers_parallel(%d): finished sending layers\n", t->proc_id);
     } else {
         printf_dbg("tsi_set_layers_parallel(%d): received %d layers\n", t->proc_id, nlayers);
         if ((layers_size = (int *) tsi_malloc(sizeof(int) * nlayers)) == NULL) {
-            log_message(t->log, "tsi_set_layers_parallel: failed to allocate layers array\n");
+            log_message(t->l, 0, "tsi_set_layers_parallel: failed to allocate layers array\n");
             return 1;
         }
         printf_dbg("tsi_set_layers_parallel(%d): waiting for layers array\n", t->proc_id);
         if (MPI_Bcast(layers_size, nlayers, MPI_INT, t->root_id, MPI_COMM_WORLD) != MPI_SUCCESS) {
-            log_message(t->log, "tsi_set_layers_parallel: failed to receive layers array\n");
+            log_message(t->l, 0, "tsi_set_layers_parallel: failed to receive layers array\n");
             return 1;
         }
         build_cmgrid(g, nlayers, layers_size);
