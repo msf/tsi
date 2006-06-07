@@ -97,8 +97,8 @@ tsi *new_tsi(registry *reg) {
 	sprintf(buf,"TSI %s - started!\n",TSI_VERSION);
 	log_string(t->l, buf); 
 
-	t->global_best.value = -999;
-	t->global_best.proc_id = t->proc_id;
+	t->global_best.value = t->last_corr.value = -999;
+	t->global_best.proc_id = t->last_corr.proc_id = t->proc_id;
 
 	/* get initial data from registry */
 	if ((k = get_key(reg, "GLOBAL", "ITERATIONS")) == NULL) {
@@ -205,10 +205,6 @@ tsi *new_tsi(registry *reg) {
 
 	if (t->resume) {
 		t->optimize_last = 0;
-		t->dump_ai = 1;
-		t->dump_cm = 1;
-		t->dump_bai = 1;
-		t->dump_bcm = 1;
 	}
 
 	/* get heap data */

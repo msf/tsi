@@ -30,11 +30,19 @@ int tsi_backup_simulation(tsi *t, int i, int s)
         }
     }
     if (t->resume) {
-        printf_dbg("tsi_backup_simulation(): dumping BestAI...\n");
+        printf_dbg("tsi_backup_simulation(): dumping best results...\n");
         if (s) {
-            /* dump BCM_c and CC_c */
+            /* dump nextBCM_c and nextBAI in binary */
         } else {
-            /* dump CC_c twice (first BCM_c) */
+            /* dump CC_c as first BCM_c */
+            /* dump AI as first BAI in binary */
+        }
+        if (t->global_best.value > t->last_corr.value) {
+            printf_dbg("tsi_backup_simulation(): dumping BestAI...\n");
+            t->last_corr.value = t->global_best.value; 
+            t->last_corr.proc_id = t->global_best.proc_id; 
+            /* dump bestAI (sim numbered for sequence eval on resume) */
+            /* include correlation on 3rd line for fast resume (what about cart-grid format?) */
         }
     }
     return 1;
@@ -45,6 +53,7 @@ int tsi_backup_simulation(tsi *t, int i, int s)
 int tsi_restore_simulation(tsi *t, int i, int s)
 {
     if (!t->resume) return 0;
+    /* recurse each node sim sequence for best results -> fuck up... develop new model for sim sequence... */
     return 1;
 } /* tsi_restore_simulation */
 
