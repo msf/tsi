@@ -8,6 +8,7 @@
 #include "grid_heap.h"
 #include "si.h"
 #include "si_math.h"
+#include "si_resume.h"
 
 
 si *new_si(registry *r, grid_heap *h, log_t *l) {

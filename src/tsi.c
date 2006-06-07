@@ -28,8 +28,6 @@ int  tsi_finish_iteration(tsi *t, int iteration);
 int  tsi_save_results(tsi *t);
 int  tsi_compare(float *AI, cm_grid *CM, float *nextBAI, cm_grid *BCM);
 void grid_copy(float *a, float *b, unsigned int grid_size);
-int  tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc);
-int  tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type);
 int  expand_correlations_grid(cm_grid *cmg, float *CM);
 
 
@@ -1009,48 +1007,6 @@ void grid_copy(float *a, float *b, unsigned int grid_size)
 {
 	printf_dbg2("\tgrid_copy(): called\n");
 	memcpy(a, b, grid_size*sizeof(float));
-}
-
-
-
-int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
-	switch(type) {
-		case CARTESIAN_FILE:
-			return (read_cartesian_grid(fp, grid, t->grid_size));
-		case TSI_ASCII_FILE:
-		case TSI_BIN_FILE:
-			return (read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize));
-		case GSLIB_FILE:
-			return (read_gslib_grid(fp, grid, t->grid_size));
-			/*
-			   case SGEMS_FILE:
-			   return read_sgems_grid(fp, grid, t->grid_size));
-			 */
-		default:
-			fprintf(stderr, "ERROR: Unknown grid file type!\n");
-			return 0;
-	} /* switch */ 
-}
-
-
-
-int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
-	switch(type) {
-		case CARTESIAN_FILE:
-			return (write_cartesian_grid(fp, grid, t->grid_size));
-		case TSI_ASCII_FILE:
-		case TSI_BIN_FILE:
-			return (write_tsi_grid(fp, type, grid, t->xsize, t->ysize, t->zsize));
-		case GSLIB_FILE:
-			return (write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc));
-			/*
-			   case SGEMS_FILE:
-			   return write_sgems_grid(fp, grid, t->grid_size));
-			 */
-		default:
-			fprintf(stderr, "ERROR: Unknown grid file type!\n");
-			return 0;
-	} /* switch */ 
 }
 
 /* end of file tsi.c */

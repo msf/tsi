@@ -80,4 +80,46 @@ int tsi_restore_iteration(tsi *t, int i)
     return 1;
 } /* tsi_restore_iteration */
 
+
+
+int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
+	switch(type) {
+		case CARTESIAN_FILE:
+			return (read_cartesian_grid(fp, grid, t->grid_size));
+		case TSI_ASCII_FILE:
+		case TSI_BIN_FILE:
+			return (read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize));
+		case GSLIB_FILE:
+			return (read_gslib_grid(fp, grid, t->grid_size));
+			/*
+			   case SGEMS_FILE:
+			   return read_sgems_grid(fp, grid, t->grid_size));
+			 */
+		default:
+			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			return 0;
+	} /* switch */ 
+}
+
+
+
+int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
+	switch(type) {
+		case CARTESIAN_FILE:
+			return (write_cartesian_grid(fp, grid, t->grid_size));
+		case TSI_ASCII_FILE:
+		case TSI_BIN_FILE:
+			return (write_tsi_grid(fp, type, grid, t->xsize, t->ysize, t->zsize));
+		case GSLIB_FILE:
+			return (write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc));
+			/*
+			   case SGEMS_FILE:
+			   return write_sgems_grid(fp, grid, t->grid_size));
+			 */
+		default:
+			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			return 0;
+	} /* switch */ 
+}
+
 /* end of file tsi_resume.c */
