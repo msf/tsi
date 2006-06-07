@@ -69,7 +69,7 @@ int delete_tsi_parallel(tsi *t) {
 
 int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
 #ifdef TSI_MPI
-    int nlayers, *layers_size;
+    unsigned int nlayers, *layers_size;
 
     nlayers = get_nlayers(g);
     layers_size = get_layers(g);
@@ -90,7 +90,7 @@ int tsi_set_layers_parallel(tsi *t, cm_grid *g) {
         printf_dbg("tsi_set_layers_parallel(%d): finished sending layers\n", t->proc_id);
     } else {
         printf_dbg("tsi_set_layers_parallel(%d): received %d layers\n", t->proc_id, nlayers);
-        if ((layers_size = (int *) tsi_malloc(sizeof(int) * nlayers)) == NULL) {
+        if ((layers_size = (unsigned int *) tsi_malloc(sizeof(unsigned int) * nlayers)) == NULL) {
             log_message(t->l, 0, "tsi_set_layers_parallel: failed to allocate layers array\n");
             return 1;
         }
@@ -203,8 +203,8 @@ int tsi_compare_parallel_v2(tsi *t)
 {
 #ifdef TSI_MPI
     corr corr_data, result;
-    int z0, z1, *layer_size, nlayers, last_layer, layer, nxy, ai_p;
-    unsigned int i, j, compressed_grid_size;
+    int z0, z1, last_layer, layer, nxy, ai_p;
+    unsigned int i, j, compressed_grid_size, *layer_size, nlayers;
     float ai_val;
 	int ret, x, y;
     

@@ -92,6 +92,7 @@ typedef struct tsi_type {
         dump_bai,
         dump_bcm,
         resume;
+    corr last_corr;
     char *dump_path,
          *input_path,
          *output_path,

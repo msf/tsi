@@ -128,7 +128,7 @@ int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 
 
 int read_gslib_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
-    char str[64];
+    char str[65];
 
     /* ignore header */
     if (fgets(str, 64, fp) == NULL) return 0;

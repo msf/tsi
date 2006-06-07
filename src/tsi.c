@@ -12,24 +12,25 @@
 #include "tsi.h"
 #include "tsi_math.h"
 #include "tsi_parallel.h"
+#include "tsi_resume.h"
 #include "timer.h"
 
 
 /* additional prototypes to TSI */
-int		tsi_simulation(tsi *t, int i, int s);
-int		tsi_recurse_iterations(tsi *t, int i, int s);
-int		tsi_recurse_simulations(tsi *t, int i, int s);
-int		tsi_seismic_inversion(tsi *t, int iteration, int simulation);
-int		tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation);
-int		tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation);
-int		tsi_setup_iteration(tsi *t, int iteration);
-int		tsi_finish_iteration(tsi *t, int iteration);
-int		tsi_save_results(tsi *t);
-int		tsi_compare(float *AI, cm_grid *CM, float *nextBAI, cm_grid *BCM);
-void 	grid_copy(float *a, float *b, unsigned int grid_size);
-int		tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc);
-int		tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type);
-int 	expand_correlations_grid(cm_grid *cmg, float *CM);
+int  tsi_simulation(tsi *t, int i, int s);
+int  tsi_recurse_iterations(tsi *t, int i, int s);
+int  tsi_recurse_simulations(tsi *t, int i, int s);
+int  tsi_seismic_inversion(tsi *t, int iteration, int simulation);
+int  tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation);
+int  tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation);
+int  tsi_setup_iteration(tsi *t, int iteration);
+int  tsi_finish_iteration(tsi *t, int iteration);
+int  tsi_save_results(tsi *t);
+int  tsi_compare(float *AI, cm_grid *CM, float *nextBAI, cm_grid *BCM);
+void grid_copy(float *a, float *b, unsigned int grid_size);
+int  tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc);
+int  tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type);
+int  expand_correlations_grid(cm_grid *cmg, float *CM);
 
 
 
@@ -475,6 +476,11 @@ int tsi_simulation(tsi *t, int i, int s)
 	log_separator(t->l);
 	log_simulation_number(t->l, s);
 
+	if (tsi_restore_simulation(t, i, s)) {
+		//log_message();
+		return 1;
+	}
+
 	getCurrTime(&t1);
 	r = tsi_direct_sequential_simulation(t, i, s);
 	if (r) {
@@ -501,6 +507,11 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	log_separator(t->l);
 	log_iteration_number(t->l, iteration);
 	log_message(t->l, 0, "tsi_setup_iteration() setup Direct Sequential [Co]-Simulation");
+	
+	if (tsi_restore_iteration(t, iteration)) {
+		//log_message
+		return 1;
+	}
 
 	if (iteration == 0) { /* first iteration */
 		t->currBAI_idx = -1; 
@@ -785,6 +796,8 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 			getCurrTime(&t4);
 			getCurrTime(&t5);
+			
+			tsi_backup_simulation(t, iteration, simulation);
 
 			t->nextBAI_idx = t->ai_idx;    /* nextBxx = xx at this stage */
 			//t->nextBCM_idx = t->cm_idx;
@@ -823,6 +836,8 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			printf_dbg2("clearing nextBCM");
 			dirty_cmgrid(t->nextBCM_c);
 			/**/
+
+			tsi_backup_simulation(t, iteration, simulation);
 			delete_grid(t->heap, t->ai_idx);
 			t->ai_idx = t->cm_idx = -1;
 
@@ -887,8 +902,10 @@ int tsi_finish_iteration(tsi *t, int iteration)
 		getCurrTime(&t2);
 		par_time = getElapsedTime( &t1, &t2);
 		log_action_time(t->l, 0, "tsi_finish_iteration distributed Compare & Update time", par_time);
+		tsi_backup_iteration(t, iteration);
 	}
 
+	getCurrTime(&t3);
 	log_message(t->l, 0, "tsi_finish_iteration deleting currBAI & currBCM");
 	if (iteration > 0) {
 		delete_grid(t->heap, t->currBAI_idx);
@@ -896,9 +913,9 @@ int tsi_finish_iteration(tsi *t, int iteration)
 		t->currBAI_idx = t->currBCM_idx = -1;
 	}
 
-	getCurrTime(&t3);
 	t->par_time += par_time;
 	log_action_time(t->l, 0,"tsi_finish_iteration Time", getElapsedTime(&t1, &t3));
+
 
 	return 1;
 } /* tsi_eval_best_correlations */
