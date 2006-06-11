@@ -7,7 +7,7 @@
 #include "tsi.h"
 #include "tsi_parallel.h"
 #include "tsi_math.h"
-
+#include "timer.h"
 
 /* local prototypes */
 int expand_correlations_grid(cm_grid *cmg, float *CM);
@@ -136,8 +136,11 @@ int tsi_is_best_parallel(tsi *t) {
 
 int tsi_compare_parallel(tsi *t) 
 {
+
 #ifdef TSI_MPI
     int ret;
+    struct timeval t1, t2;
+    double par_time;
 
     if (t->compare) {
         ret = tsi_compare_parallel_collective(t);
@@ -150,7 +153,13 @@ int tsi_compare_parallel(tsi *t)
         }
         return ret;
     } else {
-        return tsi_compare_parallel_direct(t);
+        getCurrTime(&t1);
+        ret = tsi_compare_parallel_direct(t);
+        getCurrTime(&t2);
+        par_time = getElapsedTime(&t1, &t2);
+        t->par_time += par_time;
+        log_action_time(t->l, 0, "tsi_parallel_compare(): TIME IN PARALLEL COMPARE", par_time);
+        return ret;
     }
 #else
     t->nextBCM_idx = new_grid(t->heap);
@@ -179,7 +188,11 @@ int tsi_compare_parallel_collective(tsi *t) {
                  cc_size;        /* size of compressed correlations grid */
 
     unsigned int n, g, h, i, l, z0, z1;        /* aux variables */
-    unsigned int layer, last_layer;
+    unsigned int layer, last_layer;    
+    struct timeval t1, t2, t3, t4, t5, t6, t7;
+    double par_time, mm_time, run_time;
+
+    getCurrTime(&t1);
 
     /* distribute all values */
     bcm = t->nextBCM_c;
@@ -200,10 +213,12 @@ int tsi_compare_parallel_collective(tsi *t) {
     send_buf = cc;
     recv_buf = cc + cc_size + fragment_size;
     printf_dbg("tsi_compare_parallel_collective(): performing all to all\n");
+    getCurrTime(&t2);
     if (MPI_Alltoall(send_buf, fragment_size, MPI_FLOAT, recv_buf, fragment_size, MPI_FLOAT, MPI_COMM_WORLD) != MPI_SUCCESS) {
         log_string(t->l,"tsi_compare_parallel_collective(): Failed to execute all to all communication\n");
         return 1;
     }
+    getCurrTime(&t3);
 
     /* compare and select best values */
     printf_dbg("tsi_compare_parallel_collective(): begining local compare\n");
@@ -220,6 +235,7 @@ int tsi_compare_parallel_collective(tsi *t) {
     }
 
     /* distribute results lists */
+    getCurrTime(&t4);
     send_buf = rv;    /* get new BCM */
     recv_buf = cc;
     printf_dbg("tsi_compare_parallel_collective(): performing gather float\n");
@@ -235,12 +251,23 @@ int tsi_compare_parallel_collective(tsi *t) {
         log_string(t->l,"tsi_compare_parallel_collective(): Failed to execute gather all communication\n");
         return 1;
     }
+    getCurrTime(&t5);
     nv += fragment_size;
 
     /* distribute best AI values */
     bai = load_grid(t->heap, t->nextBAI_idx);
     ai_z_idx = new_grid(t->heap);
+    if (ai_z_idx < 0) {
+        printf_dbg("tsi_compare_parallel_collective(): failed to allocate ai_z grid\n");
+        return 1;
+    }
     ai_z = load_grid(t->heap, ai_z_idx);
+    if (ai_z == NULL) {
+        printf_dbg("tsi_compare_parallel_collective(): failed to load ai_z grid\n");
+        return 1;
+    }
+    cc_size = bcm->nxy * bcm->nlayers;
+    getCurrTime(&t6);
     for (n = 0; n < t->n_procs; n++) {
         h = 0;
         if (n == t->proc_id) {      /* broadcast local best AI values*/
@@ -308,11 +335,27 @@ int tsi_compare_parallel_collective(tsi *t) {
 
         }
     } /* for */
+    getCurrTime(&t7);
 
     /* clear grids */
     dirty_cmgrid(bcm);
     dirty_grid(t->heap, t->nextBCM_idx);
     delete_grid(t->heap, ai_z_idx);
+
+    mm_time = getElapsedTime(&t1, &t2);
+    run_time = getElapsedTime(&t3, &t4);
+    par_time += getElapsedTime(&t4, &t5);
+    mm_time += getElapsedTime(&t5, &t6);
+    log_action_time(t->l, 0, "parallel_compare_collective(): TIME FOR PARALLEL DISTRIBUTION OF BEST RESULTS", par_time);
+    log_action_time(t->l, 0, "parallel_compare_collective(): TIME FOR PARALLEL UPDATE OF AI VALUES", getElapsedTime(&t6, &t7));
+    par_time += getElapsedTime(&t6, &t7);
+    log_action_time(t->l, 0, "parallel_compare_collective(): TIME SPENT IN MESSAGE PASSING", par_time);
+    log_action_time(t->l, 0, "parallel_compare_collective(): time spent in memory management", mm_time);
+    log_action_time(t->l, 0, "parallel_compare_collective(): time spent comparing and selecting best results", run_time);
+    log_action_time(t->l, 0, "parallel_compare_collective(): execution time", getElapsedTime(&t1,&t7));
+    t->par_time += par_time;
+    t->mm_time += mm_time;
+    t->corr_time += run_time;
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel_collective */
@@ -323,8 +366,8 @@ int tsi_compare_parallel_direct(tsi *t)
 {
 	//return tsi_compare_parallel_v1(t);
 	//return tsi_compare_parallel_v2(t);
-	//return tsi_compare_parallel_v3(t);
-	return tsi_compare_parallel_v4(t);
+	return tsi_compare_parallel_v3(t);
+	//return tsi_compare_parallel_v4(t);
 } /* tsi_compare_parallel_direct */
 
 

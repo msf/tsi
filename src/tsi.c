@@ -897,7 +897,6 @@ int tsi_finish_iteration(tsi *t, int iteration)
 	double par_time, mm_time;
 
 	getCurrTime(&t1);
-
 	if (t->n_procs > 1) {
 		log_message(t->l, 0, "tsi_finish_iteration(): running distributed Compare & Update");
 		if (tsi_is_best_parallel(t))
@@ -909,15 +908,12 @@ int tsi_finish_iteration(tsi *t, int iteration)
 			t->bestAI_idx = -1;
 		}
 	}
+        getCurrTime(&t2);
 
 	if (!t->optimize_last || (iteration+1 < t->iterations)) {
 		if (tsi_compare_parallel(t))
-			return 0;
-
-		getCurrTime(&t2);
+		    return 0;
 		tsi_backup_iteration(t, iteration);
-	} else {
-		getCurrTime(&t2);
 	}
 	
 	log_message(t->l, 0, "tsi_finish_iteration(): deleting currBAI & currBCM");
@@ -926,18 +922,16 @@ int tsi_finish_iteration(tsi *t, int iteration)
 		delete_grid(t->heap, t->currBCM_idx);
 		t->currBAI_idx = t->currBCM_idx = -1;
 	}
-	getCurrTime(&t3);
 
+	getCurrTime(&t3);
 	par_time = getElapsedTime( &t1, &t2);
-	mm_time = getElapsedTime( &t3, &t3);
 	t->par_time += par_time;
-	t->mm_time += mm_time;
-	log_action_time(t->l, 0,"tsi_finish_iteration(): PARALLEL UPDATE OF BEST RESULTS", par_time);
+	log_action_time(t->l, 0,"tsi_finish_iteration(): PARALLEL EVALUATION OF BEST CORRELATION", par_time);
 	log_action_time(t->l, 0,"tsi_finish_iteration(): Time", getElapsedTime(&t1, &t3));
 
 
 	return 1;
-} /* tsi_eval_best_correlations */
+} /* tsi_finish_iteration */
 
 
 
@@ -1032,6 +1026,6 @@ void grid_copy(float *a, float *b, unsigned int grid_size)
 {
 	printf_dbg2("\tgrid_copy(): called\n");
 	memcpy(a, b, grid_size*sizeof(float));
-}
+} /* grid_copy */
 
 /* end of file tsi.c */
