@@ -217,7 +217,7 @@ tsi *new_tsi(registry *reg) {
 		t->resume = 0;
 	}
 
-	if (t->resume) {
+	if (t->resume || t->dump_ai || t->dump_cm || t->dump_bai || t->dump_bcm) {
 		t->optimize_last = 0;
 	}
 
