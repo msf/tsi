@@ -87,7 +87,7 @@ tsi *new_tsi(registry *reg) {
 
 	/* create logger */
 	t->l = new_log(t->reg, t->proc_id);
-	if(t->l == NULL) {
+	if (t->l == NULL) {
 		printf("log creation failed, aborting\n");
 		delete_tsi(t);
 		return NULL;
@@ -123,7 +123,15 @@ tsi *new_tsi(registry *reg) {
 	}
 
 	printf_dbg("TSI: %d Simulations x %d Iterations\n",t->simulations, t->iterations);
-	k = get_key(reg, "GLOBAL", "OPTIMIZE");
+	k = get_key(reg, "GLOBAL", "OPTIMIZE_LAST");
+	if (k) {
+		t->optimize_last = get_int(k);
+	} else {
+		printf_dbg("new_tsi(%d): failed to get optimize_last flag from the registry! Using defaults...\n", t->proc_id);
+		t->optimize_last = 1;
+	}
+
+	k = get_key(reg, "MPI", "OPTIMIZE");
 	if (k) {
 		t->optimize = get_int(k);
 	} else {
@@ -131,12 +139,20 @@ tsi *new_tsi(registry *reg) {
 		t->optimize = 1;
 	}
 
-	k = get_key(reg, "GLOBAL", "OPTIMIZE_LAST");
+	k = get_key(reg, "MPI", "USE_MPI_IO");
 	if (k) {
-		t->optimize_last = get_int(k);
+		t->mpi_io = get_int(k);
 	} else {
-		printf_dbg("new_tsi(%d): failed to get optimize_last flag from the registry! Using defaults...\n", t->proc_id);
-		t->optimize_last = 0;
+		printf_dbg("new_tsi(%d): failed to get MPI_IO flag from the registry! Using defaults...\n", t->proc_id);
+		t->mpi_io = 0;
+	}
+
+	k = get_key(reg, "MPI", "COMPARE");
+	if (k) {
+		t->compare = get_int(k);
+	} else {
+		printf_dbg("new_tsi(%d): failed to get COMPARE flag from the registry! Using defaults...\n", t->proc_id);
+		t->compare = 0;
 	}
 
 	/* change simulation data to optimize resource use during execution */
@@ -159,7 +175,7 @@ tsi *new_tsi(registry *reg) {
 
 		/* terminate processes that aren't needed */
 		if (t->n_procs <= t->proc_id) {
-			exit(0);
+			exit(0);       //   <---------------- TEST TEST TEST
 			//return NULL;
 		}
 
@@ -168,7 +184,7 @@ tsi *new_tsi(registry *reg) {
 		if (t->proc_id < over_sims) t->simulations--;
 
 		/* set root node */
-		k = get_key(reg, "GLOBAL", "MIDDLEZERO");
+		k = get_key(reg, "MPI", "MIDDLEZERO");
 		if (k) {
 			t->root_id = get_int(k);
 		} else {
@@ -218,7 +234,7 @@ tsi *new_tsi(registry *reg) {
 		heap_size = get_int(k);
 	else {
 		printf_dbg("new_tsi(%d): failed to get heap size flag from the registry! Using defaults...\n", t->proc_id);
-		heap_size = 12;
+		heap_size = 13;
 	}
 	k = get_key(reg, "HEAP", "THRESHOLD");
 	if (k)
@@ -421,8 +437,8 @@ int run_tsi(tsi *t) {
 	log_result(t->l, 0, "run_tsi() - HEAP CURR grids ",t->heap->curr_grids);
 	log_result(t->l, 0, "run_tsi() - HEAP MAXIMUM grids",t->heap->max_grids);
 	log_string(t->l,"\n");
-	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Memory Management",t->mm_time);
-	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Parallel Execution ",t->par_time);
+	log_action_time(t->l, 0, "run_tsi() - TOTAL Time spent in Memory Management",t->mm_time);
+	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Parallel Code Execution ",t->par_time);
 	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Direct Sequential Simulation",t->dss_time);
 	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Seismic Inversion",t->si_time);
 	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Eval Best Correlations",t->corr_time);
@@ -496,7 +512,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	double run_time, par_time;
 	cm_grid *cmg;
 
-	getCurrTime(&t1);
 	/* prepare simulations */
 	log_separator(t->l);
 	log_iteration_number(t->l, iteration);
@@ -507,6 +522,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
 		return 1;
 	}
 
+	getCurrTime(&t1);
 	if (iteration == 0) { /* first iteration */
 		t->currBAI_idx = -1; 
 		t->currBCM_idx = -1;
@@ -527,7 +543,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
 		delete_cmgrid(t->nextBCM_c);
 		*/
 	}
-	getCurrTime(&t3);
 
 	/* prepare seismic inversion (new set of layers) */
 	log_message(t->l, 0, "tsi_setup_iteration() setup Seismic Inversion");
@@ -540,24 +555,27 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	}
 	if (!cmg) return 0;
 
+	getCurrTime(&t3);
 	if (tsi_set_layers_parallel(t, cmg)) {
 		printf_dbg("tsi_setup_iteration(%d,%d,0): failed to set layers\n", t->proc_id, iteration);
 		delete_tsi(t);
 		return 0;
 	}
-	store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
 	getCurrTime(&t4);
+	store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
 
 	// printf_dbg("tsi_setup_iteration: \tNew set of layers:\n");
 	// print_layers(cmg);
 	// printf("\n");
 
-	run_time = getElapsedTime(&t1, &t4);
+	run_time = getElapsedTime(&t1, &t3);
 	par_time = getElapsedTime(&t3, &t4);
 	t->par_time += par_time;
+	t->mm_time += run_time;
 
-	log_action_time(t->l, 0, "tsi_setup_iteration() Time in SI (grid layers) setup",par_time); 
-	log_action_time(t->l, 0, "tsi_setup_iteration() Time",run_time); 
+	log_action_time(t->l, 0, "tsi_setup_iteration() Time in SI (grid layers) setup", run_time);
+	log_action_time(t->l, 0, "tsi_setup_iteration() TIME IN PARALLEL GRID LAYERS SETUP",par_time);
+	log_action_time(t->l, 0, "tsi_setup_iteration() Time", getElapsedTime(&t1, &t4));
 
 	/*
 	   printf_dbg("tsi_setup_iteration(%d,%d,0): terminated", t->proc_id, iteration);
@@ -657,12 +675,12 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 	getCurrTime(&t1);
 	/* allocate new grids for CM and SY */
 	if ((t->cm_idx = new_grid(t->heap)) < 0) {
-		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATED CM grid");
+		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATE CM grid");
 		delete_tsi(t);
 		return 0;
 	}
 	if ((t->sy_idx = new_grid(t->heap)) < 0) {
-		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATED SY grid");
+		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATE SY grid");
 		delete_tsi(t);
 		return 0;
 	}
@@ -757,10 +775,12 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 	}
 
 	log_message(t->l, 1, "tsi_eval_best_correlations() computing grid_correlation");
+
 	/* evaluate best global correlation */
 	getCurrTime(&t2);    /* BENCHMARKING... */
 	corr = grid_correlation(t->seismic, t->sy, t->grid_size);   /* between real and synthetic seismic data */
 	getCurrTime(&t3);
+
 	clear_grid(t->heap, t->seismic_idx);
 	delete_grid(t->heap, t->sy_idx); /* not needed anymore, delete it */
 	t->sy_idx = -1; 
@@ -824,7 +844,6 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
 			//////////////////////////////////////////////////////// TODO
                         /**/
-			//delete_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("clearing CM grid");
 			clear_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("clearing nextBCM");
@@ -836,7 +855,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			t->ai_idx = t->cm_idx = -1;
 
 			log_result(t->l, 2, "tsi_compare() - Compare & Update changed points",result);
-			if (result > 0) {
+			if (result >= 0) {
 				printf_dbg2("tsi_eval_best_corr(%d,%d,%d): final clean-up\n", t->proc_id, iteration, simulation);
 			} else {
 				printf_dbg("tsi_eval_best_corr(%d,%d,%d): Compare&Update failed!\n", t->proc_id, iteration, simulation);
@@ -849,6 +868,8 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 	} else {
 		getCurrTime(&t4);
 		getCurrTime(&t5);
+		delete_grid(t->heap, t->ai_idx);
+		t->ai_idx = -1;
 	} /* if optimize last iteration */
 
 	getCurrTime(&t6);
@@ -873,12 +894,12 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 int tsi_finish_iteration(tsi *t, int iteration) 
 {
 	struct timeval t1, t2, t3;
-	double par_time;
+	double par_time, mm_time;
 
 	getCurrTime(&t1);
 
 	if (t->n_procs > 1) {
-		log_message(t->l, 0, "tsi_finish_iteration running distributed Compare & Update");
+		log_message(t->l, 0, "tsi_finish_iteration(): running distributed Compare & Update");
 		if (tsi_is_best_parallel(t))
 			return 0;
 
@@ -894,21 +915,25 @@ int tsi_finish_iteration(tsi *t, int iteration)
 			return 0;
 
 		getCurrTime(&t2);
-		par_time = getElapsedTime( &t1, &t2);
-		log_action_time(t->l, 0, "tsi_finish_iteration distributed Compare & Update time", par_time);
 		tsi_backup_iteration(t, iteration);
+	} else {
+		getCurrTime(&t2);
 	}
-
-	getCurrTime(&t3);
-	log_message(t->l, 0, "tsi_finish_iteration deleting currBAI & currBCM");
+	
+	log_message(t->l, 0, "tsi_finish_iteration(): deleting currBAI & currBCM");
 	if (iteration > 0) {
 		delete_grid(t->heap, t->currBAI_idx);
 		delete_grid(t->heap, t->currBCM_idx);
 		t->currBAI_idx = t->currBCM_idx = -1;
 	}
+	getCurrTime(&t3);
 
+	par_time = getElapsedTime( &t1, &t2);
+	mm_time = getElapsedTime( &t3, &t3);
 	t->par_time += par_time;
-	log_action_time(t->l, 0,"tsi_finish_iteration Time", getElapsedTime(&t1, &t3));
+	t->mm_time += mm_time;
+	log_action_time(t->l, 0,"tsi_finish_iteration(): PARALLEL UPDATE OF BEST RESULTS", par_time);
+	log_action_time(t->l, 0,"tsi_finish_iteration(): Time", getElapsedTime(&t1, &t3));
 
 
 	return 1;

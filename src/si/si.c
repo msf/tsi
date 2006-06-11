@@ -161,7 +161,8 @@ void delete_si(si *s) {
 cm_grid *new_cmgrid(si *s, int empty) {
     cm_grid *g;
     int delta, i, x, n, sum, *temp;
-    
+    unsigned int j;
+
     printf_dbg2("\tnew_cmgrid(): called\n");
     if ((g = tsi_malloc(sizeof(cm_grid))) == NULL) {
         printf_dbg("\tnew_cmgrid: failed to allocate space for cm_grid\n");
@@ -216,7 +217,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
             delete_cmgrid(g);
             return NULL;
         }
-        for (i = 0; i < g->nlayers; i++) g->layer_size[i] = s->min_size;
+        for (j = 0; j < g->nlayers; j++) g->layer_size[j] = s->min_size;
         //if ((g->cg = (float *) memalign(16, g->nlayers * g->nxy * sizeof(float))) == NULL) {
         //if ((g->cg = (float *) tsi_malloc(g->nlayers * g->nxy * sizeof(float))) == NULL) {
         if ((g->cg_idx = new_grid(g->heap)) == -1) {

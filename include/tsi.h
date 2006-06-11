@@ -7,7 +7,7 @@
 #include "si.h"
 #include "log.h"
 
-#define TSI_VERSION		"v5.3"
+#define TSI_VERSION		"v5.4"
 
 #define CARTESIAN_FILE  0
 #define TSI_ASCII_FILE  1
@@ -51,7 +51,9 @@ typedef struct tsi_type {
         proc_id,                 /* process ID */
         root_id,                 /* root process ID */
         optimize,                /* runtime optimization flag */
-        optimize_last;           /* optimize last iteration */
+        optimize_last,           /* optimize last iteration */
+        mpi_io,                  /* use MPI I/O functions */
+        compare;                 /* use collective ops for best results evaluation */
 
     /* grid size */
     int xsize,

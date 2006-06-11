@@ -8,14 +8,18 @@
 #include "tsi_parallel.h"
 #include "tsi_math.h"
 
-int expand_correlations_grid(cm_grid *cmg, float *CM);
 
+/* local prototypes */
+int expand_correlations_grid(cm_grid *cmg, float *CM);
+void local_compare_update(float *lBCM, float *lBAI, float *rBCM, float *rBAI, int size);
+int tsi_compare_parallel_direct(tsi *t);
+int tsi_compare_parallel_collective(tsi *t);
 int tsi_compare_parallel_v1(tsi *t);
 int tsi_compare_parallel_v2(tsi *t);
 int tsi_compare_parallel_v3(tsi *t);
 int tsi_compare_parallel_v4(tsi *t);
 
-void local_compare_update(float *lBCM, float *lBAI, float *rBCM, float *rBAI, int size);
+
 
 int new_tsi_parallel(int *n_procs, int *proc_id) {
 #ifdef TSI_MPI
@@ -65,7 +69,7 @@ int delete_tsi_parallel(tsi *t) {
 		return 1;
 #endif /* TSI_MPI */
     return 0;
-}
+} /* delete_tsi_parallel */
 
 
 
@@ -129,21 +133,200 @@ int tsi_is_best_parallel(tsi *t) {
 } /* tsi_is_best_parallel */
 
 
+
 int tsi_compare_parallel(tsi *t) 
 {
 #ifdef TSI_MPI
+    int ret;
+
+    if (t->compare) {
+        ret = tsi_compare_parallel_collective(t);
+        if (!ret) {
+            t->nextBCM_idx = new_grid(t->heap);
+            t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+            load_cmgrid(t->nextBCM_c);
+            expand_correlations_grid(t->nextBCM_c, t->nextBCM);
+            delete_cmgrid(t->nextBCM_c);
+        }
+        return ret;
+    } else {
+        return tsi_compare_parallel_direct(t);
+    }
+#else
+    t->nextBCM_idx = new_grid(t->heap);
+    t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+    expand_correlations_grid(t->nextBCM_c, t->nextBCM);
+    delete_cmgrid(t->nextBCM_c);
+    return 0;
+#endif /* TSI_MPI */
+} /* tsi_compare_parallel */
+
+
+
+int tsi_compare_parallel_collective(tsi *t) {
+#ifdef TSI_MPI
+    cm_grid *bcm;
+    float   *bai, *ai_z;
+    int     bai_idx, ai_z_idx;
+
+    float *cc,          /* orginal BCM values */
+          *rv;          /* results array */
+    void  *recv_buf,    /* receive buffer */
+          *send_buf;    /* send buffer */
+    int   *nv;          /* locations array */
+
+    unsigned int fragment_size,  /* size of each fragment of a grid to be shared */
+                 cc_size;        /* size of compressed correlations grid */
+
+    unsigned int n, g, h, i, l, z0, z1;        /* aux variables */
+    unsigned int layer, last_layer;
+
+    /* distribute all values */
+    bcm = t->nextBCM_c;
+    load_cmgrid(bcm);
+    cc = bcm->cg;
+
+    cc_size = bcm->nxy * bcm->nlayers;
+    fragment_size = (cc_size / t->n_procs) + ((cc_size % t->n_procs > 0) ? 1 : 0);
+    cc_size = fragment_size * t->n_procs;  /* new "clustered" size */
+
+    //--------------------------- TODO ----------------------------------------------------------------
+    if (t->heap->grid_size < (2*cc_size + 2*fragment_size)) {
+        printf_dbg("tsi_compare_parallel_collective(): not enough space available on BCM cm_grid...");
+        return 1;
+    }
+    //--------------------------- END OF TODO ---------------------------------------------------------
+
+    send_buf = cc;
+    recv_buf = cc + cc_size + fragment_size;
+    printf_dbg("tsi_compare_parallel_collective(): performing all to all\n");
+    if (MPI_Alltoall(send_buf, fragment_size, MPI_FLOAT, recv_buf, fragment_size, MPI_FLOAT, MPI_COMM_WORLD) != MPI_SUCCESS) {
+        log_string(t->l,"tsi_compare_parallel_collective(): Failed to execute all to all communication\n");
+        return 1;
+    }
+
+    /* compare and select best values */
+    printf_dbg("tsi_compare_parallel_collective(): begining local compare\n");
+    nv = (int *) cc + cc_size;          /* set pointer for nodes array */
+    rv = recv_buf;                      /* set pointer for results array (same as recv_buf) */
+    for (n = 1; n < t->n_procs; n++) {
+        for (g = 0; g < fragment_size; g++) {
+            h = n * fragment_size + g;
+            if (rv[g] < rv[h]) {
+                rv[g] = rv[h];
+                nv[g] = n;
+	    }
+        }
+    }
+
+    /* distribute results lists */
+    send_buf = rv;    /* get new BCM */
+    recv_buf = cc;
+    printf_dbg("tsi_compare_parallel_collective(): performing gather float\n");
+    if (MPI_Allgather(send_buf, fragment_size, MPI_FLOAT, recv_buf, fragment_size, MPI_FLOAT, MPI_COMM_WORLD) != MPI_SUCCESS) {
+        log_string(t->l,"tsi_compare_parallel_collective(): Failed to execute gather all communication\n");
+        return 1;
+    }
+
+    send_buf = nv;
+    recv_buf = nv + fragment_size;
+    printf_dbg("tsi_compare_parallel_collective(): performing gather int\n");
+    if (MPI_Allgather(send_buf, fragment_size, MPI_INT, recv_buf, fragment_size, MPI_FLOAT, MPI_COMM_WORLD) != MPI_SUCCESS) {
+        log_string(t->l,"tsi_compare_parallel_collective(): Failed to execute gather all communication\n");
+        return 1;
+    }
+    nv += fragment_size;
+
+    /* distribute best AI values */
+    bai = load_grid(t->heap, t->nextBAI_idx);
+    ai_z_idx = new_grid(t->heap);
+    ai_z = load_grid(t->heap, ai_z_idx);
+    for (n = 0; n < t->n_procs; n++) {
+        h = 0;
+        if (n == t->proc_id) {      /* broadcast local best AI values*/
+
+            z0 = 0;
+            z1 = bcm->layer_size[0];
+            layer = last_layer = 0;
+            for (g = 0; g < cc_size; g++) {        /* build z vectors AI array */
+                layer = g / bcm->nxy;
+                if (layer > last_layer) { 
+                    last_layer = layer;
+                    z0 = z1;
+                    z1 += bcm->layer_size[layer];
+                    printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
+                }
+                if (nv[g] == n) {
+                    for (i = z0; i < z1; i++) {
+                    	ai_z[h] = bai[(i * bcm->nxy) + (g - layer*bcm->nxy)];
+                    	h++;
+                    } /* for */
+                }
+            } /* for */
+
+            if (h > 0) {
+                if (MPI_Bcast(ai_z, h, MPI_FLOAT, n, MPI_COMM_WORLD) != MPI_SUCCESS) {
+                    printf_dbg("tsi_compare_parallel: failed to broadcast new AI value\n");
+                    return 1;
+                }
+	    }
+
+        } else {                    /* receive new AI values */
+
+            for (g = 0; g < cc_size; g++) {   /* calc array size of broadcast */
+                if (nv[g] == n) {
+                    h += bcm->layer_size[g/bcm->nxy];
+	        }
+	    } /* for */
+
+	    if (h > 0) {
+                if (MPI_Bcast(ai_z, h, MPI_FLOAT, n, MPI_COMM_WORLD) != MPI_SUCCESS) {
+                    printf_dbg("tsi_compare_parallel: failed to broadcast new AI value\n");
+                    return 1;
+	        }
+
+                z0 = 0;
+                z1 = bcm->layer_size[0];
+                layer = last_layer = 0;
+                h = 0;
+                for (g = 0; g < cc_size; g++) {        /* unpack z vectors AI array */
+                    layer = g / bcm->nxy;
+                    if (layer > last_layer) { 
+                        last_layer = layer;
+                        z0 = z1;
+                        z1 += bcm->layer_size[layer];
+                        printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
+                    }
+                    if (nv[g] == n) {
+                        for (i = z0; i < z1; i++) {
+                             bai[(i * bcm->nxy) + (g - layer*bcm->nxy)] = ai_z[h];
+                             h++;
+                        }
+                    }
+                } /* for */
+	    }
+
+        }
+    } /* for */
+
+    /* clear grids */
+    dirty_cmgrid(bcm);
+    dirty_grid(t->heap, t->nextBCM_idx);
+    delete_grid(t->heap, ai_z_idx);
+#endif /* TSI_MPI */
+    return 0;
+} /* tsi_compare_parallel_collective */
+
+
+
+int tsi_compare_parallel_direct(tsi *t) 
+{
 	//return tsi_compare_parallel_v1(t);
 	//return tsi_compare_parallel_v2(t);
 	//return tsi_compare_parallel_v3(t);
 	return tsi_compare_parallel_v4(t);
-#else
-	t->nextBCM_idx = new_grid(t->heap);
-    t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
-	expand_correlations_grid(t->nextBCM_c, t->nextBCM);
-	delete_cmgrid(t->nextBCM_c);
-	return 0;
-#endif /* TSI_MPI */
-}
+} /* tsi_compare_parallel_direct */
+
 
 
 int tsi_compare_parallel_v1(tsi *t) {
@@ -201,6 +384,8 @@ int tsi_compare_parallel_v1(tsi *t) {
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel_v1 */
+
+
 
 int tsi_compare_parallel_v2(tsi *t) 
 {
@@ -289,6 +474,7 @@ int tsi_compare_parallel_v2(tsi *t)
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel_v2 */
+
 
 
 /* totally sincronous distributed compate & update */
@@ -434,7 +620,8 @@ int tsi_compare_parallel_v3(tsi *t)
 
 #endif /* TSI_MPI */
 	return 0;
-} /* end of tsi_compare_parallel_v3 */
+} /* tsi_compare_parallel_v3 */
+
 
 
 /* totally sincronous distributed compate & update,
@@ -625,7 +812,7 @@ int tsi_compare_parallel_v4(tsi *t)
 
 #endif /* TSI_MPI */
 	return 0;
-} /* end of tsi_compare_parallel_v4 */
+} /* tsi_compare_parallel_v4 */
 
 
 
@@ -638,5 +825,6 @@ void local_compare_update(float *lBCM, float *lBAI, float *rBCM, float *rBAI, in
 			lBAI[i] = rBAI[i];
 		}
 	}
-}
+} /* local_compare_update */
+
 /* end of tsi_parallel.c */

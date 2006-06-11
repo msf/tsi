@@ -11,7 +11,8 @@ typedef struct grid_type {
     int swappable,     /* swappable flag. set to null when grid is in use */
         dirty,         /* dirty grid flag. set to null if grid contents are disposable */
         next_grid,     /* next free grid on stack */
-		valid;
+        valid,
+        first_load;    /* flag to zero the grid */
     unsigned int size; /* new size if different from default */
 
     char *filename;    /* filename to use when creating file */

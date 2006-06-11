@@ -149,8 +149,9 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
 int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM) 
 {
     int x, y, z;
-    int i, z1, z2;
+    int z1, z2;
     int temp;
+    unsigned int i;
 
     double sum_xy;
     double sum_x,sum_x_2,sum_x2;
@@ -226,9 +227,10 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 
 
 int expand_correlations_grid(cm_grid *cmg, float *CM) {
-    int z, i, j, n, nxy;
+    int z, j, n, nxy;
     float *cg;
     float *t;
+    unsigned int i;
 
     printf_dbg2("expand_correlations_grid(): called\n");
     load_cmgrid(cmg);
