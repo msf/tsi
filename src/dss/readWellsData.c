@@ -65,7 +65,7 @@ int readWellsData(general_vars_t * general, float * wellsData, unsigned int well
 	}
 
 	/* j is the size of the WellsData */
-	printf("readWellsData: %d points\n",j);
+	//printf("readWellsData: %d points\n",j);
 	general->wellsNPoints = j;
 	general->wellsDataVal = (float *) tsi_malloc(sizeof(float) * j);
 	general->wellsDataPos = (unsigned int *) tsi_malloc(sizeof(unsigned int) * j); 

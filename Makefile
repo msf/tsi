@@ -3,13 +3,13 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-COMPILER := gcc
+#COMPILER := gcc
 
 # Default settings for gcc
 CC      := gcc#-3.4
 CPP     := g++#-3.4
 CFLAGS  := -pipe 
-LDFLAGS := -lm -lc -lpthread -lstdc++ -lgcc
+LDFLAGS := -lm -lc -lpthread -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
 #OPTS	+= -march=pentium-m
 #OPTS	+= -m32
@@ -36,7 +36,7 @@ ifeq ($(COMPILER), icc)
 CC      := icc
 CPP     := icc
 CFLAGS  := -O3 -mP2OPT_hlo_prefetch=F
-LDFLAGS := -lm -lc -lpthread -lstdc++ -lgcc
+LDFLAGS := -lm -lc -lpthread -lgcc
 OPTS    :=
 DEBUG   := -DTSI_DEBUG2
 endif
