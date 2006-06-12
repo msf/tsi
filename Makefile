@@ -6,15 +6,15 @@ COMPILER := mpicc
 COMPILER := gcc
 
 # Default settings for gcc
-CC      := gcc-4.0
-CPP     := g++-4.0
+CC      := gcc#-3.4
+CPP     := g++#-3.4
 CFLAGS  := -pipe 
 LDFLAGS := -lm -lc -lpthread -lgcc
-OPTS    := -O3 -ffast-math -fomit-frame-pointer -ftree-vectorize -mfpmath=sse -msse -msse2
-#OPTS    += -ftree-vectorizer-verbose=5
+OPTS    := -O3 -ffast-math -fomit-frame-pointer  -msse -msse2 -mfpmath=sse 
+#OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=pentium-m
 #OPTS	+= -m32
-#OPTS	+= -DTSI_DEBUG -g
+OPTS	+= -DTSI_DEBUG -g
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
