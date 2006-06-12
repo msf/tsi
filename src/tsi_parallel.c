@@ -790,7 +790,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 
     //--------------------------- TODO ----------------------------------------------------------------
     if (t->heap->grid_size < (2*cc_size + 2*fragment_size)) {
-        printf_dbg("tsi_compare_parallel_collective(): not enough space available on BCM cm_grid...");
+        printf_dbg("tsi_compare_parallel_direct(): not enough space available on BCM cm_grid...");
         return 1;
     }
     //--------------------------- END OF TODO ---------------------------------------------------------
@@ -798,7 +798,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
     send_buf = cc;
     recv_buf = cc + cc_size + fragment_size;
 	
-    printf_dbg("tsi_compare_parallel_collective(): performing all to all\n");
+    printf_dbg("tsi_compare_parallel_direct(): performing all to all\n");
     getCurrTime(&t2);
 	/* this code implements ALLTOALL using point to point paired sendrecvs 
 	 * this is specially nice on clusters with fullduplex point to point links and no (or bad) multicast support
@@ -832,7 +832,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
     par_time = getElapsedTime(&t2, &t3);
 
     /* compare and select best values */
-    printf_dbg("tsi_compare_parallel_collective(): begining local compare\n");
+    printf_dbg("tsi_compare_parallel_direct(): begining local compare\n");
     nv = (int *) cc + cc_size;          /* set pointer for nodes array */
     rv = recv_buf;                      /* set pointer for results array (same as recv_buf) */
 	for (n = 1; n < t->n_procs; n++) {
@@ -859,7 +859,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 	from = (from  + clustersize - 1) % clustersize;
 	start = from * fragment_size;
 
-    printf_dbg("tsi_compare_parallel_collective(): performing gather of new BCM\n");
+    printf_dbg("tsi_compare_parallel_direct(): performing gather of new BCM\n");
     send_buf = rv;    /* get new BCM */
     recv_buf = cc;
 	i = t->proc_id + fragment_size;
@@ -890,7 +890,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 	from = (from  + clustersize - 1) % clustersize;
 	start = from * fragment_size;
 
-    printf_dbg("tsi_compare_parallel_collective(): performing gather of new best AI locations\n");
+    printf_dbg("tsi_compare_parallel_direct(): performing gather of new best AI locations\n");
     send_buf = nv;
     recv_buf = nv + fragment_size;
 	i = t->proc_id + fragment_size;
@@ -918,12 +918,12 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
     bai = load_grid(t->heap, t->nextBAI_idx);
     ai_z_idx = new_grid(t->heap);
     if (ai_z_idx < 0) {
-        printf_dbg("tsi_compare_parallel_collective(): failed to allocate ai_z grid\n");
+        printf_dbg("tsi_compare_parallel_direct(): failed to allocate ai_z grid\n");
         return 1;
     }
     ai_z = load_grid(t->heap, ai_z_idx);
     if (ai_z == NULL) {
-        printf_dbg("tsi_compare_parallel_collective(): failed to load ai_z grid\n");
+        printf_dbg("tsi_compare_parallel_direct(): failed to load ai_z grid\n");
         return 1;
     }
     cc_size = bcm->nxy * bcm->nlayers;
@@ -966,9 +966,10 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 
     send_buf = ai_z;
     recv_buf = ai_z + send_size;
-	int from_size;
+	int from_size, total = send_size;
 	double r_time;
 	r_time = 0;
+	printf_dbg("parallel_compare(%d): send_size: %d\n", t->proc_id, send_size);            
 	while(to != t->proc_id) {
 
 		from_size = 0;
@@ -978,6 +979,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 			}
 		} /* for */
 
+		printf_dbg("parallel_compare(%d): sendrecv, send_size: %d\t got so far: %d\t next recv_size: %d\n", t->proc_id, send_size, total, from_size);
 		ret = MPI_Sendrecv(send_buf , send_size, MPI_FLOAT, to, to,
 				recv_buf, from_size, MPI_FLOAT, from, t->proc_id,
 				MPI_COMM_WORLD, &stat);
@@ -994,9 +996,9 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 					last_layer = layer;
 					z0 = z1;
 					z1 += bcm->layer_size[layer];
-					printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
 				}
 				if (nv[g] == from) {
+					printf_dbg("parallel_compare(%d): writting BAI for bcm layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
 					for (i = z0; i < z1; i++) {
 						bai[(i * bcm->nxy) + (g - layer*bcm->nxy)] = ai_z[send_size + h];
 						h++;
@@ -1004,6 +1006,8 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 				}
 			} /* for */
 		}
+		total += from_size;
+
 		getCurrTime(&t5);
 		r_time += getElapsedTime(&t5, &t4);
 		
@@ -1017,14 +1021,23 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 
     /* clear grids */
     dirty_cmgrid(bcm);
-    dirty_grid(t->heap, t->nextBCM_idx);
+    dirty_grid(t->heap, t->nextBAI_idx);
     delete_grid(t->heap, ai_z_idx);
 
     par_time += getElapsedTime(&t2, &t3) - r_time;
-    log_action_time(t->l, 0, "parallel_compare_collective(): TIME SPENT IN MESSAGE PASSING", par_time);
-    log_action_time(t->l, 0, "parallel_compare_collective(): execution time", run_time);
+    log_action_time(t->l, 0, "parallel_compare_direct(): TIME SPENT IN MESSAGE PASSING", par_time);
+    log_action_time(t->l, 0, "parallel_compare_direct(): execution time", run_time);
     t->par_time += par_time;
     t->corr_time += run_time;
+	
+	/* this is done here because the other compare_parallel_direct() don't use compressed CorrMaps */
+	t->nextBCM_idx = new_grid(t->heap);
+	t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+	load_cmgrid(t->nextBCM_c);
+	expand_correlations_grid(t->nextBCM_c, t->nextBCM);
+	delete_cmgrid(t->nextBCM_c);
+	dirty_grid(t->heap, t->nextBCM_idx);
+
 #endif /* TSI_MPI */
     return 0;
 } /* tsi_compare_parallel_v5*/
