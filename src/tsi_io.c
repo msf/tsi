@@ -121,7 +121,7 @@ int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
 
     for (i = 0; i < grid_size; i++) 
-		fprintf(fp, "%.3f\n", grid[i]);
+		fprintf(fp, "%.4f\n", grid[i]);
     return i;
 } /* write_cartesian_grid */
 

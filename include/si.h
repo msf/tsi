@@ -19,6 +19,9 @@ typedef struct si_type {
     registry  *reg;
     grid_heap *heap;
     log_t *l;                   /* reference to the log */
+    
+    int n_procs,
+        proc_id;
 
 	/* grid size */
     int xsize,
@@ -43,16 +46,16 @@ typedef struct si_type {
     /* execution log */
     int dump_sy,
         dump_rg;
-    char *dump_path;
+    char *dump_path,
+         empty_path;
+    int dump_file;        /* dump file type */
 } si;
 
 
 /* SI methods */
-si *new_si(registry *r, grid_heap *h, log_t *l);
+si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id);
 
-int setup_si(si *s);
-
-int run_si(si *s, float *AI, float *seismic, float *CM, float *SY);
+int run_si(si *s, float *AI, float *seismic, float *CM, float *SY, int it, int sim);
 
 void delete_si(si *s);
 

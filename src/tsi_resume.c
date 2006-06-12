@@ -1,36 +1,100 @@
 /* tsi_resume.c */
 
-#include <tsi_resume.h>
+#include <string.h>
+#include "tsi_resume.h"
 
 
 int tsi_backup_simulation(tsi *t, int i, int s)
 {
+    float *g;
+    cm_grid *cmg;
+    char filename[1024], desc[128];
+    int g_idx;
+    TSI_FILE *fp;
+
     if (t->dump_ai) {
-        printf_dbg("tsi_backup_simulation(): dumping AI...\n");
+        printf_dbg("\ttsi_backup_simulation(): dumping AI...\n");
         /* dump AI */
-    }
-    if (t->dump_cm) {
-        printf_dbg("tsi_backup_simulation(): dumping CC...\n");
-        /* expand and dump CC */
-    }
-    if (t->dump_bcm) {
-        printf_dbg("tsi_backup_simulation(): dumping BCM...\n");
-        if (s) {
-            /* expand and dump nextBCM */
-        } else {
-            /* expand and dump CC as first BCM */
+        g = load_grid(t->heap, t->ai_idx);
+        sprintf(desc, "AI_%d_%d", i, (s * t->n_procs + t->proc_id));        
+        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
+        fp = create_file(filename);
+        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
+            printf_dbg("\ttsi_backup_simulation(): failed to dump AI\n");
+            return 0;
         }
+        close_file(fp);
+        clear_grid(t->heap, t->ai_idx);
     }
+
     if (t->dump_bai) {
-        printf_dbg("tsi_backup_simulation(): dumping BAI...\n");
+        printf_dbg("\ttsi_backup_simulation(): dumping BAI...\n");
+        sprintf(desc, "BAI_%d_%d", i, (s * t->n_procs + t->proc_id));        
+        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         if (s) {
             /* dump nextBAI */
+            g_idx = t->nextBAI_idx;
         } else {
             /* dump AI as first BAI */
+            g_idx = t->ai_idx;
         }
+        g = load_grid(t->heap, g_idx);
+        fp = create_file(filename);
+        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
+            printf_dbg("\ttsi_backup_simulation(): failed to dump BAI\n");
+            return 0;
+        }
+        close_file(fp);
+        clear_grid(t->heap, g_idx);
     }
+
+    if (t->dump_cm) {
+        printf_dbg("\ttsi_backup_simulation(): dumping CC...\n");
+        /* expand and dump CC */
+        cmg = get_cmgrid(t->si_eng);
+        load_cmgrid(cmg);
+        g_idx = new_grid(t->heap);
+        g = load_grid(t->heap, g_idx);
+        expand_correlations_grid(cmg, g);
+        sprintf(desc, "CC_%d_%d", i, (s * t->n_procs + t->proc_id));        
+        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
+        fp = create_file(filename);
+        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
+            printf_dbg("\ttsi_backup_simulation(): failed to dump CC\n");
+            return 0;
+        }
+        close_file(fp);
+        delete_grid(t->heap, g_idx);
+        clear_cmgrid(cmg);
+    }
+
+    if (t->dump_bcm) {
+        printf_dbg("\ttsi_backup_simulation(): dumping BCM...\n");
+        sprintf(desc, "BCM_%d_%d", i, (s * t->n_procs + t->proc_id));        
+        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
+        if (s) {
+            /* expand and dump nextBCM */
+            cmg = t->nextBCM_c;
+        } else {
+            /* expand and dump CC as first BCM */
+            cmg = get_cmgrid(t->si_eng);
+        }
+        load_cmgrid(cmg);
+        g_idx = new_grid(t->heap);
+        g = load_grid(t->heap, g_idx);
+        expand_correlations_grid(cmg, g);
+        fp = create_file(filename);
+        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
+            printf_dbg("\ttsi_backup_simulation(): failed to dump CC\n");
+            return 0;
+        }
+        close_file(fp);
+        delete_grid(t->heap, g_idx);
+        clear_cmgrid(cmg);
+    }
+
     if (t->resume) {
-        printf_dbg("tsi_backup_simulation(): dumping best results...\n");
+        printf_dbg("\ttsi_backup_simulation(): dumping best results...\n");
         if (s) {
             /* dump nextBCM_c and nextBAI in binary */
         } else {
@@ -38,13 +102,14 @@ int tsi_backup_simulation(tsi *t, int i, int s)
             /* dump AI as first BAI in binary */
         }
         if (t->global_best.value > t->last_corr.value) {
-            printf_dbg("tsi_backup_simulation(): dumping BestAI...\n");
+            printf_dbg("\ttsi_backup_simulation(): dumping BestAI...\n");
             t->last_corr.value = t->global_best.value; 
             t->last_corr.proc_id = t->global_best.proc_id; 
             /* dump bestAI (sim numbered for sequence eval on resume) */
             /* include correlation on 3rd line for fast resume (what about cart-grid format?) */
         }
     }
+
     return 1;
 } /* tsi_backup_simulation */
 
@@ -61,14 +126,42 @@ int tsi_restore_simulation(tsi *t, int i, int s)
 
 int tsi_backup_iteration(tsi *t, int i)
 {
-    if (t->dump_bcm) {
-        printf_dbg("tsi_backup_iteration(): dumping BCM...\n");
-        /* expand and dump nextBCM */
-    }
+    float *g;
+    cm_grid *cmg;
+    char filename[1024], desc[128];
+    int g_idx;
+    TSI_FILE *fp;
+
     if (t->dump_bai) {
-        printf_dbg("tsi_backup_iteration(): dumping BAI...\n");
-        /* dump nextBAI */
+        printf_dbg("\ttsi_backup_iteration(): dumping BAI...\n");
+        sprintf(desc, "BAI_%d", i);        
+        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
+        g_idx = t->nextBAI_idx;
+        g = load_grid(t->heap, g_idx);
+        fp = create_file(filename);
+        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
+            printf_dbg("\ttsi_backup_iteration(): failed to dump BAI\n");
+            return 0;
+        }
+        close_file(fp);
+        clear_grid(t->heap, g_idx);
     }
+
+    if (t->dump_bcm) {
+        printf_dbg("\ttsi_backup_simulation(): dumping BCM...\n");
+        sprintf(desc, "BCM_%d", i);        
+        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
+        g_idx = t->nextBCM_idx;
+        g = load_grid(t->heap, g_idx);
+        fp = create_file(filename);
+        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
+            printf_dbg("\ttsi_backup_simulation(): failed to dump CC\n");
+            return 0;
+        }
+        close_file(fp);
+        clear_grid(t->heap, g_idx);
+    }
+
     return 1;
 } /* tsi_backup_iteration */
 
@@ -98,7 +191,7 @@ int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
 		default:
 			fprintf(stderr, "ERROR: Unknown grid file type!\n");
 			return 0;
-	} /* switch */ 
+	} /* switch */
 }
 
 

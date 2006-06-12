@@ -6,12 +6,13 @@
 #include "log.h"
 #include "registry.h"
 #include "grid_heap.h"
+#include "tsi.h"
 #include "si.h"
 #include "si_math.h"
 #include "si_resume.h"
 
 
-si *new_si(registry *r, grid_heap *h, log_t *l) {
+si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     si *s;
     reg_key *k, *kpath;
     TSI_FILE *fp;
@@ -27,6 +28,8 @@ si *new_si(registry *r, grid_heap *h, log_t *l) {
     s->heap = h;
     s->l = l;
     s->cmg = NULL;
+    s->n_procs = n_procs;
+    s->proc_id = proc_id;
 
     /* get grid parameters */
     if ((k = get_key(r, "GRID", "XNUMBER")) == NULL) {
@@ -113,20 +116,38 @@ si *new_si(registry *r, grid_heap *h, log_t *l) {
     }
     s->min_size = get_int(k);
 
+    /* dumps */
+    s->dump_sy = s->dump_rg = 0;
+    if ((k = get_key(r, "DUMP", "SYNTH")) != NULL) {
+       s->dump_sy = get_int(k);
+    }
+    if ((k = get_key(r, "DUMP", "RCOEF")) != NULL) {
+       s->dump_rg = get_int(k);
+    }
+
+    s->empty_path = 0;
+    s->dump_path = &s->empty_path;
+    if ((k = get_key(r, "DUMP", "PATH")) != NULL) {
+       s->dump_path = get_string(k);
+    } else if ((k = get_key(r, "GLOBAL", "OUTPUT_PATH")) != NULL) {
+       s->dump_path = get_string(k);
+    }
+
+    s->dump_file = TSI_BIN_FILE;
+    if ((k = get_key(r, "DUMP", "FILE_TYPE")) != NULL) {
+        if (!strcmp(get_string(k), "cart-grid")) s->dump_file = CARTESIAN_FILE;
+        else if (!strcmp(get_string(k), "tsi-ascii")) s->dump_file = TSI_ASCII_FILE;
+        else if (!strcmp(get_string(k), "tsi-bin")) s->dump_file = TSI_BIN_FILE;
+        //else if (!strcmp(get_string(k), "sgems")) s->dump_file = SGEMS_FILE;
+        else if (!strcmp(get_string(k), "gslib")) s->dump_file = GSLIB_FILE;
+    }
+  
     return s;
 } /* new_si */
 
 
 
-int setup_si(si *s) {
-    printf_dbg("\tsetup_si(): called but not implemented\n");
-    /* generate new set of layers */
-    return 1;
-}
-
-
-
-int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
+int run_si(si *s, float *AI, float *seismic, float *CM, float *SY, int it, int sim) {
     int result;
     float *RG;
 
@@ -135,9 +156,13 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY) {
 
     /* build reflections grid (use CM as aux grid) */
     result = make_reflections_grid(s, AI, RG);
+    if (s->dump_rg)
+        dump_reflections_grid(s, RG, it, sim);
 
     /* build synthetic grid */
     result = make_synthetic_grid(s, RG, SY);   /* CM has reflections grid */
+    if (s->dump_sy)
+        dump_synthetic_grid(s, SY, it, sim);
 	
     /* build correlations cube, use CM has resulting correlations Grid */
     result = make_correlations_grid(s, seismic, SY, CM);

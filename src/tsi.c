@@ -28,7 +28,6 @@ int  tsi_finish_iteration(tsi *t, int iteration);
 int  tsi_save_results(tsi *t);
 int  tsi_compare(float *AI, cm_grid *CM, float *nextBAI, cm_grid *BCM);
 void grid_copy(float *a, float *b, unsigned int grid_size);
-int  expand_correlations_grid(cm_grid *cmg, float *CM);
 
 
 
@@ -64,13 +63,13 @@ tsi *new_tsi(registry *reg) {
 	if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) != NULL) 
 		t->output_path = get_string(k);
 
-	t->seismic_path = t->input_path;
-	if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL) 
-		t->seismic_path = get_string(k);
-
 	t->log_path = t->output_path;
 	if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) != NULL) 
 		t->log_path = get_string(k);
+
+	t->seismic_path = t->input_path;
+	if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL) 
+		t->seismic_path = get_string(k);
 
 	t->dump_path = t->output_path;
 	if ((k = get_key(reg, "DUMP", "PATH")) != NULL) 
@@ -138,6 +137,7 @@ tsi *new_tsi(registry *reg) {
 		printf_dbg("new_tsi(%d): failed to get optimize flag from the registry! Using defaults...\n", t->proc_id);
 		t->optimize = 1;
 	}
+        t->optimize = 0;  /* force optimize to false beacause of MPI limitations */
 
 	k = get_key(reg, "MPI", "USE_MPI_IO");
 	if (k) {
@@ -175,7 +175,7 @@ tsi *new_tsi(registry *reg) {
 
 		/* terminate processes that aren't needed */
 		if (t->n_procs <= t->proc_id) {
-			exit(0);       //   <---------------- TEST TEST TEST
+			exit(0);       //   <---------------- check MPI 2.0 for possible options...
 			//return NULL;
 		}
 
@@ -326,7 +326,7 @@ tsi *new_tsi(registry *reg) {
 	printf_dbg("new_tsi(): DSS engine loaded\n");
 
 	/* start SI engine */
-	t->si_eng = new_si(t->reg, t->heap, t->l);
+	t->si_eng = new_si(t->reg, t->heap, t->l, t->n_procs, t->proc_id);
 	if (!t->si_eng) {
 		printf_dbg("new_tsi(%d): failed to start si engine\n", t->proc_id);
 		delete_tsi(t);
@@ -699,7 +699,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 	if (t->cm && t->seismic && t->sy && t->ai) {
 		log_message(t->l, 1, "tsi_seismic_inversion() running Seismic Inversion");
 		getCurrTime(&t2);
-		result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy);  /* 4 grids */
+		result = run_si(t->si_eng, t->ai, t->seismic, t->cm, t->sy, iteration, simulation);  /* 4 grids */
 		getCurrTime(&t3);
 	} else {
 		printf_dbg("tsi_seismic_inversion(%d,%d,%d): failed to load CM, Seismic, AI or SY for SI!\n", t->proc_id, iteration, simulation);
@@ -894,7 +894,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 int tsi_finish_iteration(tsi *t, int iteration) 
 {
 	struct timeval t1, t2, t3;
-	double par_time, mm_time;
+	double par_time;
 
 	getCurrTime(&t1);
 	if (t->n_procs > 1) {
@@ -938,7 +938,7 @@ int tsi_finish_iteration(tsi *t, int iteration)
 int tsi_save_results(tsi *t) {
 	reg_key *k;
 	TSI_FILE *fp;
-	char filename[128];
+	char filename[1024];
 
 	/* save best AI grid */
 	if (t->global_best.proc_id == t->proc_id) {

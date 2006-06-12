@@ -114,4 +114,6 @@ void delete_tsi(tsi *t);
 
 int run_tsi(tsi *t);
 
+int expand_correlations_grid(cm_grid *cmg, float *CM);
+
 #endif /* _TSI_H */
