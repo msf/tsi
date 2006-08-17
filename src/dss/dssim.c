@@ -210,7 +210,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		sim[i] = general->nosvalue;
 	}
 
-	toSim = general->nxyz;
+	toSim = general->nxyz -1;
 	index = in = 0;
 
 	/* copy wells data to simulation grid */
@@ -245,7 +245,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	in = 0;
 	zmean = 0.f;
 	zvariance = 0.f;
-	while( toSim > 0 ) {
+	while( toSim >= 0 ) {
 		
 		if(toSim == (general->nxyz * 0.75))
 			printf_dbg("\tdsssim(): 1/4 completed.\n");
