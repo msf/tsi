@@ -94,13 +94,8 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         return NULL;
     }
     
-    /* layers data */
-    if ((k = get_key(r, "CORR", "RANDOM_LAYERS")) == NULL) {
-       printf_dbg("\tnew_si: failed to get random layers flag from the registry! Using defaults.\n");
-       s->random = 1;
-    } else {
-       s->random = get_int(k);
-    }
+	/* layers data */
+	s->random = 1;
 
     if ((k = get_key(r, "CORR", "LAYERS_MIN")) == NULL) {
        printf_dbg("\tnew_si: failed to get number of layers setting from the registry!\n");
@@ -135,11 +130,10 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 
     s->dump_file = TSI_BIN_FILE;
     if ((k = get_key(r, "DUMP", "FILE_TYPE")) != NULL) {
-        if (!strcmp(get_string(k), "cart-grid")) s->dump_file = CARTESIAN_FILE;
+        if (!strcmp(get_string(k), "gslib")) s->dump_file = CARTESIAN_FILE;
         else if (!strcmp(get_string(k), "tsi-ascii")) s->dump_file = TSI_ASCII_FILE;
         else if (!strcmp(get_string(k), "tsi-bin")) s->dump_file = TSI_BIN_FILE;
-        //else if (!strcmp(get_string(k), "sgems")) s->dump_file = SGEMS_FILE;
-        else if (!strcmp(get_string(k), "gslib")) s->dump_file = GSLIB_FILE;
+        else if (!strcmp(get_string(k), "sgems-ascii")) s->dump_file = GSLIB_FILE;
     }
   
     return s;

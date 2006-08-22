@@ -13,7 +13,7 @@
 #define TSI_ASCII_FILE  1
 #define TSI_BIN_FILE    2
 #define GSLIB_FILE      3
-#define SGEMS_FILE      4
+#define SGEMS_FILE      1
 
 
 typedef struct corr_type {

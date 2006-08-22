@@ -249,7 +249,8 @@ tsi *new_tsi(registry *reg) {
 	if (k)
 		t->root = get_int(k);
 	else {
-		printf_dbg("new_tsi(%d): failed to get BCM root from the registry! Using defaults...\n", t->proc_id);
+		// this is legacy code.
+		//printf_dbg("new_tsi(%d): failed to get BCM root from the registry! Using defaults...\n", t->proc_id);
 		t->root = 1;
 	}
 
@@ -340,25 +341,22 @@ tsi *new_tsi(registry *reg) {
 	t->dump_file = TSI_BIN_FILE;     /* increases performance for dump/resume features */
 	t->result_file = TSI_ASCII_FILE;
 	if ((k = get_key(reg, "DUMP", "FILE_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "cart-grid")) t->dump_file = CARTESIAN_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->dump_file = CARTESIAN_FILE;
 		else if (!strcmp(get_string(k), "tsi-ascii")) t->dump_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->dump_file = TSI_BIN_FILE;
-		//else if (!strcmp(get_string(k), "sgems")) t->dump_file = SGEMS_FILE;
-		else if (!strcmp(get_string(k), "gslib")) t->dump_file = GSLIB_FILE;
+		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
 	}
 	if ((k = get_key(reg, "GLOBAL", "RESULT_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "cart-grid")) t->result_file = CARTESIAN_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->dump_file = CARTESIAN_FILE;
 		else if (!strcmp(get_string(k), "tsi-ascii")) t->result_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->result_file = TSI_BIN_FILE;
-		//else if (!strcmp(get_string(k), "sgems")) t->result_file = SGEMS_FILE;
-		else if (!strcmp(get_string(k), "gslib")) t->result_file = GSLIB_FILE;
+		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
 	}
 	if ((k = get_key(reg, "SEISMIC", "FILE_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "cart-grid")) t->seismic_file = CARTESIAN_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->dump_file = CARTESIAN_FILE;
 		else if (!strcmp(get_string(k), "tsi-ascii")) t->seismic_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->seismic_file = TSI_BIN_FILE;
-		//else if (!strcmp(get_string(k), "sgems")) t->seismic_file = SGEMS_FILE;
-		else if (!strcmp(get_string(k), "gslib")) t->seismic_file = GSLIB_FILE;
+		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
 	}
 
 	/* load seismic grid */

@@ -14,7 +14,7 @@ OPTS    := -O3 -ffast-math -fomit-frame-pointer  -msse -msse2 -mfpmath=sse
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=pentium-m
 #OPTS	+= -m32
-OPTS	+= -DTSI_DEBUG -g
+#OPTS	+= -DTSI_DEBUG -g
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
