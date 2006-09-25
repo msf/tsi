@@ -117,6 +117,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "math_random.h"
 #include "dss.h"
 #include "dss_legacy.h"
 
@@ -210,7 +211,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		sim[i] = general->nosvalue;
 	}
 
-	toSim = general->nxyz -1;
+	toSim = general->nxyz;
 	index = in = 0;
 
 	/* copy wells data to simulation grid */
@@ -245,7 +246,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	in = 0;
 	zmean = 0.f;
 	zvariance = 0.f;
-	while( toSim >= 0 ) {
+	while( toSim > 0 ) {
 		
 		if(toSim == (general->nxyz * 0.75))
 			printf_dbg("\tdsssim(): 1/4 completed.\n");
@@ -255,7 +256,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			printf_dbg("\tdsssim(): 3/4 completed.\n");
 
 		/* generate point to simulate */
-		in = ((int) random() % toSim) +1; /* +1 because of fortran offsets */
+		in = ((int) tsi_random() % toSim) +1; /* +1 because of fortran offsets */
 		index = order[in];  /* point to be simulated */
 
 		/* mark has simulated */
@@ -343,7 +344,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			}
 				
 			krige(ix, iy, iz, xx, yy, zz, lktype, gmean, 
-					&cmean, &cstdev, // this are the output vars of krige
+					&cmean, &cstdev, // these are the output vars of krige
 					&bestAICube[1], clcorr,
 					general, search, simulation,
 					covariance, covtable_lookup, krige_vars);
@@ -387,7 +388,7 @@ L9999:
 		/* !Gera um valor aleatorio com distribuicao Gaussiana */
 		vms = 0;
 		for (i = 1; i <= covtable_lookup->ntry; ++i) {
-			p = ((double)random()) / RAND_MAX;
+			p = tsi_random_real();
 			gauinv(&p, &xp, &ierr);
 			xp = xp * cstdev + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */

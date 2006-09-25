@@ -333,13 +333,13 @@ void delete_dss(dss *d) {
 
 float *load_harddata_file(char *filename,  unsigned int *size) {
     float x, y, z, val;
-    int i;
+    int i, m;
 	char line[256];
 	float *buf;
 	TSI_FILE *fp;
 
     if ((fp = open_file(filename)) == NULL) {
-        printf("new_dss(): ERROR - Can't open Hard Data file: %s\n", filename);
+        fprintf(stderr,"load_harddata_file(): ERROR - Can't open Hard Data file: %s\n", filename);
         return NULL;
     }
 	
@@ -353,7 +353,10 @@ float *load_harddata_file(char *filename,  unsigned int *size) {
 	fseek(fp, 0, SEEK_SET); // back to start of file
 	
 	i = 0;
-	while(fscanf(fp,"%f %f %f %f", &x, &y, &z, &val) != EOF) {
+	m = 0;
+	while( (m = fscanf(fp,"%f %f %f %f", &x, &y, &z, &val)) != EOF ) {
+		if(m != 4)
+			fprintf(stdout,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 1+(i/4));
 		buf[i++] = x;
 		buf[i++] = y;
 		buf[i++] = z;
