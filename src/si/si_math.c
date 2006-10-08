@@ -32,25 +32,17 @@ int make_reflections_grid(si *s, float *AI, float *RG)
     int x, y, z, z_;
     double value;
     struct timeval t1, t2;
+	unsigned int p1, p2;
         
     getCurrTime(&t1);
-/*
-    for (x = 0; x < s->xsize; x++) {
-        for (y = 0; y < s->ysize; y++)
-            for (z = 0; z < s->zsize -1; z++) {
-                 value =  (AI[getPoint(s,x,y,z+1)] - AI[getPoint(s,x,y,z)]) / (AI[getPoint(s,x,y,z+1)] + AI[getPoint(s,x,y,z)]);
-                 RG[getPoint(s,x,y,z)] = value;
-            }
-            RG[getPoint(s,x,y,s->zsize -1)] = 0;
-	}
-*/
 
-    /* old code */
     for (x = 0; x < s->xsize; x++)
         for (y = 0; y < s->ysize; y++)
             for (z = 0; z < s->zsize -1; z++) {
-                 value =  (AI[getPoint(s,x,y,z+1)] - AI[getPoint(s,x,y,z)]) / (AI[getPoint(s,x,y,z+1)] + AI[getPoint(s,x,y,z)]);
-                 RG[getPoint(s,x,y,z)] = value;
+				p1 = getPoint(s,x,y,z+1);
+				p2 = getPoint(s,x,y,z);
+                 value =  (AI[p1] - AI[p2]) / (AI[p1] + AI[p2]);
+                 RG[p2] = value;
             }
 
     z_ = s->zsize-1;
@@ -100,34 +92,6 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
                 }
             }
 
-	/* optimization tests */
-/*    it = z = nxyz - nxy;
-    for (k = 0; k < z; k++) {
-        for (l = a; a < b; l++) {
-            SY[getPoint(s,x,y,it+j)] += RG[getPoint(s,x,y,z)] * (s->values[(s->wavelet_used_values / 2) + j]);
-        }
-        it++;
-    }
-*/
-
-/*
-    float *wvals, wval;
-    it = 0;
-    wvals = s->values + wavelet_spots;
-    for (j = -wavelet_spots + 1; j <= wavelet_spots; j++) {
-        for (z = 0; z < s->zsize; z++) {
-            it = z + 1 + j;
-            if ((it > 0) && (it < s->zsize)) {
-                wval = *(wvals + j);
-                for (x = 0; x < s->xsize; x++) 
-                    for (y = 0; y < s->ysize; y++) {
-                        SY[getPoint(s,x,y,it)] += RG[getPoint(s,x,y,z)] * wval;
-                        aux++;
-                    }
-            }
-        }
-    }
-*/
     getCurrTime(&t2);
 	log_action_time(s->l, 2, "make_syntetic_grid() cpuTime",getElapsedTime(&t1,&t2));
     printf_dbg2("make_syntetic_grid (%f secs, %u calcs)\n", getElapsedTime(&t1, &t2), aux);
@@ -202,10 +166,11 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
                 else 
                     r = 0; 
 
+				temp = getPoint(s,x,y,i);
 				if (r < 0)
-					corr_grid[getPoint(s,x,y,i)] = 0; 
+					corr_grid[temp] = 0; 
 				else
-					corr_grid[getPoint(s,x,y,i)] = r; 
+					corr_grid[temp] = r; 
 				
                 // reposition Z pointer
                 z1 = z2;
