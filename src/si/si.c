@@ -457,10 +457,15 @@ void delete_cmgrid(cm_grid *g) {
 
 
 
-void print_layers(cm_grid *g) {
-    unsigned int i;
-    for (i = 0; i < g->nlayers; i++)
-         printf_dbg("layer[%d] = %d\n",i,g->layer_size[i]);
+void print_layers(log_t *l, cm_grid *g) {
+	unsigned int i;
+	char buf[256];
+	sprintf(buf, "number of layers: %d\n",g->nlayers);
+	log_string(l, buf);
+	for (i = 0; i < g->nlayers; i++){
+		sprintf(buf,"\tsize of layer[%d] = %d\n",i,g->layer_size[i]);
+		log_string(l, buf);
+	}
 } /* print_layers*/
 
 /* end of file si.c */

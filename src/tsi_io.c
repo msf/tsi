@@ -4,19 +4,57 @@
 #include "tsi.h"
 #include "tsi_io.h"
 
-#ifndef TSI_MPIIO
+/**
+ * high level functions
+ */
 
-/* I/O prototypes */
-/* (none) */
+int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
+	switch(type) {
+		case CARTESIAN_FILE:
+			return (read_cartesian_grid(fp, grid, t->grid_size));
+		case TSI_ASCII_FILE:
+		case TSI_BIN_FILE:
+			return (read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize));
+		case GSLIB_FILE:
+			return (read_gslib_grid(fp, grid, t->grid_size));
+			/*
+			   case SGEMS_FILE:
+			   return read_sgems_grid(fp, grid, t->grid_size));
+			 */
+		default:
+			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			return 0;
+	} /* switch */
+} /* tsi_read_grid */
 
-/**** open/close files ****/
+int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
+	switch(type) {
+		case CARTESIAN_FILE:
+			return (write_cartesian_grid(fp, grid, t->grid_size));
+		case TSI_ASCII_FILE:
+		case TSI_BIN_FILE:
+			return (write_tsi_grid(fp, type, grid, t->xsize, t->ysize, t->zsize));
+		case GSLIB_FILE:
+			return (write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc));
+			/*
+			   case SGEMS_FILE:
+			   return write_sgems_grid(fp, grid, t->grid_size));
+			 */
+		default:
+			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			return 0;
+	} /* switch */ 
+} /* tsi_write_grid */
+
+/**** 
+ * open/close files ***
+ */
 
 TSI_FILE *open_file(char *filename) {
     TSI_FILE *fp;
     fp = fopen(filename, "r+");
     return fp;
 } /* open_file */
-
 
 
 TSI_FILE *create_file(char *filename) {
@@ -26,13 +64,14 @@ TSI_FILE *create_file(char *filename) {
 } /* create_file */
 
 
-
 int close_file(TSI_FILE *fp) {
     return fclose(fp);
 } /* close_file */
 
 
-/**** grid read/write functions ****/
+/**** 
+ * grid read/write functions ***
+ */
 
 int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
     char header[64];
@@ -42,23 +81,25 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 
     /* load file header */
 	
-	if ( fread(header, sizeof(char), 3, fp ) < 3)
-			return 0;
+    if ( fread(header, sizeof(char), 3, fp ) < 3) {
+	fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
+	return 0;
+    }
 
 
     /* parse header */
     if (strncmp(header, tsi_h, 3)) {
-        printf_dbg("\tread_tsi_grid(): unknown file format\n");
+        fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
         return 0;
     }
 
     fscanf(fp, "%d %d %d %d\n", &type, &x1, &y1, &z1);
     if ((type != 1) && (type != 2)) {
-        printf_dbg("\tread_tsi_grid(): incompatible format\n");
+        fprintf(stderr,"\tread_tsi_grid(): incompatible format\n");
         return 0;
     }
     if ((x != x1) || (y != y1) || (z < z1)) {
-        printf_dbg("\tread_tsi_grid(): incoeherent size parameters\n");
+        fprintf(stderr,"\tread_tsi_grid(): incoeherent size parameters\n");
         return 0;
     }
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
@@ -73,7 +114,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
             return read_float(fp, grid, grid_size);
 
         default:
-            printf_dbg("\tread_tsi_grid(): unknown file format\n");
+            fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
             break;
     } /* switch */
 
@@ -94,24 +135,11 @@ int write_tsi_grid(TSI_FILE *fp, int type, float *grid, int x, int y, int z) {
 } /* write_tsi_grid */
 
 
-
-//int read_tsi_cmgrid(TSI_FILE *fp, cm_grid *cmg, int x, int y, int z) {
-//    return 0;
-//} /* read_tsi_cmgrid */
-
-
-
-//int write_tsi_cmgrid(TSI_FILE *fp, cm_grid *cmg, float *address, int x, int y, int z) {
-//    return 0;
-//} /* read_cartesian_grid */
-
-
-
 int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
 	
     for (i=0; i < grid_size; i++) 
-		fscanf(fp, "%f\n", &grid[i]);
+	    fscanf(fp, "%f\n", &grid[i]);
     return i;
 } /* read_cartesian_grid */
 
@@ -121,7 +149,7 @@ int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
 
     for (i = 0; i < grid_size; i++) 
-		fprintf(fp, "%.4f\n", grid[i]);
+	    fprintf(fp, "%.4f\n", grid[i]);
     return i;
 } /* write_cartesian_grid */
 
@@ -204,10 +232,6 @@ unsigned int write_float(TSI_FILE *fp, float *grid, unsigned int nelems)
 
 	return err;
 } /* write_float */
-
-#endif /* TSI_MPIIO */
-
-
 
 /* end of tsi_io.c */
 
