@@ -52,7 +52,6 @@ typedef struct tsi_type {
         root_id,                 /* root process ID */
         optimize,                /* runtime optimization flag */
         optimize_last,           /* optimize last iteration */
-        mpi_io,                  /* use MPI I/O functions */
         compare;                 /* use collective ops for best results evaluation */
 
     /* grid size */
@@ -115,5 +114,8 @@ void delete_tsi(tsi *t);
 int run_tsi(tsi *t);
 
 int expand_correlations_grid(cm_grid *cmg, float *CM);
+
+int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type);
+int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc);
 
 #endif /* _TSI_H */

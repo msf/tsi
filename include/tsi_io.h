@@ -3,10 +3,9 @@
 
 
 #include <stdio.h>
-#define TSI_FILE FILE
 
+typedef FILE TSI_FILE;
 
-//#include "si.h"      <- fuck-up
 
 /* open/close files */
 TSI_FILE *open_file(char *filename);
@@ -35,11 +34,7 @@ int read_tsi_grid(TSI_FILE *fp, float *address, int x, int y, int z);
 
 int write_tsi_grid(TSI_FILE *fp, int type, float *address, int x, int y, int z);
 
-//int read_tsi_cmgrid(TSI_FILE *fp, cm_grid *cmg, int x, int y, int z);
-
-//int write_tsi_cmgrid(TSI_FILE *fp, cm_grid *cmg, int x, int y);
-
-int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
+	int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
 
 int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
 
