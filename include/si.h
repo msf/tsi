@@ -59,11 +59,6 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY, int it, int s
 
 void delete_si(si *s);
 
-cm_grid *get_cmgrid(si *s);
-
-int store_cmgrid(si *s, cm_grid *g);
-
-
 /* compressed correlations grid methods */
 cm_grid *new_cmgrid(si *s, int empty_flag);
 
@@ -75,15 +70,20 @@ int dirty_cmgrid(cm_grid *g);
 
 int clear_cmgrid(cm_grid *g);
 
+int store_cmgrid(si *s, cm_grid *g);
+
 int build_cmgrid(cm_grid *g, unsigned int nlayers, unsigned int *layer_size);
 
 cm_grid *clone_cmgrid(cm_grid *g);
+
+cm_grid *get_cmgrid(si *s);
 
 unsigned int get_nlayers(cm_grid *g);
 
 unsigned int *get_layers(cm_grid *g);
 
-void print_layers(cm_grid *g);
+void print_layers(log_t *l, cm_grid *g);
+
 
 
 #endif /* _SI_H */
