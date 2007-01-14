@@ -1,0 +1,23 @@
+TSI TODO LIST!
+
+---------------------------------------------------------------
+TO BE DONE:
+- printlayers()
+- camada de abstracao para syscalls nao portaveis: 
+	time: gettimeofday()<
+
+LONG TERM:
+- allocar a cmgrid com tsi_malloc e nao com o grid_heap
+- simplificar criacao, destruicao e uso da cmgrid.
+(rever uso e desenho do heap/grid manager e sua API).
+
+---------------------------------------------------------------
+DONE
+- error reporting no "read_harddata_file()"
+- mersenne twister como RNG
+- removi tsi_io_mpi
+- bug fix importante na DSS (bug nao esta presente na tsi-5.4 mas tava no "current")
+- small fixes no tsi_io.c (melhorar bug reporting)
+- pequenas mudanças de ficheiros para algumas funcoes.
+- correcoes no tsi.conf
+
