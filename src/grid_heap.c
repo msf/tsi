@@ -65,7 +65,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
             h->g[i].filename = strdup(filename);
             
             if (!h->g[i].fp) {
-                printf_dbg("new_heap(): failed to open grid file!\n");
+                printf_dbg("new_heap(): failed to create grid swap file!\n");
                 delete_heap(h);
                 return NULL;
             } /* if */
@@ -273,7 +273,7 @@ void delete_grid(grid_heap *h, int idx) {
         if (h->use_fs) {
             if (h->g[idx].fp)
                 close_file(h->g[idx].fp);
-                h->g[idx].fp = create_file(h->g[idx].filename);
+            h->g[idx].fp = create_file(h->g[idx].filename);
         }
         printf_dbg2("delete_grid(): curr_grids=%d alloc_grids=%d\n", h->curr_grids, h->alloc_grids);
     } else {

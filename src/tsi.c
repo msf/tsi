@@ -5,6 +5,7 @@
 
 #include "debug.h"
 #include "memdebug.h"
+#include "math_random.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "dss.h"
@@ -30,14 +31,13 @@ int  tsi_compare(float *AI, cm_grid *CM, float *nextBAI, cm_grid *BCM);
 void grid_copy(float *a, float *b, unsigned int grid_size);
 
 
-
 tsi *new_tsi(registry *reg) {
 	tsi *t;
 	reg_key *k, *kpath;
 	int usefs, heap_size, swap_thr, new_sims, over_sims, over_procs;
 	TSI_FILE *fp;
 	char buf[512];
-	unsigned int timeSeed;
+	long timeSeed;
 
 	t = (tsi *) tsi_malloc(sizeof(tsi));
 	if (!t) return NULL;
@@ -46,12 +46,12 @@ tsi *new_tsi(registry *reg) {
 
 	/* set a starting point for the rand() */
 	fp = open_file("/dev/random");
-	fread(&timeSeed,sizeof(unsigned int), 1, fp);
+	fread(&timeSeed,sizeof(long), 1, fp);
 	close_file(fp);
 	//timeSeed = 7919; /* used to get a deterministic behavior */
 
-	srandom(timeSeed);
-	printf_dbg("new_tsi: seed : %u\n",timeSeed);
+	tsi_seed_random(timeSeed);
+	printf_dbg("new_tsi: seed : %lu\n",timeSeed);
 
 	t->empty_path = 0; 
 
@@ -138,14 +138,6 @@ tsi *new_tsi(registry *reg) {
 		t->optimize = 1;
 	}
         t->optimize = 0;  /* force optimize to false beacause of MPI limitations */
-
-	k = get_key(reg, "MPI", "USE_MPI_IO");
-	if (k) {
-		t->mpi_io = get_int(k);
-	} else {
-		printf_dbg("new_tsi(%d): failed to get MPI_IO flag from the registry! Using defaults...\n", t->proc_id);
-		t->mpi_io = 0;
-	}
 
 	k = get_key(reg, "MPI", "COMPARE");
 	if (k) {
@@ -347,16 +339,16 @@ tsi *new_tsi(registry *reg) {
 		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
 	}
 	if ((k = get_key(reg, "GLOBAL", "RESULT_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "gslib")) t->dump_file = CARTESIAN_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->result_file = CARTESIAN_FILE;
 		else if (!strcmp(get_string(k), "tsi-ascii")) t->result_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->result_file = TSI_BIN_FILE;
-		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
+		else if (!strcmp(get_string(k), "sgems-ascii")) t->result_file = GSLIB_FILE;
 	}
 	if ((k = get_key(reg, "SEISMIC", "FILE_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "gslib")) t->dump_file = CARTESIAN_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->seismic_file = CARTESIAN_FILE;
 		else if (!strcmp(get_string(k), "tsi-ascii")) t->seismic_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->seismic_file = TSI_BIN_FILE;
-		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
+		else if (!strcmp(get_string(k), "sgems-ascii")) t->seismic_file = GSLIB_FILE;
 	}
 
 	/* load seismic grid */
@@ -562,9 +554,8 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	getCurrTime(&t4);
 	store_cmgrid(t->si_eng, cmg);  /* adds CM/C grid to SI engine */
 
-	// printf_dbg("tsi_setup_iteration: \tNew set of layers:\n");
-	// print_layers(cmg);
-	// printf("\n");
+	/* report layers info. */
+	print_layers(t->l, cmg);
 
 	run_time = getElapsedTime(&t1, &t3);
 	par_time = getElapsedTime(&t3, &t4);
@@ -828,7 +819,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 				printf_dbg("tsi_eval_best_corr(%d,%d,%d): failed to load nextBAI or nextBCM!", t->proc_id, iteration, simulation);
 				return 0;
 			}
-                        //////////////////////////////////////////////////////// TODO
+            //////////////////////////////////////////////////////// TODO
 			/**/
 			printf_dbg2("loading CM grid from SI");
                         load_cmgrid(get_cmgrid(t->si_eng));
@@ -841,7 +832,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			getCurrTime(&t5);
 			//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
 			//////////////////////////////////////////////////////// TODO
-                        /**/
+            /**/
 			printf_dbg2("clearing CM grid");
 			clear_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("clearing nextBCM");
@@ -856,7 +847,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 			if (result >= 0) {
 				printf_dbg2("tsi_eval_best_corr(%d,%d,%d): final clean-up\n", t->proc_id, iteration, simulation);
 			} else {
-				printf_dbg("tsi_eval_best_corr(%d,%d,%d): Compare&Update failed!\n", t->proc_id, iteration, simulation);
+				fprintf(stderr,"tsi_eval_best_corr(%d,%d,%d): Compare&Update failed!\n", t->proc_id, iteration, simulation);
 				return 0;
 			}
 		} /* if first simulation */
@@ -1025,5 +1016,6 @@ void grid_copy(float *a, float *b, unsigned int grid_size)
 	printf_dbg2("\tgrid_copy(): called\n");
 	memcpy(a, b, grid_size*sizeof(float));
 } /* grid_copy */
+
 
 /* end of file tsi.c */
