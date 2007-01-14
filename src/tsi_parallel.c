@@ -161,6 +161,7 @@ int tsi_compare_parallel(tsi *t)
     t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
     load_cmgrid(t->nextBCM_c);
     expand_correlations_grid(t->nextBCM_c, t->nextBCM);
+    dirty_grid(t->heap, t->nextBCM_idx);
     delete_cmgrid(t->nextBCM_c);
     return 0;
 #endif /* TSI_MPI */
