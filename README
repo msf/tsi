@@ -2,7 +2,6 @@ TSI TODO LIST!
 
 ---------------------------------------------------------------
 TO BE DONE:
-- printlayers()
 - camada de abstracao para syscalls nao portaveis: 
 	time: gettimeofday()<
 
@@ -13,6 +12,7 @@ LONG TERM:
 
 ---------------------------------------------------------------
 DONE
+- printlayers()
 - error reporting no "read_harddata_file()"
 - mersenne twister como RNG
 - removi tsi_io_mpi
