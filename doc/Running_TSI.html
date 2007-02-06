@@ -1,0 +1,176 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+<style>BODY, P, DIV, H1, H2, H3, H4, H5, H6, ADDRESS, OL, UL, LI, TITLE, TD, OPTION, SELECT 
+{ 
+ font-family: Verdana 
+}
+BODY, P, DIV, ADDRESS, OL, UL, LI, TITLE, TD, OPTION, SELECT  
+{  
+  font-size: 10.0pt; 
+  margin-top:0pt;  
+  margin-bottom:0pt;  
+} 
+BODY, P
+{
+  margin-left:0pt; 
+  margin-right:0pt;
+}
+BODY
+{
+  background: white;
+  margin: 6px;
+  padding: 0px;
+}
+h6 { font-size: 10pt }
+h5 { font-size: 11pt }
+h4 { font-size: 12pt }
+h3 { font-size: 13pt }
+h2 { font-size: 14pt }
+h1 { font-size: 16pt }
+blockquote { padding: 10px; border: 1px #DDDDDD dashed }
+a img {	border: 0; }
+table.zeroBorder {
+	border-width: 1px 1px 1px 1px;
+	border-style: dotted dotted dotted dotted;
+	border-color: gray gray gray gray;
+}
+table.zeroBorder th {
+	border-width: 1px 1px 1px 1px;
+	border-style: dotted dotted dotted dotted;
+	border-color: gray gray gray gray;
+}
+table.zeroBorder td {
+	border-width: 1px 1px 1px 1px;
+	border-style: dotted dotted dotted dotted;
+	border-color: gray gray gray gray;
+}
+.hiddenStyle {
+		visibility: hidden; 
+		position: absolute;
+		z-Index: 1;
+		paddingRight: 0;
+		background: white
+	}
+.misspell { background-image: url('/images/misspell.gif'); background-repeat: repeat-x; background-position: bottom }
+@media screen {
+.pb { border-top: 1px dashed #C0C0C0; border-bottom: 1px dashed #C0C0C0 }
+.writely-comment { font-size: 9pt; line-height: 1.4em; padding: 1px; border: 1px dashed #C0C0C0 }
+}
+@media print {
+.pb { border-top: 0px; border-bottom: 0px }
+.writely-comment { display: none }
+}
+@media screen,print {
+.pb { height: 1px }
+}
+</style></head>
+<body revision='dhj8x4g2_2c2pj5z:22'>
+Truques e dicas para correr a TSI.<br>
+<br>
+A TSI pode ser corrida a 64 ou 32 bits, e com ou sem MPI<br>
+<br>
+<br>
+temos portanto uma tabela deste estilo:<br>
+<br>
+<div>
+  <table border=0 cellpadding=3 cellspacing=0 width=100%>
+    <tbody>
+    <tr>
+      <td style=TEXT-ALIGN:center width=33%>
+        Nome do Executável da TSI<br>
+      </td>
+      <td style=TEXT-ALIGN:center width=33%>
+        32 bits<br>
+      </td>
+      <td style=TEXT-ALIGN:center width=33%>
+        64 bits<br>
+      </td>
+    </tr>
+    <tr>
+      <td style=TEXT-ALIGN:left width=33%>
+        Normal - 1 CPU<br>
+      </td>
+      <td style=TEXT-ALIGN:center width=33%>
+        tsi-32<br>
+      </td>
+      <td style=TEXT-ALIGN:center width=33%>
+        tsi<br>
+      </td>
+    </tr>
+    <tr>
+      <td style=TEXT-ALIGN:left width=33%>
+        MPI - Vários CPUs<br>
+      </td>
+      <td style=TEXT-ALIGN:center width=33%>
+        tsi-mpi-32<br>
+      </td>
+      <td style=TEXT-ALIGN:center width=33%>
+        tsi-mpi<br>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <br>
+  <br>
+  A <span style=FONT-WEIGHT:bold>TSI é mais rápida a 64bits</span>, e também é
+  mais rápida se usarmos vários processadores. Portanto, a ordem de preferência
+  deve ser esta:<br>
+  <br>
+  <ol>
+    <li>
+      tsi-mpi
+    </li>
+    <li>
+      tsi-mpi-32
+    </li>
+    <li>
+      tsi
+    </li>
+    <li>
+      tsi-32
+    </li>
+  </ol>
+  <br>
+  Para correr a tsi-mpi no feynman, deverá usar-se o seguinte comando:<br>
+  <br>
+  $ <span style=FONT-WEIGHT:bold>set_mpi_64bits</span><br>
+  $ <span style=FONT-WEIGHT:bold>mpiexec -n 2 ./tsi-mpi
+  tsi_config.par</span><br>
+  PS:&nbsp; o "-n 2" no comando para correr a TSI em MPI é para a tsi correr
+  usando 2 cpus, caso a máquina/sistema MPI tenha 32 cpus, deverá ser: "-n 32"<br>
+  <br>
+  Para usar a tsi-mpi-32 no feynman, o comando é o seguinte:<br>
+  <br>
+  $ <span style=FONT-WEIGHT:bold>set_mpi_32bits</span><br>
+  $ <span style=FONT-WEIGHT:bold>mpiexec -n 2 ./tsi-mpi-32
+  tsi_config.par</span><br>
+  <br>
+  <br>
+  para usar a tsi ou a tsi-32, o comando é este:<br>
+  <br>
+  $ <span style=FONT-WEIGHT:bold>./tsi-32 config.par</span><br>
+  ou<br>
+  $<span style=FONT-WEIGHT:bold> ./tsi config.par</span><br>
+  <br>
+  <br>
+  NOTAS SOBRE TAMANHOS SIMULÁVEIS, E COMO SIMULAR...<br>
+  <br>
+  É sabido, que a <span style=FONT-WEIGHT:bold>tsi a 64bits tem problemas</span>
+  se a grid a simular for <span style=FONT-WEIGHT:bold>MAIOR QUE 32MILHÕES DE
+  PONTOS</span>.<br>
+  Como tal, para simular grids de dimensões superiores, temos de usar a versão
+  tsi-mpi-32.<br>
+  <br>
+  Também foi visto que para simular problemas maiores que 100 milhões no
+  feynman, é necessário "configurar" o MPI de forma diferente:<br>
+  $ <span style=FONT-WEIGHT:bold>mpiexec -mca btl tcp,self -n 2</span>
+  <span style=FONT-WEIGHT:bold>./tsi-mpi-32 tsi_config.par<br>
+  <br>
+  </span><br>
+  <br>
+  <br>
+  <br>
+</div>
+<br></body>
+</html>
