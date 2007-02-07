@@ -284,6 +284,9 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	}
 	/* 		Write a warning if the matrix is singular: */
 	if (ising != 0) {
+		fprintf(stderr, "krige(); WARNING: singular matrix for node (%d,%d,%d)\n",
+				ix, iy, iz);
+
 		if (general->idbg >= 1) {
 			/* apagar */
 			/*                  write(ldbg,*) 'WARNING SGSIM: singular matrix' */

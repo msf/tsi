@@ -262,7 +262,6 @@ int readdata(float *hard_data,
 
 		tsi_free(var);
 
-        printf_dbg2("readdata(): calc. vmedexp, vvarexp\n");
 		simulation->vmedexp = 0;
 		simulation->vvarexp = 0;
 		for (i = 0; i < general->nd; ++i) {
@@ -279,11 +278,14 @@ int readdata(float *hard_data,
 		av /= (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
 		ss = ss / ((double) MAX(twt,1e-20f)) - av * av;
 
+        	printf_dbg2("readdata(): vmedexp: %f, vvarexp: %f\n", simulation->vmedexp, simulation->vvarexp);
 		/* !write (*,*) ' Data for SGSIM: ' */
 		/* !write (*,*) ' Number of acceptable data  = ',nd */
 		/* !write (*,*) ' Number trimmed             = ',nt */
 		/* !write (*,*) ' Weighted Average           = ',av */
 		/* !write (*,*) ' Weighted Variance          = ',ss */
+		printf_dbg2(" Number of acceptable data: %d\nNumber trimmed: %d\n Weighted Average: %f\n Weighted Variance: %f\n",
+		general->nd, nt, av, ss);
 	}
 	
 	/* !Read secondary attribute model if necessary: */
