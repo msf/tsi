@@ -18,6 +18,15 @@ or
 note: tsi needs more files besides the configurarion file, those should be indicated in the configuration file.
 ----------------------------------------------------------------------
 
+--RUNNING WITH MPI----------------------------------------------------
+to run the application using MPI, you must have MPI environment allready set.
+After that you should run it like this:
+
+$ mpiexec -np NCPUS tsi-mpi conf/tsi_config.par
+----------------------------------------------------------------------
+
+
+
 -[RUNNING REQUIREMENTS]-----------------------------------------------
 To Run the aplication the following files are required:
 - executable file
@@ -95,6 +104,29 @@ although this was not tested yet.
 
 
 ---------------------------------------------- info about versions ---
+tsi-v5.6 - 2007.02.XX
+	- TSI with MPI support.
+	- print layers size in log file.
+	- print seed in log file.
+	- supports windows (single processor mode)
+	- new pseudo random number generator (mersenne twister)
+	- better error messages when problems are found in input files.
+
+tsi-5.4 - 2006.07.18
+	- TSI with MPI support, tested and with great measured performance.
+	- tested with grids with up to 120 million points. (32bit mode, with mpi)
+	- memory usage is configurable (proporcional to the grid size, can be 9x grid size to 13x grid size)
+	- better 64bit support (faster than 32bits, good/valid results up to 34 million points)
+	- considerable speed optimizations.
+	- reworked random path generation (faster)
+	- lots of bugs fixed on DSS
+
+tsi-5.1 - 2006.04.21
+	- First release with MPI support, MPI has some performance issues..
+	- virtual grid manager support, will allow to configure the number of grids to keep in memory.
+	- better logging.
+
+
 tsi-v4.0 - 2005.08.25
 	- TSI multi-threaded, execution time is inversely proporcional to the number of 
 	CPUs/THREADS if number of simulations is a multiple of the number of simulation THREADS
