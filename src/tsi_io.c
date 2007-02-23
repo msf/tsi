@@ -173,10 +173,10 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
 
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
     if (desc) {
-        if (!fprintf(fp,"TSI 1 %d %d %d\n1\n%s\n", x, y, z, desc))
+        if (!fprintf(fp,"TSI_1_%d_%d_%d\n1\n%s\n", x, y, z, desc))
             return 0; 
     } else {
-        if (!fprintf(fp,"TSI 1 %d %d %d\n1\ngrid\n", x, y, z))
+        if (!fprintf(fp,"TSI_1_%d_%d_%d\n1\ngrid\n", x, y, z))
             return 0;
     }
 
