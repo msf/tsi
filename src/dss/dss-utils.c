@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include "dss.h"
 
+float roundf(float x);
 
-
-inline int getPos(int x, int y, int z, int xlen, int xylen)
+int getPos(int x, int y, int z, int xlen, int xylen)
 {	
 	return ((x-1) + (xlen * (y -1)) + (xylen * (z-1)));
 }
@@ -20,5 +20,5 @@ inline int getPos(int x, int y, int z, int xlen, int xylen)
  */
 int getIndex(float min, float siz, float loc)
 {
-	return (int) ( (loc - min) / siz );
+	return (int) roundf( 1 + (loc - min) / siz );
 }
