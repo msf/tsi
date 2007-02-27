@@ -2,7 +2,7 @@
 
 #                                     
 # Compiler settings (gcc, icc, win32)
-COMPILER := mpicc
+OMPILER := mpicc
 #COMPILER := gcc
 
 # Default settings for gcc
@@ -12,8 +12,8 @@ CFLAGS  := -pipe
 LDFLAGS := -lm -lc -lpthread -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
 OPTS	+= -msse -msse2 -mfpmath=sse 
-OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
-OPTS	+= -march=k8
+#OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
+#OPTS	+= -march=k8
 #OPTS	+= -m32
 OPTS	+= -DTSI_DEBUG -g
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls

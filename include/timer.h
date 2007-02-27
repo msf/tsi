@@ -1,15 +1,13 @@
 /* timer.h 
    simple cpu timer api.
    */
-#ifdef __linux__
-#include <sys/time.h>
-#include <time.h>
-#endif
-
 #ifdef WIN32
 #include <sys/types.h> 
 #include <sys/timeb.h> 
 #include <winsock2.h> //timeval
+#else
+#include <sys/time.h>
+#include <time.h>
 #endif
 
 #define my_time			timeval

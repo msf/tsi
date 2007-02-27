@@ -3,7 +3,7 @@
 #include "registry.h"
 #include "tsi.h"
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     /* main TSI objects */
     registry  *r;
