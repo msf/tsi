@@ -9,7 +9,7 @@ OMPILER := mpicc
 CC      := gcc#-3.4
 CPP     := g++#-3.4
 CFLAGS  := -pipe 
-LDFLAGS := -lm -lc -lpthread -lgcc
+LDFLAGS := -lm -lpthread -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
 OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
