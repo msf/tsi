@@ -27,27 +27,6 @@ int tsi_backup_simulation(tsi *t, int i, int s)
         clear_grid(t->heap, t->ai_idx);
     }
 
-    if (t->dump_bai) {
-        printf_dbg("\ttsi_backup_simulation(): dumping BAI...\n");
-        sprintf(desc, "BAI_%d_%d", i, (s * t->n_procs + t->proc_id));        
-        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
-        if (s) {
-            /* dump nextBAI */
-            g_idx = t->nextBAI_idx;
-        } else {
-            /* dump AI as first BAI */
-            g_idx = t->ai_idx;
-        }
-        g = load_grid(t->heap, g_idx);
-        fp = create_file(filename);
-        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
-            printf_dbg("\ttsi_backup_simulation(): failed to dump BAI\n");
-            return 0;
-        }
-        close_file(fp);
-        clear_grid(t->heap, g_idx);
-    }
-
     if (t->dump_cm) {
         printf_dbg("\ttsi_backup_simulation(): dumping CC...\n");
         /* expand and dump CC */
@@ -58,31 +37,6 @@ int tsi_backup_simulation(tsi *t, int i, int s)
         expand_correlations_grid(cmg, g);
         sprintf(desc, "CC_%d_%d", i, (s * t->n_procs + t->proc_id));        
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
-        fp = create_file(filename);
-        if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
-            printf_dbg("\ttsi_backup_simulation(): failed to dump CC\n");
-            return 0;
-        }
-        close_file(fp);
-        delete_grid(t->heap, g_idx);
-        clear_cmgrid(cmg);
-    }
-
-    if (t->dump_bcm) {
-        printf_dbg("\ttsi_backup_simulation(): dumping BCM...\n");
-        sprintf(desc, "BCM_%d_%d", i, (s * t->n_procs + t->proc_id));        
-        sprintf(filename, "%s%s.tsi", t->dump_path, desc);
-        if (s) {
-            /* expand and dump nextBCM */
-            cmg = t->nextBCM_c;
-        } else {
-            /* expand and dump CC as first BCM */
-            cmg = get_cmgrid(t->si_eng);
-        }
-        load_cmgrid(cmg);
-        g_idx = new_grid(t->heap);
-        g = load_grid(t->heap, g_idx);
-        expand_correlations_grid(cmg, g);
         fp = create_file(filename);
         if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
             printf_dbg("\ttsi_backup_simulation(): failed to dump CC\n");
