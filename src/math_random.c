@@ -186,18 +186,35 @@ double genrand_res53(void)
 /* These real versions are due to Isaku Wada, 2002/01/09 added */
 
 
+/*  CODE ADDED BY MIG.  #####################################  */
+#ifndef NEW_RAND
+#include <stdlib.h>
+#endif
+
 void tsi_seed_random(long seed)
 {
+#ifdef NEW_RAND
 	init_genrand(seed);
+#else
+    srandom(seed);
+#endif
 }
 
 unsigned long tsi_random(void)
 {
+#ifdef NEW_RAND
 	//TODO: try int28()
 	return genrand_int31();
+#else
+    return random();
+#endif
 }
 
 double tsi_random_real(void)
 {
+#ifdef NEW_RAND
 	return genrand_real2();
+#else
+    return random() / RAND_MAX;
+#endif
 }
