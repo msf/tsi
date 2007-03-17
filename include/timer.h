@@ -30,6 +30,6 @@ static int gettimeofday(struct timeval *tv, void *ignore)
 
 #define my_time			timeval
 
-double getTimeDiff(struct my_time *start, struct my_time *stop);
+double getElapsedTime(struct my_time *start, struct my_time *stop);
 int getCurrTime(struct my_time *tv);
 

@@ -66,7 +66,7 @@ int make_reflections_grid(si *s, float *AI, float *RG)
 int make_synthetic_grid(si *s, float *RG, float *SY) {
     int x, y, z, nxy, nxyz;
     int wavelet_spots;
-    int j, k, l, it, a, b;
+    int j, it;
     struct my_time t1, t2;
     unsigned int aux;
 

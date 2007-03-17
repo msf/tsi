@@ -635,8 +635,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 	 */
 
 	/* evaluate simulation result */
-	run_time = getElapsedTime(t2,t3);
-	mm_time = getElapsedTime(t1,t2);
+	run_time = getElapsedTime(&t2,&t3);
+	mm_time = getElapsedTime(&t1,&t2);
 	t->dss_time += run_time;
 	t->mm_time += mm_time;
 	if (!result) {
