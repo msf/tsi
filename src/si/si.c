@@ -4,6 +4,7 @@
 #include <string.h>
 #include "debug.h"
 #include "log.h"
+#include "math_random.h"
 #include "registry.h"
 #include "grid_heap.h"
 #include "tsi.h"
@@ -258,9 +259,9 @@ cm_grid *new_cmgrid(si *s, int empty) {
 
     /* first, we warrantee the minimum number of layers */
     do {
-        x = random() % (s->min_size * 2);
+        x = tsi_random() % (s->min_size * 2);
         x += s->min_size;
-        i = (int) random() % n;
+        i = (int) tsi_random() % n;
         temp[i] = x;
 
         x = 0;
@@ -271,8 +272,8 @@ cm_grid *new_cmgrid(si *s, int empty) {
 
     /* now we assure the max_size */
     do {
-        x = random() % (s->min_size);
-        i = random() % n;
+        x = tsi_random() % (s->min_size);
+        i = tsi_random() % n;
         if (temp[i] == 0) temp[i] += s->min_size;
         temp[i] += x;
         sum = 0;

@@ -139,11 +139,11 @@ tsi *new_tsi(registry *reg) {
 	}
         t->optimize = 0;  /* force optimize to false beacause of MPI limitations */
 
-	k = get_key(reg, "MPI", "COMPARE");
+	k = get_key(reg, "MPI", "COLLECTIVE_COMPARE");
 	if (k) {
 		t->compare = get_int(k);
 	} else {
-		printf_dbg("new_tsi(%d): failed to get COMPARE flag from the registry! Using defaults...\n", t->proc_id);
+		printf_dbg("new_tsi(%d): failed to get COLLECTIVE_COMPARE flag from the registry! Using defaults...\n", t->proc_id);
 		t->compare = 0;
 	}
 
@@ -409,7 +409,7 @@ void delete_tsi(tsi *t) {
 
 
 int run_tsi(tsi *t) {
-	struct timeval t1,t2;
+	struct my_time t1,t2;
 
 	printf_dbg("run_tsi(%d,0,0): begin\n", t->proc_id);
 	log_separator(t->l);
@@ -471,7 +471,7 @@ int tsi_recurse_simulations(tsi *t, int i, int s) {
 int tsi_simulation(tsi *t, int i, int s)
 {
 	int r;
-	struct timeval t1, t2;
+	struct my_time t1, t2;
 
 	log_separator(t->l);
 	log_simulation_number(t->l, s);
@@ -498,7 +498,7 @@ int tsi_simulation(tsi *t, int i, int s)
 
 int tsi_setup_iteration(tsi *t, int iteration) 
 {
-	struct timeval t1, t3, t4;
+	struct my_time t1, t3, t4;
 	double run_time, par_time;
 	cm_grid *cmg;
 
@@ -579,7 +579,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
 
 int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation) 
 {
-	struct timeval t1, t2, t3;
+	struct my_time t1, t2, t3;
 	int result;
 	double run_time, mm_time;
 
@@ -635,8 +635,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 	 */
 
 	/* evaluate simulation result */
-	run_time = getElapsedTime(&t2,&t3);
-	mm_time = getElapsedTime(&t1,&t2);
+	run_time = getElapsedTime(t2,t3);
+	mm_time = getElapsedTime(t1,t2);
 	t->dss_time += run_time;
 	t->mm_time += mm_time;
 	if (!result) {
@@ -657,7 +657,7 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 
 int tsi_seismic_inversion(tsi *t, int iteration, int simulation) 
 {
-	struct timeval t1, t2, t3;
+	struct my_time t1, t2, t3;
 	double mm_time, run_time;
 	int result;
 
@@ -739,7 +739,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
  */
 int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation) 
 {
-	struct timeval t1, t2, t3, t4, t5, t6;
+	struct my_time t1, t2, t3, t4, t5, t6;
 	double mm_time, run_time;
 	float corr;
 	int result;
@@ -882,7 +882,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 int tsi_finish_iteration(tsi *t, int iteration) 
 {
-	struct timeval t1, t2, t3;
+	struct my_time t1, t2, t3;
 	double par_time;
 
 	getCurrTime(&t1);

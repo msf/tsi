@@ -206,7 +206,7 @@ unsigned long tsi_random(void)
 	//TODO: try int28()
 	return genrand_int31();
 #else
-    return random();
+    return (unsigned long)random();
 #endif
 }
 
@@ -215,6 +215,6 @@ double tsi_random_real(void)
 #ifdef NEW_RAND
 	return genrand_real2();
 #else
-    return random() / RAND_MAX;
+    return ((double)random()) / RAND_MAX;
 #endif
 }

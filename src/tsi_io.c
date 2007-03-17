@@ -88,7 +88,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 
 
     /* parse header */
-    if (strncmp(header, tsi_h, 3)) {
+    if (strncasecmp(header, tsi_h, 3)) {
         fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
         return 0;
     }

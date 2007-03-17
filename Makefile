@@ -2,7 +2,7 @@
 
 #                                     
 # Compiler settings (gcc, icc, win32)
-OMPILER := mpicc
+COMPILER := mpicc
 #COMPILER := gcc
 
 # Default settings for gcc
@@ -15,7 +15,7 @@ OPTS	+= -msse -msse2 -mfpmath=sse
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
 #OPTS	+= -m32
-OPTS	+= -DTSI_DEBUG -g
+OPTS	+= -g -DNEW_RAND
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop

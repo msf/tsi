@@ -31,7 +31,7 @@ int make_reflections_grid(si *s, float *AI, float *RG)
 {
     int x, y, z, z_;
     double value;
-    struct timeval t1, t2;
+    struct my_time t1, t2;
 	unsigned int p1, p2;
         
     getCurrTime(&t1);
@@ -67,7 +67,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
     int x, y, z, nxy, nxyz;
     int wavelet_spots;
     int j, k, l, it, a, b;
-    struct timeval t1, t2;
+    struct my_time t1, t2;
     unsigned int aux;
 
     aux = 0;
@@ -121,7 +121,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
 
 	unsigned int nlayers, *layer_size;
     int n;
-    struct timeval t1, t2;
+    struct my_time t1, t2;
 
     printf_dbg2("make_correlations_grid(): called\n");
     load_cmgrid(s->cmg);

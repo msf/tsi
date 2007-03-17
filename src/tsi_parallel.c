@@ -139,7 +139,7 @@ int tsi_compare_parallel(tsi *t)
 
 #ifdef TSI_MPI
     int ret;
-    struct timeval t1, t2;
+    struct my_time t1, t2;
     double par_time;
 
     if (t->compare) {
@@ -186,7 +186,7 @@ int tsi_compare_parallel_collective(tsi *t) {
 
     unsigned int n, g, h, i, z0, z1;        /* aux variables */
     unsigned int layer, last_layer;    
-    struct timeval t1, t2, t3, t4, t5, t6, t7;
+    struct my_time t1, t2, t3, t4, t5, t6, t7;
     double par_time, mm_time, run_time;
 
     getCurrTime(&t1);
@@ -380,7 +380,7 @@ int tsi_compare_parallel_v3(tsi *t)
     float *BAI, *BCM;
 
     double par_time, run_time;
-    struct timeval t1, t2, t3;
+    struct my_time t1, t2, t3;
 
     // MPI stuff
     int clustersize;
@@ -557,7 +557,7 @@ int tsi_compare_parallel_v4(tsi *t)
     float *BAI, *BCM;
 
     double par_time, run_time = 0;
-    struct timeval t1, t2, t3;
+    struct my_time t1, t2, t3;
     // MPI stuff
     int clustersize;
     int size_per_rank;
@@ -773,7 +773,7 @@ int tsi_compare_parallel_direct_v5(tsi *t) {
 
     unsigned int n, g, h, i, z0, z1;        /* aux variables */
     unsigned int layer, last_layer;    
-    struct timeval t1, t2, t3, t4, t5;
+    struct my_time t1, t2, t3, t4, t5;
     double par_time, run_time;
 
     /* mpi info */
