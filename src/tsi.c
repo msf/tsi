@@ -144,7 +144,7 @@ tsi *new_tsi(registry *reg) {
 		t->compare = get_int(k);
 	} else {
 		printf_dbg("new_tsi(%d): failed to get COLLECTIVE_COMPARE flag from the registry! Using defaults...\n", t->proc_id);
-		t->compare = 0;
+		t->compare = 1;
 	}
 
 	/* change simulation data to optimize resource use during execution */
