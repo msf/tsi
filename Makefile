@@ -3,7 +3,11 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-#COMPILER := gcc
+COMPILER := gcc
+
+# Targets
+RELEASE_TARGET := tsi
+DEBUG_TARGET   := tsi-debug
 
 # Default settings for gcc
 CC      := gcc#-3.4
@@ -101,10 +105,6 @@ DSS_DEPS_DEBUG := $(DSS_FILES:.c=.o)
 DSS_OBJS_DEBUG := $(subst $(DSS_DIR),$(DEBUG_DIR),$(DSS_DEPS_DEBUG))
 #COMP_DEPS_DEBUG := $(COMP_FILES:.c=.o)
 #COMP_OBJS_DEBUG := $(subst $(COMP_DIR),$(DEBUG_DIR),$(COMP_DEPS_DEBUG))
-
-# Targets
-RELEASE_TARGET := tsi
-DEBUG_TARGET   := tsi-debug
 
 
 # RELEASE RULES

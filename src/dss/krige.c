@@ -86,6 +86,24 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	first = FALSE;
 	na = search->nclose + covtable_lookup->ncnode;
 
+    if (na > krige_vars->last_na) {
+        krige_vars->last_na = na;
+        printf_dbg("\tkrige(): na=%d\n", na);
+        if (krige_vars->rr) tsi_free(krige_vars->rr);
+        if (krige_vars->r__) tsi_free(krige_vars->r__);
+        if (krige_vars->s) tsi_free(krige_vars->s);
+        if (krige_vars->a) tsi_free(krige_vars->a);
+        if (krige_vars->vra) tsi_free(krige_vars->vra);
+        if (krige_vars->vrea) tsi_free(krige_vars->vrea);
+        krige_vars->rr =   (double *) tsi_malloc(8 + na * sizeof(double));
+        krige_vars->r__ =  (double *) tsi_malloc(8 + na * sizeof(double));
+        krige_vars->s =    (double *) tsi_malloc(8 + na * sizeof(double));
+        krige_vars->a =    (double *) tsi_malloc(16 + na * na * sizeof(double));
+        krige_vars->vra =  (float *)  tsi_malloc(na * sizeof(float));
+        krige_vars->vrea = (float *)  tsi_malloc(na * sizeof(float));
+    }
+
+
 	neq = na;
 	if (lktype == 1) {
 		neq += 1;

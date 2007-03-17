@@ -43,12 +43,13 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
 	 * 12 is the precalculated maximum of:
 	na = search->nclose + covtable_lookup->ncnode;
 	*/
-	d->krige->rr =   (double *) tsi_malloc(8 + 12 * sizeof(double));
-	d->krige->r__ =  (double *) tsi_malloc(8 + 12 * sizeof(double));
-	d->krige->s =    (double *) tsi_malloc(8 + 12 * sizeof(double));
-	d->krige->a =    (double *) tsi_malloc(16 + 12 * 12 * sizeof(double));
-	d->krige->vra =  (float *)  tsi_malloc(12 * sizeof(float));
-	d->krige->vrea = (float *)  tsi_malloc(12 * sizeof(float));
+    d->krige->rr = NULL;
+    d->krige->r__ = NULL;
+    d->krige->s = NULL;
+    d->krige->a = NULL;
+    d->krige->vra = NULL;
+    d->krige->vrea = NULL;
+    d->krige->last_na = 0;    
 
     printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, r)){
