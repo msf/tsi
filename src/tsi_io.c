@@ -11,12 +11,12 @@
 int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
 	switch(type) {
 		case CARTESIAN_FILE:
-			return (read_cartesian_grid(fp, grid, t->grid_size));
+			return read_cartesian_grid(fp, grid, t->grid_size);
 		case TSI_ASCII_FILE:
 		case TSI_BIN_FILE:
-			return (read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize));
+			return read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
 		case GSLIB_FILE:
-			return (read_gslib_grid(fp, grid, t->grid_size));
+			return read_gslib_grid(fp, grid, t->grid_size);
 			/*
 			   case SGEMS_FILE:
 			   return read_sgems_grid(fp, grid, t->grid_size));
@@ -30,12 +30,12 @@ int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
 int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
 	switch(type) {
 		case CARTESIAN_FILE:
-			return (write_cartesian_grid(fp, grid, t->grid_size));
+			return write_cartesian_grid(fp, grid, t->grid_size);
 		case TSI_ASCII_FILE:
-		case TSI_BIN_FILE:
-			return (write_tsi_grid(fp, type, grid, t->xsize, t->ysize, t->zsize));
 		case GSLIB_FILE:
-			return (write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc));
+			return write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc);
+		case TSI_BIN_FILE:
+			return write_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
 			/*
 			   case SGEMS_FILE:
 			   return write_sgems_grid(fp, grid, t->grid_size));
@@ -123,9 +123,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 
 
 
-int write_tsi_grid(TSI_FILE *fp, int type, float *grid, int x, int y, int z) {
-    if (type == 1)  /* ASCII file */
-        return write_gslib_grid(fp, grid, x, y, z, NULL);
+int write_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 
     /* bin file */
     if (!fprintf(fp,"TSI 2 %d %d %d\n", x, y, z))

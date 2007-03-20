@@ -3,11 +3,11 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-COMPILER := gcc
+#COMPILER := gcc
 
 # Targets
-RELEASE_TARGET := tsi
-DEBUG_TARGET   := tsi-debug
+RELEASE_TARGET := tsi-mpi-64
+DEBUG_TARGET   := tsi-mpi-64-debug
 
 # Default settings for gcc
 CC      := gcc#-3.4

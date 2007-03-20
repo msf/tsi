@@ -32,9 +32,9 @@ int write_block_file(TSI_FILE *fp, int offset, void *address, unsigned int block
 /* grid read/write functions */
 int read_tsi_grid(TSI_FILE *fp, float *address, int x, int y, int z);
 
-int write_tsi_grid(TSI_FILE *fp, int type, float *address, int x, int y, int z);
+int write_tsi_grid(TSI_FILE *fp, float *address, int x, int y, int z);
 
-	int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
+int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
 
 int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size);
 

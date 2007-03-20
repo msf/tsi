@@ -49,12 +49,12 @@ int dump_reflections_grid(si *s, float *g, int it, int sim)
 int si_write_grid(si *eng, TSI_FILE *fp, float *grid, int type, char *desc) {
 	switch(type) {
 		case CARTESIAN_FILE:
-			return (write_cartesian_grid(fp, grid, eng->grid_size));
+			return write_cartesian_grid(fp, grid, eng->grid_size);
 		case TSI_ASCII_FILE:
-		case TSI_BIN_FILE:
-			return (write_tsi_grid(fp, type, grid, eng->xsize, eng->ysize, eng->zsize));
 		case GSLIB_FILE:
-			return (write_gslib_grid(fp, grid, eng->xsize, eng->ysize, eng->zsize, desc));
+			return write_gslib_grid(fp, grid, eng->xsize, eng->ysize, eng->zsize, desc);
+		case TSI_BIN_FILE:
+			return write_tsi_grid(fp, grid, eng->xsize, eng->ysize, eng->zsize);
 			/*
 			   case SGEMS_FILE:
 			   return write_sgems_grid(fp, grid, t->grid_size));
