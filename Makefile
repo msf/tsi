@@ -158,7 +158,7 @@ wc:
 	wc -l $(SOURCE_FILES) $(DSS_FILES) $(SI_FILES) $(INCLUDE_FILES)
 
 clean: FORCE
-	rm -f $(RELEASE_DIR)/*.o $(DEBUG_DIR)/*.o $(DEBUG_TARGET) $(RELEASE_TARGET)
+	rm -f $(RELEASE_DIR)/*.* $(DEBUG_DIR)/*.* $(DEBUG_TARGET) $(RELEASE_TARGET)
 	rm -f *~ $(SOURCE_DIR)/*~ $(DSS_DIR)/*~ $(SI_DIR)/*~ $(INCLUDE_DIR)/*~ gmon.out
 	rm -f core
 

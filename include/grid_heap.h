@@ -3,6 +3,9 @@
 
 #include "tsi_io.h"
 
+#ifdef WIN32
+#define strdup _strdup
+#endif
 
 typedef struct grid_type {
     float *grid,       /* alligned grid */

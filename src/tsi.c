@@ -45,10 +45,13 @@ tsi *new_tsi(registry *reg) {
 	t->heap = NULL;
 
 	/* set a starting point for the rand() */
-	fp = open_file("/dev/random");
+#ifndef WIN32
+    fp = open_file("/dev/random");
 	fread(&timeSeed,sizeof(long), 1, fp);
 	close_file(fp);
-	//timeSeed = 7919; /* used to get a deterministic behavior */
+#else
+    timeSeed = 7919; /* used to get a deterministic behavior */
+#endif
 
 	tsi_seed_random(timeSeed);
 	printf_dbg("new_tsi: seed : %lu\n",timeSeed);
@@ -403,7 +406,7 @@ void delete_tsi(tsi *t) {
 	}
 
 	debug_check();
-	delete_tsi_parallel();
+	delete_tsi_parallel(t);
 } /* delete_tsi */
 
 

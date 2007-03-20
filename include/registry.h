@@ -3,6 +3,11 @@
 
 #include <stdio.h>
 
+#ifdef WIN32
+#define atoll _atoi64
+#define strdup _strdup
+#endif
+
 /* struct that defines a 64 bit resolution registry key */
 typedef struct reg_key_type {
     char *name;

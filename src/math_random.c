@@ -187,6 +187,10 @@ double genrand_res53(void)
 
 
 /*  CODE ADDED BY MIG.  #####################################  */
+#ifdef WIN32
+#define NEW_RAND
+#endif
+
 #ifndef NEW_RAND
 #include <stdlib.h>
 #endif

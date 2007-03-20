@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include "dss.h"
 
-float roundf(float x);
+float my_roundf(const float val)
+{
+    return ((val - floorf(val)) < 0.5) ? floorf(val) : ceilf(val);
+}
 
 int getPos(int x, int y, int z, int xlen, int xylen)
 {	
@@ -20,5 +23,5 @@ int getPos(int x, int y, int z, int xlen, int xylen)
  */
 int getIndex(float min, float siz, float loc)
 {
-	return (int) roundf( 1 + (loc - min) / siz );
+	return (int) my_roundf( 1 + (loc - min) / siz );
 }

@@ -4,6 +4,10 @@
 #include "tsi.h"
 #include "tsi_io.h"
 
+#ifdef WIN32  
+#define strncasecmp strncmp
+#endif
+
 /**
  * high level functions
  */

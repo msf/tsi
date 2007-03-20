@@ -3,6 +3,10 @@
 #include "registry.h"
 #include "tsi.h"
 
+#ifdef WIN32
+void debug_check() { return ; }
+#endif
+
 int main(int argc, char *argv[])
 {
     /* main TSI objects */

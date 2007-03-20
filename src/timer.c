@@ -14,5 +14,5 @@ double getElapsedTime(struct my_time *start, struct my_time *stop)
 	
 int getCurrTime(struct my_time *tv)
 {
-    return gettimeofday(tv,NULL);
+    return gettimeofday(tv,'\0');
 }

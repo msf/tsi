@@ -81,7 +81,6 @@ int tsi_restore_simulation(tsi *t, int i, int s)
 int tsi_backup_iteration(tsi *t, int i)
 {
     float *g;
-    cm_grid *cmg;
     char filename[1024], desc[128];
     int g_idx;
     TSI_FILE *fp;

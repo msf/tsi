@@ -184,7 +184,8 @@ cm_grid *new_cmgrid(si *s, int empty) {
     unsigned int j;
 
     printf_dbg2("\tnew_cmgrid(): called\n");
-    if ((g = tsi_malloc(sizeof(cm_grid))) == NULL) {
+    g = (cm_grid *) tsi_malloc(sizeof(cm_grid));
+    if (g == NULL) {
         printf_dbg("\tnew_cmgrid: failed to allocate space for cm_grid\n");
         return NULL;
     }
