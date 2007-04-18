@@ -2,8 +2,11 @@ TSI TODO LIST!
 
 ---------------------------------------------------------------
 TO BE DONE:
-- camada de abstracao para syscalls nao portaveis: 
-	time: gettimeofday()<
+- remove bug that ocours when running in:
+	- grid bigger than 33million points +
+		linux 64 bits executable or
+		any windows executable or
+		linux 32 bits and optimizations other than: -03 -ffast-math -fomit-frame-pointer
 
 LONG TERM:
 - allocar a cmgrid com tsi_malloc e nao com o grid_heap
@@ -12,6 +15,8 @@ LONG TERM:
 
 ---------------------------------------------------------------
 DONE
+- camada de abstracao para syscalls nao portaveis: 
+	time: gettimeofday()<
 - printlayers()
 - error reporting no "read_harddata_file()"
 - mersenne twister como RNG
