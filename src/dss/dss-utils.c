@@ -1,6 +1,4 @@
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "dss.h"
 
 float my_roundf(const float val)

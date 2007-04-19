@@ -340,7 +340,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			/* !Estimacao em xo (SDSIM) */
 			/* aceder ao bestCorrCube, apenas se ktype >= 4 */
 			if(general->ktype == 5) {
-				clcorr = bestCorrCube[ix + (iy - 1) * general->nx + (iz - 1) * general->nxy];
+				clcorr = bestCorrCube[index];
 			}
 				
 			krige(ix, iy, iz, xx, yy, zz, lktype, gmean, 
