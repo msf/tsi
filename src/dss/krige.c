@@ -140,7 +140,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			ix1 = ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
 			iy1 = iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
 			iz1 = iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
-			index = ix1 + (iy1 - 1) * general->nx + (iz1 - 1) * general->nxy;
+			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);	
 			if(general->ktype == 5)
 				krige_vars->vrea[j - 1] = bestAICube[index];
 		}
@@ -253,7 +253,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		krige_vars->a[in - 1] = 0.f;
 		++in;
 		krige_vars->a[in - 1] = 0.f;
-		ind = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+		ind = getPos(ix, iy, iz, general->nx, general->nxy);
 		krige_vars->r__[na + 1] = (double) bestAICube[ind];
 		krige_vars->rr[na + 1] = krige_vars->r__[na + 1];
 		if (edmax - edmin < 1e-20f) {
@@ -301,7 +301,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	}
 	/* 		Write a warning if the matrix is singular: */
 	if (ising != 0) {
-		printf_dbg("krige(); WARNING: singular matrix for node (%d,%d,%d)\n",
+		printf("krige(); ERROR: singular matrix for node (%d,%d,%d)\n",
 				ix, iy, iz);
 
 		*cmean = gmean;
@@ -334,7 +334,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		*cmean += gmean;
 	}
 	else if (lktype >= 4) {
-		ind = ix + (iy - 1) * general->nx + (iz - 1) * general->nxy;
+		ind = getPos(ix, iy, iz, general->nx, general->nxy);
 		*cmean += (float) krige_vars->s[na] * (bestAICube[ind] - simulation->vmedexp);
 		*cstdev -= (float) (krige_vars->s[na] * krige_vars->rr[na]);
 		*cmean += simulation->vmedexp;

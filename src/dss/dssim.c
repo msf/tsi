@@ -280,9 +280,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		*/
 
 		/* get relative x,y,z from index */
-		iz = (index - 1) / general->nxy + 1;
-		iy = (index - (iz - 1) * general->nxy - 1) / general->nx + 1;
-		ix = index - (iz - 1) * general->nxy - (iy - 1) * general->nx;
+		get3Dcoords(index, general->nx, general->nxy, &ix, &iy, &iz);
 
 		/* getting absolute coords from relative coords */
 		xx = general->xmn + (float) (ix - 1) * general->xsiz;

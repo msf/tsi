@@ -30,9 +30,10 @@ extern int gauinv(double *, float *, int *);
 extern int readdata(float *, unsigned int, general_vars_t *, search_vars_t *,
                     simulation_vars_t *);
 
-extern inline int getPos(int, int, int, int, int);
+extern int getPos(int, int, int, int, int);
+extern void get3Dcoords(int, int, int, int*, int*, int*);
 
-extern inline int getIndex(float min, float siz, float loc);
+extern int getIndex(float min, float siz, float loc);
 
 
 

@@ -11,6 +11,24 @@ int getPos(int x, int y, int z, int xlen, int xylen)
 	return (x + (xlen * (y -1)) + (xylen * (z-1)));
 }
 
+void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
+{
+	int ix, iy, iz;
+	int t;
+	
+	/* the same way that we subtract y & z in getPos, we increment here! */
+	ind++;
+
+	iz = ind / xylen;
+	*z = iz +1;
+
+	t = (ind % xylen);
+	iy = t / xlen;
+	*y = iy +1;
+
+	*x = ind % xlen;
+}
+
 
 /*     Gets the coordinate index location of a point within a grid 
  min     origin at the center of the first cell 

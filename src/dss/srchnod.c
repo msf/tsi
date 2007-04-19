@@ -1,4 +1,5 @@
 #include "dss.h"
+#include "dss_legacy.h"
 
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
@@ -98,7 +99,7 @@ int srchnod(int ix, int iy, int iz, float *sim,
 		if( k < 1 || k > general->nz )
 			continue;
 
-		ind = i + (j - 1) * general->nx + (k - 1) * general->nxy;
+		ind = getPos(i, j, k, general->nx, general->nxy);
 		if (sim[ind] > general->nosvalue) {
 			/* Check the number of data already taken from this octant: */
 			if (search->noct > 0) {

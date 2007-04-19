@@ -3,23 +3,23 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-#COMPILER := gcc
+COMPILER := gcc
 
 # Targets
-RELEASE_TARGET := tsi-mpi-64
-DEBUG_TARGET   := tsi-mpi-64-debug
+RELEASE_TARGET := tsi-32
+DEBUG_TARGET   := tsi-64-debug
 
 # Default settings for gcc
 CC      := gcc#-3.4
 CPP     := g++#-3.4
-CFLAGS  := -pipe 
+CFLAGS  := -pipe  -DNEW_RAND
 LDFLAGS := -lm -lpthread -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
-OPTS	+= -msse -msse2 -mfpmath=sse 
+#OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
-#OPTS	+= -m32
-OPTS	+= -g -DNEW_RAND
+OPTS	+= -m32
+#OPTS	+= -g -DTSI_DEBUG
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
 #OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
@@ -42,7 +42,7 @@ ifeq ($(COMPILER), icc)
 CC      := icc
 CPP     := icc
 CFLAGS  := -O3 -mP2OPT_hlo_prefetch=F
-LDFLAGS := -lm -lc -lpthread -lgcc
+LDFLAGS := -lm -lpthread -lgcc
 OPTS    :=
 DEBUG   := -DTSI_DEBUG2
 endif

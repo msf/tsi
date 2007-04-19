@@ -87,6 +87,7 @@ int covtable(int *order, float * tmp,
 
 	/* Parameter adjustments */
 	--order;
+	--tmp;
 
 	/* Function Body */
 	i1 = (general->nx-1)/2;
@@ -158,9 +159,7 @@ int covtable(int *order, float * tmp,
 	for (il = 1; il <= i1; ++il) {
 		loc = order[il];
 
-		iz = (loc - 1) / (general->nxy) + 1;
-		iy = (loc - (iz - 1) * (general->nxy) - 1) / general->nx + 1;
-		ix = loc - (iz - 1) * (general->nxy) - (iy - 1) * general->nx;
+		get3Dcoords(loc, general->nx, general->nxy, &ix, &iy, &iz);
 
 		covtable_lookup->iznode[il - 1] = iz;
 		covtable_lookup->iynode[il - 1] = iy;
