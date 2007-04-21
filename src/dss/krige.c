@@ -178,21 +178,26 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			/* Decide whether or not to use the covariance look-up table: */
 			if ((float) j <= search->nclose || (float) i <= search->nclose) 
 			{
-				cov = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
+				double cmax;
+				krige_vars->a[in - 1] = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
 						covariance->c0, covariance->it, covariance->cc, 
-						covariance->aa, krige_vars->rotmat, &
-						covariance->cmax);
-				krige_vars->a[in - 1] = (double) cov;
+						covariance->aa, krige_vars->rotmat, &cmax);
+				
+				covariance->cmax = (float) cmax;
 			} else {
 				/* Try to use the covariance look-up (if the distance is in range): */
 				ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
 				jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
 				kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
-				if (ii < 1 || ii > general->nx || jj < 1 || jj > general->ny || kk < 1 || kk 
-						> general->nz) {
-					cov = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
+				if (ii < 1 || ii > general->nx ||
+					jj < 1 || jj > general->ny ||
+					kk < 1 || kk > general->nz) {
+					double cmax, c;
+					c = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
 							covariance->c0, covariance->it, covariance->cc, 
-							covariance->aa, krige_vars->rotmat, &covariance->cmax);
+							covariance->aa, krige_vars->rotmat, &cmax);
+					cov = (float) c;
+					covariance->cmax = (float) cmax;
 				} else {
 					cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
 				}
@@ -201,24 +206,27 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		}
 		/* Get the RHS value (possibly with covariance look-up table): */
 		if ((float) j <= search->nclose) {
-			cov = cova3(xx, yy, zz, x1, y1, z1, covariance->nst,
+			double cmax;
+			krige_vars->r__[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->nst,
 					covariance->c0, covariance->it, covariance->cc, covariance->aa,
-					krige_vars->rotmat, &covariance->cmax);
-			krige_vars->r__[j - 1] = (double) cov;
+					krige_vars->rotmat, &cmax);
+			covariance->cmax = (float) cmax;
 		} else {
 			/* Try to use the covariance look-up (if the distance is in range): */
 			ii = covtable_lookup->nctx + 1 + (ix - ix1);
 			jj = covtable_lookup->ncty + 1 + (iy - iy1);
 			kk = covtable_lookup->nctz + 1 + (iz - iz1);
-			if (ii < 1 || ii > general->nx || jj < 1 || jj > general->ny || kk < 1 || kk > 
-					general->nz) {
-				cov = cova3(xx, yy, zz, x1, y1, z1, covariance->nst,
+			if (ii < 1 || ii > general->nx ||
+				jj < 1 || jj > general->ny ||
+				kk < 1 || kk > general->nz) {
+				double cmax;
+				krige_vars->r__[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->nst,
 						covariance->c0, covariance->it, covariance->cc, covariance->aa, 
-						krige_vars->rotmat, &covariance->cmax);
+						krige_vars->rotmat, &cmax);
+				covariance->cmax = (float) cmax;
 			} else {
-				cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+				krige_vars->r__[j - 1] = (double) covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
 			}
-			krige_vars->r__[j - 1] = (double) cov;
 		}
 		krige_vars->rr[j - 1] = krige_vars->r__[j - 1];
 	}
@@ -301,7 +309,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	}
 	/* 		Write a warning if the matrix is singular: */
 	if (ising != 0) {
-		printf("krige(); ERROR: singular matrix for node (%d,%d,%d)\n",
+		printf("krige() ERROR: singular matrix for node (%d,%d,%d)\n",
 				ix, iy, iz);
 
 		*cmean = gmean;

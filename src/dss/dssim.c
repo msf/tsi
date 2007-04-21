@@ -175,7 +175,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	printf_dbg2("\tdssim() called\n");
 
 	/* Function Body */
-	for (i = 1; i <= covariance->nst[0]; ++i) {
+	for (i = 1; i <= covariance->nst; ++i) {
 		setrot(covariance->ang1[i - 1], covariance->ang2[i - 1], covariance->ang3[i - 1],
 				covariance->anis1[i - 1], covariance->anis2[i - 1], i, krige_vars->rotmat);
 	}

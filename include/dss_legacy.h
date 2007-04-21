@@ -93,9 +93,9 @@ extern int krige5(int *, int *, int *, float * , float *, float *,
 extern int ksol(int nright, int neq, int nsb, double *a, double *r, double *s);
 extern int ksol_opt(int neq, double *a, double *r, double *s);
 
-extern float cova3(float x1, float y1, float z1, float x2, float y2, float z2, int *nst,
-                   float *c0, int *it, float *cc, float *aa, double rotmat[5][3][3],
-                   float *cmax);
+extern double cova3(float x1, float y1, float z1, float x2, float y2, float z2, int nst,
+                   float c0, int *it, float *cc, float *aa, double rotmat[5][3][3],
+                   double *cmax);
 
 extern int covtable(int *, float *, general_vars_t *, search_vars_t *, covariance_vars_t *,
                     covtable_lookup_vars_t *, krige_vars_t *);

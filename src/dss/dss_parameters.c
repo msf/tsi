@@ -222,11 +222,11 @@ int  dss_parameters(dss *d, registry *r )
 
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;
-    varnum = d->covariance->nst[0] = get_int(k);
+    varnum = d->covariance->nst = get_int(k);
     printf_dbg2("load_dss_configs(): varnum = %d\n", varnum);
 
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
-    sill = d->covariance->c0[0] = get_float(k);
+    sill = d->covariance->c0 = get_float(k);
 
     d->covariance->it = (int *) tsi_malloc(varnum * sizeof(int));
     d->covariance->cc = (float *) tsi_malloc(varnum * sizeof(float));
@@ -274,7 +274,7 @@ int  dss_parameters(dss *d, registry *r )
         if ((k = get_key(r, variogram, "AA")) == NULL) return 1;
         aa = d->covariance->aa[i] = get_float(k);
         if (aa < 1e-20)
-			aa = 1e-20;
+			aa = (float) 1e-20;
 
         if ((k = get_key(r, variogram, "AA1")) == NULL) return 1;
         aa1 = get_float(k);

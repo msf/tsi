@@ -74,49 +74,40 @@
  */
 
 /* these variables used to be passed has arguments, but have _allways_ these values */
-int ivarg = 1;
-int maxnst = 4;
-int irot = 1;
-int maxrot = 5;
+#define MAXROT	5
 
-float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
-		int *nst, float *c0, int *it, float *cc,
-		float *aa, double rotmat[5][3][3], float *cmax)
+double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
+		int nst, float c0, int *it, float *cc,
+		float *aa, double rotmat[5][3][3], double *cmax)
 /* Calculate the maximum covariance value (used for zero distances and */
 /* for power model covariance): */
 {
 	/* System generated locals */
-	int temp, temp2;
-	float r__1;
-	double d__1, d__2;
-
-
+	int temp;
+	
 	/* Local variables */
-	float cova;
-	float h, hr;
-	int ir, is, ist;
+	double cova;
+	double h, hr;
+	int ir, is;
 	double hsqd;
 	int istart;
 
 
 	/* Parameter adjustments */
-	--nst;
-	--c0;
 	--it;
 	--cc;
 	--aa;
 
 
 	/* Function Body */
-	istart = (ivarg - 1) * maxnst + 1;
-	*cmax = c0[ivarg];
-	temp = nst[ivarg];
-	for (is = 1; is <= temp; ++is) {
-		ist = istart + is - 1;
-		if (it[ist] == 4) {
+	istart = 1;
+	*cmax = c0;
+	temp = nst;
+	for (is = 1; is <= nst; ++is) {
+		if (it[is] == 4) {
 			*cmax += 999.f;
 		} else {
-			*cmax += cc[ist];
+			*cmax += cc[is];
 		}
 	}
 
@@ -130,59 +121,55 @@ float cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 
 	/* Loop over all the structures: */
 
-	cova = 0.f;
-	temp = nst[ivarg];
-	for (is = 1; is <= temp; ++is) {
-		ist = istart + is - 1;
+	cova = 0;
+	for (is = 1; is <= nst; ++is) {
 
 		/* Compute the appropriate distance: */
 
-		if (ist != 1) {
+		if (is != 1) {
 			/* Computing MIN */
-			temp2 = irot + is - 1;
-			ir = MIN(temp2, maxrot); /* min(temp2,maxrot); */
+			ir = MIN(is,MAXROT); /* min(temp2,maxrot); */
 			hsqd = sqdist(x1, y1, z1, x2, y2, z2, ir, rotmat);
 		}
-		h = (float) sqrt(hsqd);
+		h = sqrt(hsqd);
 
 		/* Spherical Variogram Model? */
 
-		if (it[ist] == 1) {
-			hr = h / aa[ist];
-			if (hr < 1.f) {
-				cova += cc[ist] * (1.f - hr * (1.5f - hr * .5f * hr));
+		if (it[is] == 1) {
+			hr = h / aa[is];
+			if (hr < 1) {
+				cova += cc[is] * (1 - hr * (1.5 - hr * 0.5 * hr));
 			}
 
 			/* Exponential Variogram Model? */
 
-		} else if (it[ist] == 2) {
-			cova += cc[ist] * exp(h * -3.f / aa[ist]);
+		} else if (it[is] == 2) {
+			cova += cc[is] * exp(h * -3 / aa[is]);
 
 			/* Gaussian Variogram Model? */
 
-		} else if (it[ist] == 3) {
+		} else if (it[is] == 3) {
 			/* Computing 2nd power */
-			r__1 = h / aa[ist];
-			cova += cc[ist] * exp(r__1 * r__1 * -3.f);
+			double tmp = h / aa[is];
+			cova += cc[is] * exp(tmp * tmp * -3);
 
 			/* Power Variogram Model? */
 
-		} else if (it[ist] == 4) {
-			d__1 = (double) h;
-			d__2 = (double) aa[ist];
-			cova += *cmax - cc[ist] * pow(d__1, d__2);
+		} else if (it[is] == 4) {
+			double t = aa[is];
+			cova += *cmax - cc[is] * pow(h, t);
 
 			/* Hole Effect Model? */
 
-		} else if (it[ist] == 5) {
+		} else if (it[is] == 5) {
 			/*                 d = 10.0 * aa(ist) */
 			/*                 cova = cova + cc(ist)*exp(-3.0*h/d)*cos(h/aa(ist)*PI) */
-			cova += cc[ist] * cos(h / aa[ist] * PI );
+			cova += cc[is] * cos(h / aa[is] * PI );
 		}
 	}
 
 	/* Finished: */
 
 	return cova;
-} /* cova3_ */
+} /* cova3 */
 

@@ -158,7 +158,7 @@ int readdata(float *hard_data,
 		/* sortem(&istart, &iend, general->vrtr, &one, general->vrgtr, &c__, &d__, &e, &f, &g, &h__); */
 		sort_permute_float(istart, iend, general->vrtr, general->vrgtr);
 		/* !Compute the cumulative probabilities and write transformation table */
-		twt = (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
+		twt = MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
 		oldcp = 0;
 		cp = 0;
 		vmedg = 0;// TODO: vmedg should be double, possible overflow

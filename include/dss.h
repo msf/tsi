@@ -118,8 +118,8 @@ typedef struct covariance_vars_type {
     float  cmax;
 
     /* parameters from registry */
-    int    nst[1];   /* VARIOGRAM:NUMBER */
-    float  c0[1];    /* VARIOGRAM:NUGGET */
+    int    nst;   /* VARIOGRAM:NUMBER */
+    float  c0;    /* VARIOGRAM:NUGGET */
 
     int    *it;      /* VARIOGRAMn:TYPE */
     float  *cc,      /* VARIOGRAMn:COV */

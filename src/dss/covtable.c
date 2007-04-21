@@ -83,6 +83,7 @@ int covtable(int *order, float * tmp,
 	float xx, yy, zz;
 	int loc;
 	double hsqd;
+	double cmax;
 
 
 	/* Parameter adjustments */
@@ -104,9 +105,10 @@ int covtable(int *order, float * tmp,
 
 	/* Initialize the covariance subroutine and cbb at the same time: */
 	/*    printf("Calling cova3\n"); */
-	krige_vars->cbb = cova3(0, 0, 0, 0, 0, 0, covariance->nst,
+	krige_vars->cbb = (float) cova3(0, 0, 0, 0, 0, 0, covariance->nst,
 			covariance->c0, covariance->it, covariance->cc, covariance->aa, 
-			krige_vars->rotmat, &covariance->cmax);
+			krige_vars->rotmat, &cmax);
+	covariance->cmax = (float) cmax;
 	/* 		Now, set up the table and keep track of the node offsets that are */
 	/* 		within the search radius: */
 	/*    printf("loop 1/3\n"); */
@@ -126,10 +128,12 @@ int covtable(int *order, float * tmp,
 				zz = k * general->zsiz;
 				kc = covtable_lookup->nctz + 1 + k;
 
-				covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] = cova3(0, 0 , 0, xx, yy, zz, 
+				covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] = (float) cova3(0, 0 , 0, xx, yy, zz, 
 						covariance->nst, covariance->c0, covariance->it, 
 						covariance->cc, covariance->aa,
-						krige_vars->rotmat, &covariance->cmax);
+						krige_vars->rotmat, &cmax);
+
+				covariance->cmax = (float) cmax;
 
 				hsqd = sqdist(0, 0, 0, xx, yy, zz, covariance->isrot, krige_vars->rotmat);
 

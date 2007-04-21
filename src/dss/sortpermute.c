@@ -245,8 +245,8 @@ int sort_permute_int(int start,  int end,
 	int i1;
 
 	/* Local variables */
-	int i, j, k, m, p, q;
-	float  xa, ta = 0, tb = 0;  /* LPL Init values */
+	int i, j, k, m, p, q, tb = 0;
+	float  xa, ta = 0;  /* LPL Init values */
 	int lt[64];
 	int xb;
 	int ut[64], iring;
