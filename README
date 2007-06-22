@@ -2,19 +2,38 @@ TSI TODO LIST!
 
 ---------------------------------------------------------------
 TO BE DONE:
+- convert lookup tables for x, y z to "index" table.
+- significantly reduce lookup table sizes, implies:
+    - search radius must be significantly smaller than grid size.
+	- calculate search radius relative to x, y, and z
+	- set lookup table size from search radius for x, y, z
+
+
+
+LONG TERM:
+- remove cmgrid from grid_heap.
+- forward "grid_heap" knowledge inside DSS.
+- simplify grid_heap algorithm.
+
+- reduce memory use in 3 GRIDS!!
+	- preload random path in order.
+	- keep _only_ a "chunk" (set of 50 million points..) of order grid in memory.
+		- based on current position from order that is being used.
+		- keep base position index for chunk[0]
+		- create a get_order_pos(index)
+	- resort corr grid and secondary data grid based on random path order.
+		- keep only a chunk of corr grid and secondary grid.
+	   	- base pointers for chunks	
+		- get_bai_pos(index)
+		- get_corr_pos(index)
+
+---------------------------------------------------------------
+DONE
 - remove bug that ocours when running in:
 	- grid bigger than 33million points +
 		linux 64 bits executable or
 		any windows executable or
 		linux 32 bits and optimizations other than: -03 -ffast-math -fomit-frame-pointer
-
-LONG TERM:
-- allocar a cmgrid com tsi_malloc e nao com o grid_heap
-- simplificar criacao, destruicao e uso da cmgrid.
-(rever uso e desenho do heap/grid manager e sua API).
-
----------------------------------------------------------------
-DONE
 - camada de abstracao para syscalls nao portaveis: 
 	time: gettimeofday()<
 - printlayers()

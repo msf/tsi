@@ -6,7 +6,7 @@ COMPILER := mpicc
 COMPILER := gcc
 
 # Targets
-RELEASE_TARGET := tsi-32
+RELEASE_TARGET := tsi
 DEBUG_TARGET   := tsi-64-debug
 
 # Default settings for gcc
@@ -18,7 +18,6 @@ OPTS    := -O3 -ffast-math -fomit-frame-pointer
 #OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
-OPTS	+= -m32
 #OPTS	+= -g -DTSI_DEBUG
 #OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
 #OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm

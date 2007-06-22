@@ -140,8 +140,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		krige_vars_t			*	krige_vars)
 {
 
-	unsigned int toSim;
-	int i;
+	unsigned toSim;
+	unsigned i,j;
 
 
 	/* Local variables */
@@ -225,6 +225,18 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		toSim--;
 	}
 
+	/* precompute the random path */
+	for(i = 0; i < toSim--; i++) {
+		in = ((int) tsi_random() % toSim) +1; /* +1 because of fortran offsets */
+		index = order[in];
+
+		order[in] = order[i];
+		order[i] = index;
+		toSim--;
+	}
+
+
+
 	printf_dbg2("wellsNPoints: %d\tgeneral->nd: %d\n",general->wellsNPoints,general->nd);
 
 	/* codigo reescrito ..................................... FIM */
@@ -246,30 +258,28 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	in = 0;
 	zmean = 0.f;
 	zvariance = 0.f;
+	for( i = 0; i < general->nxyz; i++) {
+
+	
+	/*
 	while( toSim > 0 ) {
 		
-		if(toSim == (general->nxyz * 0.75))
-			printf_dbg("\tdsssim(): 1/4 completed.\n");
-		else if(toSim == (general->nxyz / 2))
-			printf_dbg("\tdsssim(): 1/2 completed.\n");
-		else if(toSim == (general->nxyz / 4))
-			printf_dbg("\tdsssim(): 3/4 completed.\n");
+		// generate point to simulate 
+		in = ((int) tsi_random() % toSim) +1; // +1 because of fortran offsets 
+		index = order[in];  // point to be simulated
 
-		/* generate point to simulate */
-		in = ((int) tsi_random() % toSim) +1; /* +1 because of fortran offsets */
-		index = order[in];  /* point to be simulated */
-
-		/* mark has simulated */
+		// mark has simulated 
 		order[in] = order[toSim];
 		order[toSim] = index;
 		toSim--;
-		
+    */
+		index = order[i];
 
 		if(index < 1)
 			printf("dssim(): ERROR, INDEX(%d) < 1\n", index);
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
-		/* if( sim[index] >= general->tmin &&
-		    sim[index] <= general->tmax) { */
+		 if( sim[index] >= general->tmin && sim[index] <= general->tmax)  
+			 continue;
 		/*
 		 if (sim[index] > general->nosvalue + 1e-20f || 
 				 sim[index] < general->nosvalue * 2.f) {
