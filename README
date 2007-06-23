@@ -2,6 +2,8 @@ TSI TODO LIST!
 
 ---------------------------------------------------------------
 TO BE DONE:
+- remove grid_heap usage from cmgrid.
+- make a "free_grids()" in grid_heap to remove grids from memory. 
 - convert lookup tables for x, y z to "index" table.
 - significantly reduce lookup table sizes, implies:
     - search radius must be significantly smaller than grid size.
@@ -11,7 +13,6 @@ TO BE DONE:
 
 
 LONG TERM:
-- remove cmgrid from grid_heap.
 - forward "grid_heap" knowledge inside DSS.
 - simplify grid_heap algorithm.
 
