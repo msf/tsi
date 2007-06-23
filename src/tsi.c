@@ -99,7 +99,7 @@ tsi *new_tsi(registry *reg) {
 		delete_tsi(t);
 		return NULL;
 	}
-	sprintf(buf,"TSI %s - started!\n",TSI_VERSION);
+	sprintf(buf,"TSI %s - started, seed:%ul\n",TSI_VERSION, timeSeed);
 	log_string(t->l, buf); 
 
 	t->global_best.value = t->last_corr.value = -999;
