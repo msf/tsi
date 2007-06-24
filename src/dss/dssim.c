@@ -248,12 +248,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	zvariance = 0.f;
 	while( toSim > 0 ) {
 		
-		if(toSim == (general->nxyz * 0.75))
+		if(toSim == (general->nxyz * 0.75)) {
 			printf_dbg("\tdsssim(): 1/4 completed.\n");
-		else if(toSim == (general->nxyz / 2))
+		} else if(toSim == (general->nxyz / 2)) {
 			printf_dbg("\tdsssim(): 1/2 completed.\n");
-		else if(toSim == (general->nxyz / 4))
+		} else if(toSim == (general->nxyz / 4)) {
 			printf_dbg("\tdsssim(): 3/4 completed.\n");
+ 		}
 
 		/* generate point to simulate */
 		in = ((int) tsi_random() % toSim) +1; /* +1 because of fortran offsets */
