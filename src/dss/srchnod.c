@@ -87,15 +87,20 @@ int srchnod(int ix, int iy, int iz, float *sim,
 		if (covtable_lookup->ncnode == covtable_lookup->nodmax) {
 			return 0;
 		}
-		i = nctx + covtable_lookup->ixnode[il];
+
+		i = covtable_lookup->ixnode[il];
+        j = covtable_lookup->iynode[il];
+        k = covtable_lookup->iznode[il];
+
+		i += nctx;
 		if( i < 1 || i > general->nx)
 			continue;
-		
-		j = ncty + covtable_lookup->iynode[il];
+
+		j += ncty;
 		if( j < 1 || j > general->ny )
 			continue;
 
-		k = nctz + covtable_lookup->iznode[il];
+		k += nctz;
 		if( k < 1 || k > general->nz )
 			continue;
 

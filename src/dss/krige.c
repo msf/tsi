@@ -147,7 +147,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			iy1 += iy - covtable_lookup->ncty -1;
 			iz1 += iz - covtable_lookup->nctz -1;
 
-			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);	
+			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
 			if(general->ktype == 5)
 				krige_vars->vrea[j - 1] = bestAICube[index];
 		}
@@ -206,7 +206,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 					kk < 1 || kk > general->nz) {
 					double cmax, c;
 					c = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
-							covariance->c0, covariance->it, covariance->cc, 
+							covariance->c0, covariance->it, covariance->cc,
 							covariance->aa, krige_vars->rotmat, &cmax);
 					cov = (float) c;
 					covariance->cmax = (float) cmax;
