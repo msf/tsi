@@ -65,7 +65,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
             h->g[i].filename = strdup(filename);
             
             if (!h->g[i].fp) {
-                printf_dbg("new_heap(): failed to create grid swap file!\n");
+                fprintf(stderr,"new_heap(): failed to create grid swap file!\n");
                 delete_heap(h);
                 return NULL;
             } /* if */
