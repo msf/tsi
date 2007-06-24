@@ -136,10 +136,17 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			y1 = covtable_lookup->cnodey[index - 1];
 			z1 = covtable_lookup->cnodez[index - 1];
 			krige_vars->vra[j - 1] = covtable_lookup->cnodev[index - 1];
-			ind = covtable_lookup->icnode[index - 1];
-			ix1 = ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
-			iy1 = iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
-			iz1 = iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+			
+            ind = covtable_lookup->icnode[index - 1];
+
+			ix1 = covtable_lookup->ixnode[ind - 1];
+			iy1 = covtable_lookup->iynode[ind - 1];
+			iz1 = covtable_lookup->iznode[ind - 1];
+
+			ix1 += ix - covtable_lookup->nctx -1;
+			iy1 += iy - covtable_lookup->ncty -1;
+			iz1 += iz - covtable_lookup->nctz -1;
+
 			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);	
 			if(general->ktype == 5)
 				krige_vars->vrea[j - 1] = bestAICube[index];
@@ -169,9 +176,14 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 				y2 = covtable_lookup->cnodey[index - 1];
 				z2 = covtable_lookup->cnodez[index - 1];
 				ind = covtable_lookup->icnode[index - 1];
-				ix2 = ix + (covtable_lookup->ixnode[ind - 1] - covtable_lookup->nctx - 1);
-				iy2 = iy + (covtable_lookup->iynode[ind - 1] - covtable_lookup->ncty - 1);
-				iz2 = iz + (covtable_lookup->iznode[ind - 1] - covtable_lookup->nctz - 1);
+
+				ix2 = covtable_lookup->ixnode[ind - 1];
+				iy2 = covtable_lookup->iynode[ind - 1];
+				iz2 = covtable_lookup->iznode[ind - 1];
+
+				ix2 += ix - covtable_lookup->nctx -1;
+				iy2 += iy - covtable_lookup->ncty -1;
+				iz2 += iz - covtable_lookup->nctz -1;
 			}
 			/* Now, get the covariance value: */
 			++in;
