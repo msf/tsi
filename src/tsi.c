@@ -289,9 +289,9 @@ tsi *new_tsi(registry *reg) {
 
 	int size = t->grid_size / (1024*1024) * sizeof(float);
 	if(usefs)
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) + (size/2) );
+		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) +  32);
 	else 
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + (size/2) ); 
+		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + 32); 
 	log_string(t->l, buf);
 
 
