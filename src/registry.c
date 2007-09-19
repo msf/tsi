@@ -165,8 +165,12 @@ int merge_registry(registry **r, char *filename)
                         printf_dbg2("merge_registry(): parm: >%s< >%s<\n", key->name, key->value);
                         state = END_VALUE;
                         i = 0;
+						/* value of c is going to get lost in loop, we have to check if its a newline here */
+						if( c == 10) {
+							state = IDLE;
+							nl++;
+						}
                     }
-                    break;
                 case END_VALUE:
                     if (c == 10) {
                         state = IDLE;
