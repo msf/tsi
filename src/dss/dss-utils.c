@@ -41,3 +41,39 @@ int getIndex(float min, float siz, float loc)
 {
 	return (int) my_roundf( 1 + (loc - min) / siz );
 }
+
+
+/* !Calculo do equivalente valor gaussiano        (SDSIM) */
+float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr)
+{
+    unsigned low, high, i, j;
+
+    float vmy;
+    if (cmean <= vrtr[0]) {
+        return	vrgtr[0];
+    }
+    if (cmean >= vrtr[size - 1]) {
+        return vrgtr[size - 1];
+    }
+
+    low = 0;
+    i = size/2;
+    // binary search for value closer to cmean in global histogram 
+    do {
+        if(vrtr[i] < cmean) {
+            j = (i-low)/2;
+            low = i;
+            i += j;
+        } else if(vrtr[i] > cmean) {
+            i -= (i-low)/2;
+
+        } else
+            break;
+    } while( low + 2 < i);
+
+    vmy = vrgtr[i - 1] + (cmean - vrtr[i - 1]) * 
+        (vrgtr[i] - vrgtr[i - 1]) / (vrtr[i] - vrtr[i - 1]);
+
+    return vmy;
+}
+
