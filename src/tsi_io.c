@@ -14,17 +14,10 @@
 
 int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
 	switch(type) {
-		case CARTESIAN_FILE:
-			return read_cartesian_grid(fp, grid, t->grid_size);
 		case TSI_ASCII_FILE:
+			return read_gslib_grid(fp, grid, t->xsize * t->ysize * t->zsize);
 		case TSI_BIN_FILE:
 			return read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
-		case GSLIB_FILE:
-			return read_gslib_grid(fp, grid, t->grid_size);
-			/*
-			   case SGEMS_FILE:
-			   return read_sgems_grid(fp, grid, t->grid_size));
-			 */
 		default:
 			fprintf(stderr, "ERROR: Unknown grid file type!\n");
 			return 0;
@@ -33,17 +26,10 @@ int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
 
 int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
 	switch(type) {
-		case CARTESIAN_FILE:
-			return write_cartesian_grid(fp, grid, t->grid_size);
 		case TSI_ASCII_FILE:
-		case GSLIB_FILE:
 			return write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc);
 		case TSI_BIN_FILE:
 			return write_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
-			/*
-			   case SGEMS_FILE:
-			   return write_sgems_grid(fp, grid, t->grid_size));
-			 */
 		default:
 			fprintf(stderr, "ERROR: Unknown grid file type!\n");
 			return 0;
@@ -84,14 +70,13 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
     unsigned int grid_size;
 
     /* load file header */
-	
-    if ( fread(header, sizeof(char), 3, fp ) < 3) {
-	fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
-	return 0;
-    }
+	if ( fread(header, sizeof(char), 3, fp ) < 3) {
+		fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
+		return 0;
+	}
 
 
-    /* parse header */
+    // parse header 
     if (strncasecmp(header, tsi_h, 3)) {
         fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
         return 0;
@@ -107,18 +92,16 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
         return 0;
     }
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
+	/* support both file types, even if we only use type 2 - BIN now */
     switch (type) {
         case 1:      /* ASCII data */
-			fgets( header, 63, fp);
-			fgets( header, 63, fp);
-			fgets( header, 63, fp);
-            return read_cartesian_grid(fp, grid, grid_size);
+            return read_gslib_grid(fp, grid, grid_size);
 
         case 2:      /* data in binary floats */
             return read_float(fp, grid, grid_size);
 
         default:
-            fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
+            fprintf(stderr,"\tread_tsi_grid(): unknown file format %d\n", type);
             break;
     } /* switch */
 
@@ -175,10 +158,10 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
 
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
     if (desc) {
-        if (!fprintf(fp,"TSI_1_%d_%d_%d\n1\n%s\n", x, y, z, desc))
+        if (!fprintf(fp,"TSI %d %d %d\n1\n%s\n", x, y, z, desc))
             return 0; 
     } else {
-        if (!fprintf(fp,"TSI_1_%d_%d_%d\n1\ngrid\n", x, y, z))
+        if (!fprintf(fp,"TSI %d %d %d\n1\ngrid\n", x, y, z))
             return 0;
     }
 

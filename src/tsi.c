@@ -340,23 +340,20 @@ tsi *new_tsi(registry *reg) {
 	t->seismic_file = TSI_ASCII_FILE;
 	t->dump_file = TSI_BIN_FILE;     /* increases performance for dump/resume features */
 	t->result_file = TSI_ASCII_FILE;
-	if ((k = get_key(reg, "DUMP", "FILE_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "gslib")) t->dump_file = CARTESIAN_FILE;
-		else if (!strcmp(get_string(k), "tsi-ascii")) t->dump_file = TSI_ASCII_FILE;
+	/* TSI_ASCII is the GSLIB ascii format, has defined in: 
+	 * http://www.gslib.com/gslib_help/format.html
+	 */
+	if ((k = get_key(reg, "DUMP", "DUMP_TYPE")) != NULL) {
+		if (!strcmp(get_string(k), "gslib")) t->dump_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->dump_file = TSI_BIN_FILE;
-		else if (!strcmp(get_string(k), "sgems-ascii")) t->dump_file = GSLIB_FILE;
 	}
 	if ((k = get_key(reg, "GLOBAL", "RESULT_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "gslib")) t->result_file = CARTESIAN_FILE;
-		else if (!strcmp(get_string(k), "tsi-ascii")) t->result_file = TSI_ASCII_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->result_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->result_file = TSI_BIN_FILE;
-		else if (!strcmp(get_string(k), "sgems-ascii")) t->result_file = GSLIB_FILE;
 	}
 	if ((k = get_key(reg, "SEISMIC", "FILE_TYPE")) != NULL) {
-		if (!strcmp(get_string(k), "gslib")) t->seismic_file = CARTESIAN_FILE;
-		else if (!strcmp(get_string(k), "tsi-ascii")) t->seismic_file = TSI_ASCII_FILE;
+		if (!strcmp(get_string(k), "gslib")) t->seismic_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->seismic_file = TSI_BIN_FILE;
-		else if (!strcmp(get_string(k), "sgems-ascii")) t->seismic_file = GSLIB_FILE;
 	}
 
 	/* load seismic grid */
