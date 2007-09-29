@@ -342,7 +342,7 @@ float *load_harddata_file(char *filename,  unsigned int *size) {
 	float *buf;
 	TSI_FILE *fp;
 
-    if ((fp = open_file(filename)) == NULL) {
+    if ((fp = fopen(filename, "r")) == NULL) {
         fprintf(stderr,"load_harddata_file(): ERROR - Can't open Hard Data file: %s\n", filename);
         return NULL;
     }
@@ -367,7 +367,7 @@ float *load_harddata_file(char *filename,  unsigned int *size) {
 		buf[i++] = val;
 	}
 
-    close_file(fp);
+    fclose(fp);
 	return buf;
 } /* load_harddata_file */
 

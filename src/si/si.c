@@ -77,7 +77,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         sprintf(filename, "%s%s", get_string(kpath), get_string(k));
     else
         sprintf(filename, "%s", get_string(k));
-    fp = open_file(filename);
+    fp = fopen(filename, "r");
     if (!fp) {
         printf_dbg("\tnew_si(): failed to open wavelet file!\n");
         return NULL;
@@ -88,7 +88,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         printf_dbg2("Wavelet[%d] = Pair(%d, %f)\n", i, s->points[i], s->values[i]);
         i++;
     }
-    close_file(fp);
+    fclose(fp);
 
     if (i < s->wavelet_used_values) {
         printf_dbg("\tnew_si(): EOF found. Uncomplete wavelet.\nThis wavelet must have %d values.\n", s->wavelet_used_values);
@@ -131,10 +131,8 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 
     s->dump_file = TSI_BIN_FILE;
     if ((k = get_key(r, "DUMP", "FILE_TYPE")) != NULL) {
-        if (!strcmp(get_string(k), "gslib")) s->dump_file = CARTESIAN_FILE;
-        else if (!strcmp(get_string(k), "tsi-ascii")) s->dump_file = TSI_ASCII_FILE;
+        if (!strcmp(get_string(k), "gslib")) s->dump_file = TSI_ASCII_FILE;
         else if (!strcmp(get_string(k), "tsi-bin")) s->dump_file = TSI_BIN_FILE;
-        else if (!strcmp(get_string(k), "sgems-ascii")) s->dump_file = GSLIB_FILE;
     }
   
     return s;

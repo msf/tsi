@@ -35,6 +35,8 @@ extern void get3Dcoords(int, int, int, int*, int*, int*);
 
 extern int getIndex(float min, float siz, float loc);
 
+/* this is in dss-utils.c */
+extern float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr);
 
 
 
