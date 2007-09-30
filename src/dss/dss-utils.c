@@ -1,16 +1,19 @@
 #include <math.h>
 #include "dss.h"
 
+static inline
 float my_roundf(const float val)
 {
     return ((val - floorf(val)) < 0.5) ? floorf(val) : ceilf(val);
 }
 
+inline
 int getPos(int x, int y, int z, int xlen, int xylen)
 {	
 	return (x + (xlen * (y -1)) + (xylen * (z-1)));
 }
 
+inline
 void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 {
 	int ix, iy, iz;
@@ -37,6 +40,7 @@ void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 
  coordinate index should be checked to see if its inside given grid by the caller.
  */
+inline
 int getIndex(float min, float siz, float loc)
 {
 	return (int) my_roundf( 1 + (loc - min) / siz );
