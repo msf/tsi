@@ -217,6 +217,9 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	/* copy wells data to simulation grid */
 	for(i = 0; i < (int) general->wellsNPoints; i++) {
 		in = general->wellsDataPos[i];
+		/* there can be several wells datapoints for the same grid point */
+		if( sim[in] != general->nosvalue )
+			continue;
 		sim[in] = (float) general->wellsDataVal[i];
 
 		// mark point has simulated
@@ -367,23 +370,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			*/
 		}
 		general->ktype = kinicial;
-		/* !Calculo do equivalente valor gaussiano        (SDSIM) */
-		if (cmean <= general->vrtr[0]) {
-			vmy = general->vrgtr[0];
-			goto L9999;
-		}
-		if (cmean >= general->vrtr[general->nd - 1]) {
-			vmy = general->vrgtr[general->nd - 1];
-			goto L9999;
-		}
-		for (i = 1; i < general->nd; ++i) {
-			if (cmean >= general->vrtr[i - 1] && cmean < general->vrtr[i]) {
-				vmy = general->vrgtr[i - 1] + (cmean - general->vrtr[i - 1]) * 
-					(general->vrgtr[i] - general->vrgtr[i - 1]) / (general->vrtr[i] - general->vrtr[i - 1]);
-				break;
-			}
-		}
-L9999:
+		vmy = compute_gaussian_equiv( cmean, general->nd, general->vrtr, general->vrgtr);
+
 		/* !Gera um valor aleatorio com distribuicao Gaussiana */
 		vms = 0;
 		for (i = 1; i <= covtable_lookup->ntry; ++i) {
