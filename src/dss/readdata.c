@@ -168,7 +168,7 @@ int readdata(float *hard_data,
 			w = (cp + oldcp) * .5f;
 			gauinv(&w, &vrg, &ierr);
 			if (ierr == 1) {
-				vrg = general->nosvalue;
+				vrg = general->nosim_value;
 			}
 			oldcp = cp;
 			/* !Now, reset the weight to the normal scores value: */
@@ -244,7 +244,7 @@ int readdata(float *hard_data,
 				general->wt[general->nd] = var[general->iwt - 1];
 			}
 			if (general->isecvr <= 0) {
-				general->sec[general->nd] = general->nosvalue;
+				general->sec[general->nd] = general->nosim_value;
 			} else {
 				general->sec[general->nd] = var[general->isecvr - 1];
 			}
@@ -278,100 +278,17 @@ int readdata(float *hard_data,
 		av /= (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
 		ss = ss / ((double) MAX(twt,1e-20f)) - av * av;
 
-        	printf_dbg2("readdata(): vmedexp: %f, vvarexp: %f\n", simulation->vmedexp, simulation->vvarexp);
+		printf_dbg2("readdata(): vmedexp: %f, vvarexp: %f\n",
+			   simulation->vmedexp, simulation->vvarexp);
 		/* !write (*,*) ' Data for SGSIM: ' */
 		/* !write (*,*) ' Number of acceptable data  = ',nd */
 		/* !write (*,*) ' Number trimmed             = ',nt */
 		/* !write (*,*) ' Weighted Average           = ',av */
 		/* !write (*,*) ' Weighted Variance          = ',ss */
 		printf_dbg2(" Number of acceptable data: %d\nNumber trimmed: %d\n Weighted Average: %f\n Weighted Variance: %f\n",
-		general->nd, nt, av, ss);
+			general->nd, nt, av, ss);
 	}
 	
-	/* !Read secondary attribute model if necessary: */
-	/* TSI note: code comented because in TSI, 
-	 * DSS should/does not read and manipulare secondary attribute model
-	 * like this
-	 */  
-	if (general->ktype >= 2) {
-		/*
-		if (*bai_data_size == 0) {
-			fprintf(stderr,"WARNING secondary attribute file does not exist!\n");
-			return -1;
-		}
-		*/
-		/* lvm is allready set to a pointer of BAI on dssdll */
-		/* !BAI_DATA_SIZE = nx*ny*nz */
-		/*
-		int ix, iy, iz;
-		int index = 0;
-		int testind;
-		av = 0;
-		ss = 0;
-		nelem = 0;
-		i1 = *bai_data_size__;
-		for (index = 1; index <= i1; ++index) {
-			i2 = general->nvaril;
-			for (j = 1; j <= i2; ++j) {
-				var[j - 1] = bai_data[nelem + j];
-			}
-			nelem += general->nvaril;
-			sim[index] = (float) index;
-			lvm[index] = var[general->icollvm - 1];
-			av += var[general->icollvm - 1];
-			ss += var[general->icollvm - 1] * var[general->icollvm - 1];
-		}
-		r1 = (float) general->nxyz;
-		av /= ((double) MAX(r1,1)); 
-		r1 = (float) general->nxyz;
-		ss = ss / ((double) MAX(r1,1)) - av * av;
-		*/
-		/* !Do we need to work with data residuals? (Locally Varying Mean) */
-		if (general->ktype == 2 || general->ktype == 3) {
-			/*
-			for (i = 0; i < general->nd; ++i) {
-				ix = getIndex(general->xmn, general->xsiz, general->x[i]);
-				iy = getIndex(general->ymn, general->ysiz, general->y[i]);
-				iz = getIndex(general->zmn, general->zsiz, general->z[i]);
-				index  = getPos(ix, iy, iz, general->nx, general->nxy);g
-				general->sec[i] = lvm[index];
-			}
-			*/
-			/* !Calculation of residual moved to krige subroutine: vr(i)=vr(i)-sec(i) */
-		}
-	}
-	/* !Re-scale secondary variable to mean and variance */
-	/* !of the primary variable */
-	/* for TSI this is not necessary, nor benefic */
-	/*
-	if (general->ktype >= 4) {
-		simulation->vmedsec = 0;
-		simulation->vvarsec = 0;
-		int inull = 0;
-		for (i = 1; i <= general->nxyz; ++i) {
-			if (lvm[i] != general->nosvalue) {  
-				simulation->vmedsec += lvm[i];
-			} else {
-				++inull;
-			}
-		}
-		simulation->vmedsec /= general->nxyz - inull;
-		for (i = 1; i <= general->nxyz; ++i) {
-			if (lvm[i] != general->nosvalue) {
-				r1 = lvm[i] - simulation->vmedsec;
-				simulation->vvarsec += r1 * r1;
-			}
-		}
-		simulation->vvarsec /= general->nxyz - inull;
-		for (i = 1; i <= general->nxyz; ++i) {
-			if (lvm[i] != -999.25f) {
-				lvm[i] = (lvm[i] - simulation->vmedsec) / sqrt( 
-						simulation->vvarsec) * sqrt(simulation->vvarexp) + 
-					simulation->vmedexp;
-			}
-		}
-	}
-	*/
 
 	return 0;
 } /* readdata_ */

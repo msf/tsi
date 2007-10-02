@@ -188,37 +188,37 @@ double genrand_res53(void)
 
 /*  CODE ADDED BY MIG.  #####################################  */
 #ifdef WIN32
-#define NEW_RAND
+#undef OLD_RAND
 #endif
 
-#ifndef NEW_RAND
+#ifdef OLD_RAND
 #include <stdlib.h>
 #endif
 
 void tsi_seed_random(long seed)
 {
-#ifdef NEW_RAND
-	init_genrand(seed);
-#else
+#ifdef OLD_RAND
     srandom(seed);
+#else
+	init_genrand(seed);
 #endif
 }
 
 unsigned long tsi_random(void)
 {
-#ifdef NEW_RAND
+#ifdef OLD_RAND
+    return (unsigned long)random();
+#else
 	//TODO: try int28()
 	return genrand_int31();
-#else
-    return (unsigned long)random();
 #endif
 }
 
 double tsi_random_real(void)
 {
-#ifdef NEW_RAND
-	return genrand_real2();
-#else
+#ifdef OLD_RAND
     return ((double)random()) / RAND_MAX;
+#else
+	return genrand_real2();
 #endif
 }

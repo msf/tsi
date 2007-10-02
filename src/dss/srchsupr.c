@@ -162,20 +162,22 @@ int srchsupr(float xloc, float yloc, float zloc,
 	sort_permute_float(1, *nclose, &tmp[1], &close[1]);
 
 	/* If we aren't doing an octant search then just return: */
-
+    return 0;
+    /* TSI NOTE: NOCT IS ALLWAYS 0 */
+    /*
 	if (noct <= 0) {
 		return 0;
 	}
 
-	/* PARTITION THE DATA INTO OCTANTS: */
+	// PARTITION THE DATA INTO OCTANTS: 
 
 	for (i = 0; i < 8; ++i) {
 		inoct[i] = 0;
 	}
 
-	/* Now pick up the closest samples in each octant: */
+	// Now pick up the closest samples in each octant: 
 
-	nt = noct * 8;  /* LPL */
+	nt = noct * 8;  // LPL 
 	na = 0;
 	i1 = *nclose;
 	for (j = 1; j <= i1; ++j) {
@@ -208,7 +210,7 @@ int srchsupr(float xloc, float yloc, float zloc,
 		}
 		++inoct[iq - 1];
 
-		/* Keep this sample if the maximum has not been exceeded: */
+		// Keep this sample if the maximum has not been exceeded: 
 
 		if (inoct[iq - 1] <= noct) {
 			++na;
@@ -220,7 +222,7 @@ int srchsupr(float xloc, float yloc, float zloc,
 		}
 	}
 
-	/* End of data selection. Compute number of informed octants and return: */
+	// End of data selection. Compute number of informed octants and return: 
 
 	*nclose = na;
 	ii = 0;
@@ -231,5 +233,6 @@ int srchsupr(float xloc, float yloc, float zloc,
 	}
 
 	return ii;
+    */
 } /* srchsupr_ */
 

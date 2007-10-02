@@ -75,11 +75,13 @@ int srchnod(int ix, int iy, int iz, float *sim,
 
 	/* Function Body */
 	covtable_lookup->ncnode = 0;
+    /* noct is ALLWAYS 0
 	if (search->noct > 0) {
 		for(i= 0; i < 8; i++)
 			ninoct[i] = 0;
 	}
-	
+	*/
+
 	nctx = ix - covtable_lookup->nctx - 1;
 	ncty = iy - covtable_lookup->ncty - 1;
 	nctz = iz - covtable_lookup->nctz - 1;
@@ -100,8 +102,9 @@ int srchnod(int ix, int iy, int iz, float *sim,
 			continue;
 
 		ind = getPos(i, j, k, general->nx, general->nxy);
-		if (sim[ind] > general->nosvalue) {
+		if (sim[ind] > general->nosim_value) {
 			/* Check the number of data already taken from this octant: */
+            /* noct IS ALLWAYS 0
 			if (search->noct > 0) {
 				idx = ix - i;
 				idy = iy - j;
@@ -134,6 +137,7 @@ int srchnod(int ix, int iy, int iz, float *sim,
 					continue;
 				}
 			}
+            */
 			covtable_lookup->icnode[covtable_lookup->ncnode] = il +1;
 			covtable_lookup->cnodex[covtable_lookup->ncnode] = general->xmn + (float) (i - 1) * general->xsiz;
 			covtable_lookup->cnodey[covtable_lookup->ncnode] = general->ymn + (float) (j - 1) * general->ysiz;

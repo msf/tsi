@@ -12,7 +12,7 @@ DEBUG_TARGET   := tsi-64-debug
 # Default settings for gcc
 CC      := gcc#-3.4
 CPP     := g++#-3.4
-CFLAGS  := -pipe  -DNEW_RAND
+CFLAGS  := -pipe 
 LDFLAGS := -lm -lpthread -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
 #OPTS	+= -msse -msse2 -mfpmath=sse 
@@ -31,7 +31,7 @@ OPTS    := -O3 -ffast-math -fomit-frame-pointer
 DEBUG   := -g -ggdb
 #DEBUG	+= -m32
 #DEBUG  += -pg
-DEBUG	+= -Wall -Wextra -std=gnu99 -DTSI_DEBUG2 -DNEW_RAND
+DEBUG	+= -Wall -Wextra -std=gnu99 -DTSI_DEBUG2
 #DEBUG  += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
 #DEBUG  += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow
 #DEBUG  += -Wunreachable-code -Wdisabled-optimization

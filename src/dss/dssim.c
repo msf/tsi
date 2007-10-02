@@ -184,6 +184,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			search->sanis1, search->sanis2, covariance->isrot, 
 			krige_vars->rotmat);
 	/* !Set up the super block search: */
+    /* TSI NOTE: SSTRAT IS ALLWAYS 1 */
+    /*
 	if (search->sstrat == 0) {
 		nsec = 1;
 		setsupr(&general->nx, &general->xmn, &general->xsiz, &general->ny,
@@ -197,7 +199,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				covariance->isrot, krige_vars->rotmat, search->radsqd,
 				&nsbtosr, ixsbtosr, iysbtosr, izsbtosr);
 	}
-
+    */
 	printf_dbg2("dssim() calling covtable\n");
 	/* !Set up the covariance table and the spiral search: */
 	covtable(&order[1], &sim[1], general, search, covariance, covtable_lookup, krige_vars);
@@ -208,7 +210,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	/* init the sim table with NOSVALUE (no simulated value) */
 	for(i = 1; i <= general->nxyz; ++i) {
 		order[i] = i;
-		sim[i] = general->nosvalue;
+		sim[i] = general->nosim_value;
 	}
 
 	toSim = general->nxyz;
@@ -218,7 +220,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	for(i = 0; i < (int) general->wellsNPoints; i++) {
 		in = general->wellsDataPos[i];
 		/* there can be several wells datapoints for the same grid point */
-		if( sim[in] != general->nosvalue )
+		if( sim[in] != general->nosim_value )
 			continue;
 		sim[in] = (float) general->wellsDataVal[i];
 
@@ -236,7 +238,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	if (general->imask == 1) {
 		for (i = 1; i <= general->nxyz; ++i) {
 			if (mask_data[i] == 0) {
-				sim[i] = general->nosvalue;
+				sim[i] = general->nosim_value;
 			}
 		}
 	}
@@ -275,8 +277,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* if( sim[index] >= general->tmin &&
 		    sim[index] <= general->tmax) { */
 		/*
-		 if (sim[index] > general->nosvalue + 1e-20f || 
-				 sim[index] < general->nosvalue * 2.f) {
+		 if (sim[index] > general->nosim_value + 1e-20f || 
+				 sim[index] < general->nosim_value * 2.f) {
 			++ierr;
 			printf("dssim(): ERROR: index(%d) allready has valid data: %f\n",index,sim[index]);
 			continue;
@@ -316,7 +318,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = general->ktype;
-		if (general->ktype == 5 && bestAICube[index] == general->nosvalue) {
+		if (general->ktype == 5 && bestAICube[index] == general->nosim_value) {
 			general->ktype = 0;
 		}
 		/* !Calculate the conditional mean and standard deviation.  This will be */

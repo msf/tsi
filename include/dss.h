@@ -8,13 +8,8 @@
 
 
 typedef struct general_vars_type {
-    int    nd,      /* init to 0, inc to harddata */
-           ntr,     /* init to 0, inc to harddata */
-           idbg,
-           lin,
-           lout,
-           ldbg,
-           llvm;
+    int    nd,      /* number of acceptance harddata */
+           ntr;     /* init to 0, inc to harddata */
     float  close[7000]; /* same size as harddata??? */
 
     /* used by "readdata" for harddata processing */
@@ -32,30 +27,27 @@ typedef struct general_vars_type {
     unsigned int wellsNPoints, *wellsDataPos; 
     float *wellsDataVal;
 
-    /* acorni data */
-    int    *ixv;
-
     /* parameters from registry */
-    int    nvari,     /* HARDDATA:NVARI */
-           ixl,       /* HARDDATA:IXL */
-           iyl,       /* HARDDATA:IYL */
-           izl,       /* HARDDATA:IZL */
-           ivrl,      /* HARDDATA:IVRL */
-           iwt,       /* HARDDATA:IWT */
-           isecvr;    /* HARDDATA:ISECVR */
+    int    nvari,     /* =4 - HARDDATA:NVARI */
+           ixl,       /* =1 - HARDDATA:IXL */
+           iyl,       /* =2 - HARDDATA:IYL */
+           izl,       /* =3 - HARDDATA:IZL */
+           ivrl,      /* =4 - HARDDATA:IVRL */
+           iwt,       /* =0 - HARDDATA:IWT */
+           isecvr;    /* =0 - HARDDATA:ISECVR */
     float  tmin,      /* HARDDATA:TMIN */
            tmax;      /* HARDDATA:TMAX */
 
-    int    itrans,    /* HDTRANS:ITRANS */
-           ismooth,   /* HDTRANS:ISMOOTH */
-           isvr,      /* HDTRANS:ISVR */
-           iswt;      /* HDTRANS:ISWT */
-    int    ltail;     /* HDTRANS:LTAIL */
-    float  ltpar;     /* HDTRANS:LTPAR */
-    int    utail;     /* HDTRANS:UTAIL */
-    float  utpar,     /* HDTRANS:UTPAR */
-           zmin,      /* HDTRANS:ZMIN */
-           zmax;      /* HDTRANS:ZMAX */
+    int    itrans,    /* =1 - HDTRANS:ITRANS */
+           ismooth,   /* =0 - HDTRANS:ISMOOTH */
+           isvr,      /* =1 - HDTRANS:ISVR */
+           iswt;      /* =2 - HDTRANS:ISWT */
+    int    ltail;     /* =1 - HDTRANS:LTAIL */
+    int    utail;     /* =1 - HDTRANS:UTAIL */
+    float  ltpar;     /* =TMIN - HDTRANS:LTPAR */
+    float  utpar,     /* =TMAX - HDTRANS:UTPAR */
+           zmin,      /* =TMIN - HDTRANS:ZMIN */
+           zmax;      /* =TMAX - HDTRANS:ZMAX */
 
     int    nx,        /* GRID:XNUMBER */
            ny,        /* GRID:YNUMBER */
@@ -69,15 +61,15 @@ typedef struct general_vars_type {
     int    nxy,       /* = nx * ny */
            nxyz;      /* = nx * ny * nz */
 
-    int    icollvm,   /* SOFT:ICOLLVM */
-           nvaril;    /* SOFT:NVARIL */
+    int    icollvm,   /* =1 - SOFT:ICOLLVM */
+           nvaril;    /* =1 - SOFT:NVARIL */
 
-    float  nosvalue;  /* MASK:NULL_VALUE */
+    float  nosim_value;  /* MASK:NULL_VALUE */
     int    imask;     /* MASK:USE_MASK*/
 
-    int    ktype;     /* KRIG:KTYPE */
-    float  colocorr,  /* KRIG:COLOCORR */
-           varred;    /* KRIG:VARRED */
+    int    ktype;     /* =1 (and 5)- KRIG:KTYPE */
+    float  colocorr,  /* =0 - KRIG:COLOCORR */
+           varred;    /* =0.6 - KRIG:VARRED */
 } general_vars_t;
 
 
@@ -87,17 +79,15 @@ typedef struct search_vars_type {
     /* parameters from registry */
     int    ndmin,    /* SEARCH:NDMIN */
            ndmax;    /* SEARCH:NDMIN */
-    int    sstrat,   /* SEARCH_SSTRAT */
-           noct,     /* SEARCH:NOCT */
-           mults;    /* SEARCH:MULTS */
+    int    sstrat,   /* =1 - SEARCH_SSTRAT */
+           noct;     /* =0 - SEARCH:NOCT */
     float  radius,   /* SEARCH:RADIUS */
            radsqd,   /* radius^2 */
            sang1,    /* SEARCH:SANG */
            sang2,    /* SEARCH:SANG1 */
            sang3,    /* SEARCH:SANG2 */
            sanis1,   /* (SEARCH:RADIUS1) / radius */
-           sanis2,   /* (SEARCH:RADIUS2) / radius */
-           nmult;    /* SEARCH:NMULTS */
+           sanis2;   /* (SEARCH:RADIUS2) / radius */
 } search_vars_t;
 
 
@@ -129,8 +119,20 @@ typedef struct covariance_vars_type {
            *aa,      /* VARIOGRAMn:AA */
            *anis1,   /* VARIOGRAMn:AA1 / (aa>1e-20 ? aa : 1e-20) */ 
            *anis2;   /* VARIOGRAMn:AA2 / (aa>1e-20 ? aa : 1e-20) */
+
+    struct variogram_type *variogram;
 } covariance_vars_t;
 
+typedef struct variogram_type {
+    int     type; /* it */
+    float   cov;  /* cc */
+    float   ang1;
+    float   ang2;
+    float   ang3;
+    float   aa;
+    float   anis1;
+    float   anis2;
+} variogram_t;
 
 typedef struct covtable_lookup_vars_type {
     int    nctx,
@@ -153,14 +155,9 @@ typedef struct covtable_lookup_vars_type {
     /* parameters from registry */
     int    nodmax;  /* SEARCH:NODMAX */
     int    ntry,    /* QUALITY:NTRY */
-           icmean,  /* QUALITY:ICMEAN */
-           icvar;   /* QUALITY:ICVAR */
+           icmean,  /* =1 - QUALITY:ICMEAN */
+           icvar;   /* =1 - QUALITY:ICVAR */
 
-    /* backup values */
-    int    nodmax_bk;  /* SEARCH:NODMAX */
-    int    ntry_bk,    /* QUALITY:NTRY */
-           icmean_bk,  /* QUALITY:ICMEAN */
-           icvar_bk;   /* QUALITY:ICVAR */
 } covtable_lookup_vars_t;
 
 

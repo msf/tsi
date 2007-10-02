@@ -1,5 +1,15 @@
 TSI TODO LIST!
 
+
+DOING DSS CLEANUP.
+- REMOVAL OF unused variables from DSS.H STRUCTS.
+- detecting dead code from values of config values that never change.
+- removing unused parameters.
+- general cleanup.
+- change names to something more meaningfull.
+- list goes on forever...
+
+
 ---------------------------------------------------------------
 TO BE DONE:
 - remove grid_heap usage from cmgrid.

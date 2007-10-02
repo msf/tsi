@@ -103,13 +103,13 @@ int  dss_parameters(dss *d, registry *r )
     
     /* simulations quality */
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;
-    d->clookup->ntry = d->clookup->ntry_bk = get_int(k);
+    d->clookup->ntry = get_int(k);
 
     if ((k = get_key(r, "QUALITY", "ICVAR")) == NULL) return 1;
-    d->clookup->icvar = d->clookup->icvar_bk = get_int(k);
+    d->clookup->icvar = get_int(k);
 
     if ((k = get_key(r, "QUALITY", "ICMEAN")) == NULL) return 1;
-    d->clookup->icmean = d->clookup->icmean_bk = get_int(k);
+    d->clookup->icmean = get_int(k);
 
     
     /* grid parameters */
@@ -146,7 +146,7 @@ int  dss_parameters(dss *d, registry *r )
     
     /* mask */
     if ((k = get_key(r, "MASK", "NULL_VALUE")) == NULL) return 1;
-    d->general->nosvalue = get_float(k);
+    d->general->nosim_value = get_float(k);
 
 	/* mask is not supported */
     //if ((k = get_key(r, "MASK", "USE_MASK")) == NULL) return 1;
@@ -161,18 +161,14 @@ int  dss_parameters(dss *d, registry *r )
     d->search->ndmax = get_int(k);
 
     if ((k = get_key(r, "SEARCH", "NODMAX")) == NULL) return 1;
-    d->clookup->nodmax = d->clookup->nodmax_bk = get_int(k);
+    d->clookup->nodmax = get_int(k);
 
     if ((k = get_key(r, "SEARCH", "SSTRAT")) == NULL) return 1;
     d->search->sstrat = get_int(k);
-    if (d->search->sstrat == 1) 
+    if (d->search->sstrat == 1)  {
+        printf("Resetting NDMAX to 0\n");
 		d->search->ndmax = 0;
-
-    if ((k = get_key(r, "SEARCH", "MULTS")) == NULL) return 1;
-    d->search->mults = get_int(k);
-
-    if ((k = get_key(r, "SEARCH", "NMULTS")) == NULL) return 1;
-    d->search->nmult = get_float(k);
+    }
 
     if ((k = get_key(r, "SEARCH", "NOCT")) == NULL) return 1;
     d->search->noct = get_int(k);
@@ -227,6 +223,9 @@ int  dss_parameters(dss *d, registry *r )
 
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
     sill = d->covariance->c0 = get_float(k);
+
+
+    //d->covariance->variogram = (variogram_t *) tsi_malloc(varnum * sizeof(variogram_t));
 
     d->covariance->it = (int *) tsi_malloc(varnum * sizeof(int));
     d->covariance->cc = (float *) tsi_malloc(varnum * sizeof(float));
