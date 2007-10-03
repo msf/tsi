@@ -44,6 +44,7 @@ int  dss_parameters(dss *d, registry *r )
 
 
     /* harddata transformations */
+    /*
     if ((k = get_key(r, "HDTRANS", "ITRANS")) == NULL) return 1;
     d->general->itrans = get_int(k);
 
@@ -55,7 +56,7 @@ int  dss_parameters(dss *d, registry *r )
 
     if ((k = get_key(r, "HDTRANS", "ISWT")) == NULL) return 1;
     d->general->iswt = get_int(k);
-
+    */
     if ((k = get_key(r, "HDTRANS", "ZMIN")) == NULL) return 1;
     d->general->zmin = get_float(k);
 
@@ -105,12 +106,13 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;
     d->clookup->ntry = get_int(k);
 
+    /*
     if ((k = get_key(r, "QUALITY", "ICVAR")) == NULL) return 1;
     d->clookup->icvar = get_int(k);
 
     if ((k = get_key(r, "QUALITY", "ICMEAN")) == NULL) return 1;
     d->clookup->icmean = get_int(k);
-
+    */
     
     /* grid parameters */
     if ((k = get_key(r, "GRID", "XNUMBER")) == NULL) return 1;
@@ -148,10 +150,6 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "MASK", "NULL_VALUE")) == NULL) return 1;
     d->general->nosim_value = get_float(k);
 
-	/* mask is not supported */
-    //if ((k = get_key(r, "MASK", "USE_MASK")) == NULL) return 1;
-    d->general->imask = 0;
-
 
     /* search parameters */
     if ((k = get_key(r, "SEARCH", "NDMIN")) == NULL) return 1;
@@ -163,6 +161,7 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "SEARCH", "NODMAX")) == NULL) return 1;
     d->clookup->nodmax = get_int(k);
 
+    /*
     if ((k = get_key(r, "SEARCH", "SSTRAT")) == NULL) return 1;
     d->search->sstrat = get_int(k);
     if (d->search->sstrat == 1)  {
@@ -172,6 +171,7 @@ int  dss_parameters(dss *d, registry *r )
 
     if ((k = get_key(r, "SEARCH", "NOCT")) == NULL) return 1;
     d->search->noct = get_int(k);
+    */
 
     if ((k = get_key(r, "SEARCH", "RADIUS")) == NULL) return 1;
     d->search->radius = get_float(k);
@@ -201,19 +201,20 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "KRIG", "TYPE")) == NULL) return 1;
     d->general->ktype = get_int(k);
 
+    /*
     if ((k = get_key(r, "KRIG", "COLOCORR")) == NULL) return 1;
     d->general->colocorr = get_float(k);
 
     if ((k = get_key(r, "KRIG", "VARRED")) == NULL) return 1;
     d->general->varred = get_float(k);
 
-
-    /* softdata parameters */
+    // softdata parameters 
     if ((k = get_key(r, "SOFT", "NVARIL")) == NULL) return 1;
     d->general->nvaril = get_int(k);
 
     if ((k = get_key(r, "SOFT", "ICOLLVM")) == NULL) return 1;
     d->general->icollvm = get_int(k);
+    */
 
 
     /* variogram models */
@@ -291,7 +292,7 @@ int  dss_parameters(dss *d, registry *r )
         printf("load_dss_configs(): WARNING: The sill of the variogram is not 1.0! sill = %f\n", sill);
     }
 
-    d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
+    //d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
 
     return 0;
 }

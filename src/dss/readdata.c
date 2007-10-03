@@ -70,7 +70,7 @@ int readdata(float *hard_data,
 	double oldcp;
 	float vmedg;
 	float vvarg;
-	int icolvr, icolwt, istart;
+	int ivrl, iwt, istart;
 
 	float *var;
 	
@@ -87,8 +87,8 @@ int readdata(float *hard_data,
 		fprintf(stderr,"\t- Resetting sstrar to 1\n");
 		search->ndmin = 0;
 		search->ndmax = 0;
-		general->itrans = 0;
-		search->sstrat = 1;
+		//general->itrans = 0;
+		//search->sstrat = 1;
 	}
 	
 	var = (float *) tsi_malloc(sizeof(float)*general->nvari);
@@ -99,12 +99,17 @@ int readdata(float *hard_data,
 	/* !Establish the reference histogram for the simulation (provided that */
 	/* !we have data, and we are transforming the data): */
 	if (general->itrans == 1) {
+        /* ISMOOTH IS ALLWAYS 0 */
+        /*
 		if (general->ismooth == 1) {
-			icolvr = general->isvr;
-			icolwt = general->iswt;
-		} else {
-			icolvr = general->ivrl;
-			icolwt = general->iwt;
+			ivrl = general->isvr;
+			iwt = general->iswt;
+		} 
+        else 
+        */
+        {
+			ivrl = general->ivrl;
+			iwt = general->iwt;
 		}
 		/* !Now, read in the actual data: */
 
@@ -120,22 +125,22 @@ int readdata(float *hard_data,
 			}
 			nelem += general->nvari;
 			/* !Trim this data? */
-			if (var[icolvr - 1] < general->tmin || var[icolvr - 1] > general->tmax) {
+			if (var[ivrl - 1] < general->tmin || var[ivrl - 1] > general->tmax) {
 				++nt;
 				continue;
 			}
 
-			if (icolvr > general->nvari || icolwt > general->nvari) {
+			if (ivrl > general->nvari || iwt > general->nvari) {
 				fprintf(stderr,"ERROR: too few columns in ref data\n");
 				fprintf(stderr,"\taborting.\n");
 				return -1; /* ERROR */
 			}
 			/* !Keep this data: Assign the data value and coordinate location: */
-			general->vrtr[general->ntr] = var[icolvr - 1];
-			if (icolwt <= 0) {
+			general->vrtr[general->ntr] = var[ivrl - 1];
+			if (iwt <= 0) {
 				general->vrgtr[general->ntr] = 1;
 			} else {
-				general->vrgtr[general->ntr] = var[icolwt - 1];
+				general->vrgtr[general->ntr] = var[iwt - 1];
 			}
 			if (general->vrgtr[general->ntr] <= 0) {
 				++nt;
@@ -238,6 +243,7 @@ int readdata(float *hard_data,
 			} else {
 				general->z[general->nd] = var[general->izl - 1];
 			}
+            /* NOT USED
 			if (general->iwt <= 0) {
 				general->wt[general->nd] = 1.f;
 			} else {
@@ -248,6 +254,10 @@ int readdata(float *hard_data,
 			} else {
 				general->sec[general->nd] = var[general->isecvr - 1];
 			}
+            */
+			general->wt[general->nd] = 1.f;
+			general->sec[general->nd] = general->nosim_value;
+
 			twt += general->wt[general->nd];
 			av += var[general->ivrl - 1] * general->wt[general->nd];
 			ss += var[general->ivrl - 1] * var[general->ivrl - 1] * general->wt[general->nd];
@@ -256,10 +266,6 @@ int readdata(float *hard_data,
 			++general->nd;
 		}
 		
-		if (general->imask == 1) {
-			fprintf(stderr,"imaks = 1\n");
-		}
-
 		tsi_free(var);
 
 		simulation->vmedexp = 0;
