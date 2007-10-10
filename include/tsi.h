@@ -7,10 +7,8 @@
 #include "si.h"
 #include "log.h"
 
-#define TSI_VERSION		"v5.9"
+#define TSI_VERSION		"v5.9.2"
 
-#define TSI_ASCII_FILE  1 /* this is the GSLIB format */
-#define TSI_BIN_FILE    2
 
 
 typedef struct corr_type {

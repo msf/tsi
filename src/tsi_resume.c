@@ -1,7 +1,9 @@
 /* tsi_resume.c */
 
 #include <string.h>
+#include "tsi.h"
 #include "tsi_resume.h"
+#include "tsi_io.h"
 
 
 int tsi_backup_simulation(tsi *t, int i, int s)
@@ -28,7 +30,7 @@ int tsi_backup_simulation(tsi *t, int i, int s)
     }
 
     if (t->dump_cm) {
-        printf_dbg("\ttsi_backup_simulation(): dumping CC...\n");
+        printf_dbg("\ttsi_backup_simulation(): dumping CC... type: %d\n", t->dump_file);
         /* expand and dump CC */
         cmg = get_cmgrid(t->si_eng);
         load_cmgrid(cmg);

@@ -1,11 +1,21 @@
 /* si_resume.c */
+#include <stdio.h>
 
-#include "tsi_resume.h"
-#include "si_resume.h"
-
+#include "si.h"
+#include "tsi_io.h"
 
 /* local prototypes */
-int si_write_grid(si *eng, TSI_FILE *fp, float *grid, int type, char *desc);
+int si_write_grid(si *t, TSI_FILE *fp, float *grid, int type, char *desc) {
+	switch(type) {
+		case TSI_ASCII_FILE:
+			return write_gslib_grid(fp, grid, t->xsize, t->ysize, t->zsize, desc);
+		case TSI_BIN_FILE:
+			return write_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
+		default:
+			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			return 0;
+	} /* switch */ 
+} /* si_write_grid */
 
 
 int dump_synthetic_grid(si *s, float *g, int it, int sim)
@@ -13,7 +23,7 @@ int dump_synthetic_grid(si *s, float *g, int it, int sim)
     char filename[1024], desc[128];
     TSI_FILE *fp;
 
-    printf_dbg("\tdump_synthetic_grid(): dumping SY...\n");
+    printf_dbg("\tdump_synthetic_grid(): dumping SY... type:%d\n", s->dump_file);
     sprintf(desc, "SY_%d_%d", it, (sim * s->n_procs + s->proc_id));        
     sprintf(filename, "%s%s.tsi", s->dump_path, desc);
     fp = create_file(filename);
@@ -44,24 +54,5 @@ int dump_reflections_grid(si *s, float *g, int it, int sim)
     return 1;
 } /* dump_reflections_grid */
 
-
-
-int si_write_grid(si *eng, TSI_FILE *fp, float *grid, int type, char *desc) {
-	switch(type) {
-//		case CARTESIAN_FILE:
-//			return write_cartesian_grid(fp, grid, eng->grid_size);
-		case TSI_ASCII_FILE:
-			return write_gslib_grid(fp, grid, eng->xsize, eng->ysize, eng->zsize, desc);
-		case TSI_BIN_FILE:
-			return write_tsi_grid(fp, grid, eng->xsize, eng->ysize, eng->zsize);
-			/*
-			   case SGEMS_FILE:
-			   return write_sgems_grid(fp, grid, t->grid_size));
-			 */
-		default:
-			fprintf(stderr, "ERROR: Unknown grid file type!\n");
-			return 0;
-	} /* switch */ 
-} /* si_write_grid */
 
 /* end of file si_resume.c */

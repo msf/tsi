@@ -11,6 +11,7 @@
 #include "dss.h"
 #include "si.h"
 #include "tsi.h"
+#include "tsi_io.h"
 #include "tsi_math.h"
 #include "tsi_parallel.h"
 #include "tsi_resume.h"
@@ -99,7 +100,7 @@ tsi *new_tsi(registry *reg) {
 		delete_tsi(t);
 		return NULL;
 	}
-	sprintf(buf,"TSI %s - started, seed: %u\n",TSI_VERSION, timeSeed);
+	sprintf(buf,"TSI %s - started, seed: %lu\n",TSI_VERSION, timeSeed);
 	log_string(t->l, buf); 
 
 	t->global_best.value = t->last_corr.value = -999;
@@ -371,13 +372,13 @@ tsi *new_tsi(registry *reg) {
 		return NULL;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
-	if ((fp = open_file(buf)) == NULL) {
-		printf("ERROR: Failed to open the seismic grid file!\n");
+	if ((fp = fopen(buf, "r")) == NULL) {
+		printf("ERROR: Failed to open the seismic grid file: %s\n", buf);
 		delete_tsi(t);
 		return NULL;
 	}
 	if (!tsi_read_grid(t, fp, t->seismic, t->seismic_file)) {
-		printf("ERROR: Failed to load seismic file!\n");
+		printf("ERROR: Failed to load seismic file: %s\n", buf);
 		delete_tsi(t);
 		return NULL;
 	}

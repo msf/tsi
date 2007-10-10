@@ -3,18 +3,18 @@
 #                                     
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
-COMPILER := gcc
+#COMPILER := gcc
 
 # Targets
-RELEASE_TARGET := tsi
+RELEASE_TARGET := tsi-mpi
 DEBUG_TARGET   := tsi-64-debug
 
 # Default settings for gcc
 CC      := gcc#-3.4
 CPP     := g++#-3.4
-CFLAGS  := -pipe  -DNEW_RAND
-LDFLAGS := -lm -lpthread -lgcc
-OPTS    := -O3 -ffast-math -fomit-frame-pointer 
+CFLAGS  := -pipe  -DNEW_RAND 
+LDFLAGS := -lm -lgcc 
+OPTS    := -O3 -fomit-frame-pointer -ffast-math 
 #OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8

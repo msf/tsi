@@ -4,6 +4,11 @@
 
 #include <stdio.h>
 
+
+#define TSI_ASCII_FILE  1 /* this is the GSLIB format */
+#define TSI_BIN_FILE    2
+
+
 typedef FILE TSI_FILE;
 
 

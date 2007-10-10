@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "registry.h"
 #include "grid_heap.h"
+#include "log.h"
 
 typedef struct cm_grid_type {
     unsigned int nxy;          /* size of each xy grid */
