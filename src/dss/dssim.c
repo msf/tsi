@@ -372,7 +372,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		vms = 0;
 		for (i = 1; i <= covtable_lookup->ntry; ++i) {
 			p = tsi_random_real();
-			gauinv(&p, &xp, &ierr);
+			gauinv(p, &xp); // XXX: not checking return value
 			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
 			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,

@@ -15,6 +15,14 @@ int  dss_parameters(dss *d, registry *r )
     reg_key *k;
 
     /* harddata parameters */
+    d->general->nvari = 4;
+    d->general->ixl = 1;
+    d->general->iyl = 2;
+    d->general->izl = 3;
+    d->general->ivrl = 4;
+    d->general->iwt = 0;
+    d->general->isecvr = 0;
+    /*
     if ((k = get_key(r, "HARDDATA", "NVARI")) == NULL) return 1;
     d->general->nvari = get_int(k);
     
@@ -28,13 +36,14 @@ int  dss_parameters(dss *d, registry *r )
     d->general->izl = get_int(k);
     
     if ((k = get_key(r, "HARDDATA", "IVRL")) == NULL) return 1;
-
     d->general->ivrl = get_int(k);
+
     if ((k = get_key(r, "HARDDATA", "IWT")) == NULL) return 1;
     d->general->iwt = get_int(k);
 
     if ((k = get_key(r, "HARDDATA", "ISECVR")) == NULL) return 1;
     d->general->isecvr = get_int(k);
+    */
 
     if ((k = get_key(r, "HARDDATA", "TMIN")) == NULL) return 1;
     d->general->tmin = get_float(k);

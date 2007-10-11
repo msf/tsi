@@ -25,7 +25,7 @@ extern int setrot(float, float, float , float , float,  int, double rotmat[5][3]
 extern int srchnod(int, int, int, float *, general_vars_t *, search_vars_t *, 
                    covtable_lookup_vars_t *);
 
-extern int gauinv(double *, float *, int *);
+extern int gauinv(double, float *);
 
 extern int readdata(float *, unsigned int, general_vars_t *, search_vars_t *,
                     simulation_vars_t *);

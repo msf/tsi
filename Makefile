@@ -4,6 +4,7 @@
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
 COMPILER := gcc
+#COMPILER := icc
 
 # Targets
 RELEASE_TARGET := tsi
@@ -40,10 +41,9 @@ DEBUG	+= -Wall -Wextra -std=gnu99 -DTSI_DEBUG2
 ifeq ($(COMPILER), icc)
 CC      := icc
 CPP     := icc
-CFLAGS  := -O3 -mP2OPT_hlo_prefetch=F
-LDFLAGS := -lm -lpthread -lgcc
+CFLAGS  += -Wp64 -ipo
 OPTS    :=
-DEBUG   := -DTSI_DEBUG2
+DEBUG   := -Wp64 -DTSI_DEBUG2
 endif
 
 ifeq ($(COMPILER), win32)

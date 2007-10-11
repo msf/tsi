@@ -158,12 +158,11 @@ int readdata(float *hard_data,
 			return -1; /* ERROR */
 		}
 		/* !Sort data by value: */
-		istart = 1;
+		istart = 0;
 		iend = general->ntr;
-		/* sortem(&istart, &iend, general->vrtr, &one, general->vrgtr, &c__, &d__, &e, &f, &g, &h__); */
 		sort_permute_float(istart, iend, general->vrtr, general->vrgtr);
 		/* !Compute the cumulative probabilities and write transformation table */
-		twt = MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
+		twt = MAX(twt,1e-20f); 
 		oldcp = 0;
 		cp = 0;
 		vmedg = 0;// TODO: vmedg should be double, possible overflow
@@ -171,7 +170,7 @@ int readdata(float *hard_data,
 		for (j = 0; j < iend; ++j) {
 			cp += (double) (general->vrgtr[j] / twt);
 			w = (cp + oldcp) * .5f;
-			gauinv(&w, &vrg, &ierr);
+			ierr = gauinv(w, &vrg );
 			if (ierr == 1) {
 				vrg = general->nosim_value;
 			}
@@ -262,7 +261,10 @@ int readdata(float *hard_data,
 			av += var[general->ivrl - 1] * general->wt[general->nd];
 			ss += var[general->ivrl - 1] * var[general->ivrl - 1] * general->wt[general->nd];
 			printf_dbg2("readdata: Wells Point: (%f, %f, %f) = %f\n",
-					general->x[general->nd], general->y[general->nd], general->z[general->nd], general->vr[general->nd]);
+					general->x[general->nd], 
+                    general->y[general->nd], 
+                    general->z[general->nd], 
+                    general->vr[general->nd]);
 			++general->nd;
 		}
 		
@@ -281,7 +283,7 @@ int readdata(float *hard_data,
 		}
 		simulation->vvarexp /= general->nd;
 		/* !Compute the averages and variances as an error check for the user: */
-		av /= (double) MAX(twt,1e-20f); /* dmax(twt,1e-20f); */
+		av /= (double) MAX(twt,1e-20f); 
 		ss = ss / ((double) MAX(twt,1e-20f)) - av * av;
 
 		printf_dbg2("readdata(): vmedexp: %f, vvarexp: %f\n",
