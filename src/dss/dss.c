@@ -44,7 +44,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
 	na = search->nclose + covtable_lookup->ncnode;
 	*/
     d->krige->rr = NULL;
-    d->krige->r = NULL;
+    d->krige->r__ = NULL;
     d->krige->s = NULL;
     d->krige->a = NULL;
     d->krige->vra = NULL;
@@ -232,7 +232,7 @@ void delete_dss(dss *d) {
         if (d->clookup) tsi_free(d->clookup);
         if (d->krige) {
             if (d->krige->rr) tsi_free(d->krige->rr);
-            if (d->krige->r) tsi_free(d->krige->r);
+            if (d->krige->r__) tsi_free(d->krige->r__);
             if (d->krige->s) tsi_free(d->krige->s);
             if (d->krige->a) tsi_free(d->krige->a);
             if (d->krige->vra) tsi_free(d->krige->vra);
