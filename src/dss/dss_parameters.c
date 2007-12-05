@@ -57,6 +57,9 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "HDTRANS", "ISWT")) == NULL) return 1;
     d->general->iswt = get_int(k);
     */
+    d->general->itrans = 1;
+    d->general->ismooth = 0;
+
     if ((k = get_key(r, "HDTRANS", "ZMIN")) == NULL) return 1;
     d->general->zmin = get_float(k);
 
@@ -172,6 +175,7 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "SEARCH", "NOCT")) == NULL) return 1;
     d->search->noct = get_int(k);
     */
+	d->search->ndmax = 0;
 
     if ((k = get_key(r, "SEARCH", "RADIUS")) == NULL) return 1;
     d->search->radius = get_float(k);
@@ -215,7 +219,6 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "SOFT", "ICOLLVM")) == NULL) return 1;
     d->general->icollvm = get_int(k);
     */
-
 
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;

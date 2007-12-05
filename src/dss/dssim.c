@@ -129,7 +129,6 @@
 
 /* Table of constant values */
 
-static int five = 5;
 
 int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *mask_data,
 		general_vars_t			*	general,
@@ -145,24 +144,22 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 
 	/* Local variables */
-	float xsizsup, ysizsup, zsizsup;
 	int kinicial;
-	int ixsbtosr[1000], iysbtosr[1000], izsbtosr[1000];
 	double p, zvariance;
 	int in;
 	int ix, iz, iy;
 	float xp, xx, yy, zz;
-	float vmy = 0, vms, sec2, sec3;
-	int nsec, nisb[125], ierr;
+	float vmy = 0, vms;
+	int ierr;
 	float cmean, global_mean;
 
 	double zmean;
-	int index, nxsup, nysup, nzsup;
+	int index;
 	float std_deviation;
 	int lktype;
-	float xmnsup, ymnsup, zmnsup, clcorr;
+	float clcorr;
 	float simval = 0;
-	int nsbtosr;
+
 
 
 	/* Parameter adjustments */

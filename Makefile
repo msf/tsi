@@ -1,4 +1,4 @@
-# Makefile for TSI
+	# Makefile for TSI
 
 #                                     
 # Compiler settings (gcc, icc, win32)
@@ -10,24 +10,16 @@ RELEASE_TARGET := tsi
 DEBUG_TARGET   := tsi-64-debug
 
 # Default settings for gcc
-CC      := gcc#-3.4
-CPP     := g++#-3.4
+CC      := gcc
+CPP     := g++
 CFLAGS  := -pipe 
-LDFLAGS := -lm -lpthread -lgcc
+LDFLAGS := -lm -lgcc
 OPTS    := -O3 -ffast-math -fomit-frame-pointer 
 #OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
 #OPTS	+= -g -DTSI_DEBUG
-#OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
-#OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
-#OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
-#OPTS   += -frerun-loop-opt -fcaller-saves -fforce-mem -fpeephole2
-#OPTS   += -fschedule-insns  -fschedule-insns2 -fsched-interblock
-#OPTS   += -fsched-spec -fregmove -fstrict-aliasing -fdelete-null-pointer-checks
-#OPTS   += -freorder-blocks -freorder-functions -funit-at-a-time
-#OPTS   += -falign-functions  -falign-jumps -falign-loops  -falign-labels
-#OPTS   += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
+
 DEBUG   := -g -ggdb
 #DEBUG	+= -m32
 #DEBUG  += -pg

@@ -82,11 +82,10 @@ int srchsupr(float xloc, float yloc, float zloc,
 	int i1;
 
 	/* Local variables */
-	int i, j, na, ii, iq, h;
-	float dx, dy, dz;
-	int ix, iy, iz, nt;
+	int i, ii;
+	int ix, iy, iz;
 	double hsqd;
-	int isup, nums, inoct[8], ixsup, iysup, izsup;
+	int isup, nums, ixsup, iysup, izsup;
 
 
 	/* Determine the super block location of point being estimated: */
@@ -165,6 +164,7 @@ int srchsupr(float xloc, float yloc, float zloc,
     return 0;
     /* TSI NOTE: NOCT IS ALLWAYS 0 */
     /*
+    int j, iq, na, h, nt, inoct[8];
 	if (noct <= 0) {
 		return 0;
 	}
@@ -177,6 +177,8 @@ int srchsupr(float xloc, float yloc, float zloc,
 
 	// Now pick up the closest samples in each octant: 
 
+	float dx, dy, dz;
+	
 	nt = noct * 8;  // LPL 
 	na = 0;
 	i1 = *nclose;

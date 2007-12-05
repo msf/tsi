@@ -361,10 +361,10 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		*cmean += simulation->vmedexp;
 	}
 	/* Error message if negative variance: */
-	if (*std_deviation < 0.f) {
+	if (*std_deviation < -ZERO_THRESHOLD ) {
 		/* apagar */
 		/*            write(ldbg,*) 'ERROR: Negative Variance: ',std_deviation */
-        fprintf(stderr,"krige(): ERROR: Negative Variance: %f\n", *std_deviation);
+		fprintf(stderr,"krige(): ERROR: Negative Variance: %f\n", *std_deviation);
 	}
 	*std_deviation = sqrt((double) MAX(*std_deviation, 0.f));
 	/*      Write out the kriging Weights if Seriously Debugging: */
