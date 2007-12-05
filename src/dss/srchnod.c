@@ -65,7 +65,7 @@ int srchnod(int ix, int iy, int iz, float *sim,
 {
 
 	/* Local variables */
-	int i, j, k, il, iq, ind, idx, idy, idz, ninoct[8];
+	int i, j, k, il, ind;
 	int nctx, ncty, nctz;
 
 
@@ -76,6 +76,7 @@ int srchnod(int ix, int iy, int iz, float *sim,
 	/* Function Body */
 	covtable_lookup->ncnode = 0;
     /* noct is ALLWAYS 0
+    int ninoct[8];
 	if (search->noct > 0) {
 		for(i= 0; i < 8; i++)
 			ninoct[i] = 0;
@@ -106,9 +107,10 @@ int srchnod(int ix, int iy, int iz, float *sim,
 			/* Check the number of data already taken from this octant: */
             /* noct IS ALLWAYS 0
 			if (search->noct > 0) {
-				idx = ix - i;
-				idy = iy - j;
-				idz = iz - k;
+				int iq;
+				int idx = ix - i;
+				int idy = iy - j;
+				int idz = iz - k;
 				if (idz > 0) {
 					iq = 3;
 					if (idx <= 0 && idy > 0) {

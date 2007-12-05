@@ -129,7 +129,6 @@
 
 /* Table of constant values */
 
-static int five = 5;
 
 int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *mask_data,
 		general_vars_t			*	general,
@@ -145,24 +144,21 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 
 	/* Local variables */
-	float xsizsup, ysizsup, zsizsup;
 	int kinicial;
-	int ixsbtosr[1000], iysbtosr[1000], izsbtosr[1000];
 	double p, zvariance;
 	int in;
 	int ix, iz, iy;
 	float xp, xx, yy, zz;
-	float vmy = 0, vms, sec2, sec3;
-	int nsec, nisb[125], ierr;
-	float cmean, gmean;
+	float vmy = 0, vms;
+	int ierr;
+	float cmean, global_mean;
 
 	double zmean;
-	int index, nxsup, nysup, nzsup;
-	float cstdev;
+	int index;
+	float std_deviation;
 	int lktype;
-	float xmnsup, ymnsup, zmnsup, clcorr;
+	float clcorr;
 	float simval = 0;
-	int nsbtosr;
 
 
 	/* Parameter adjustments */
@@ -234,15 +230,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 	/* codigo reescrito ..................................... FIM */
 
-/* !Assign a flag so that the node out of the mask boundaries does not get simulated: */
-	if (general->imask == 1) {
-		for (i = 1; i <= general->nxyz; ++i) {
-			if (mask_data[i] == 0) {
-				sim[i] = general->nosim_value;
-			}
-		}
-	}
-
 	printf_dbg("dssim(): grid Points: %d\twells Points: %d\t toSim Points: %d\t should be: %d\n",
 			general->nxyz, general->nd, toSim, general->nxyz - general->nd);
 	printf_dbg2("\tdssim(): Starting simulation now\n");
@@ -297,6 +284,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* !and make sure that there are enough to actually simulate a value, */
 		/* !we'll only keep the closest "ndmax" data, and look for previously */
 		/* !simulated grid nodes: */
+        /*
+         * TSI NODE: SSTRAT IS ALLWAYS 1
 		if (search->sstrat == 0) {
 			srchsupr(xx, yy, zz, search->radsqd, covariance->isrot,
 					krige_vars->rotmat, nsbtosr, ixsbtosr, iysbtosr, 
@@ -315,6 +304,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				search->nclose = search->ndmax;
 			}
 		}
+        */
 		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = general->ktype;
@@ -325,13 +315,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		/* !done with kriging if there are data, otherwise, the global mean and */
 		/* !standard deviation will be used: */
 		if (general->ktype == 2 || general->ktype >= 4) {
-			gmean = bestAICube[index];
+			global_mean = bestAICube[index];
 		} else {
-			gmean = simulation->vmedexp;
+			global_mean = simulation->vmedexp;
 		}
 		if (search->nclose + covtable_lookup->ncnode < 1) {
 			cmean = simulation->vmedexp;
-			cstdev = sqrt(simulation->vvarexp);
+			std_deviation = sqrt(simulation->vvarexp);
 		} else {
 			/* !Perform the kriging.  Note that if there are fewer than four data */
 			/* !then simple kriging is prefered so that the variance of the */
@@ -347,8 +337,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				clcorr = bestCorrCube[index];
 			}
 				
-			krige(ix, iy, iz, xx, yy, zz, lktype, gmean, 
-					&cmean, &cstdev, // these are the output vars of krige
+			krige(ix, iy, iz, xx, yy, zz, lktype, global_mean, 
+					&cmean, &std_deviation, // these are the output vars of krige
 					&bestAICube[1], clcorr,
 					general, search, simulation,
 					covariance, covtable_lookup, krige_vars);
@@ -365,7 +355,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 				if (cpdev > 0.f) {
 					cpdev = sqrt(cpdev);
 					if (covtable_lookup->icvar == 1) {
-						cstdev = cstdev * sqrt(simulation->vvarexp) / cpdev;
+						std_deviation = std_deviation * sqrt(simulation->vvarexp) / cpdev;
 					}
 				}
 			}
@@ -379,7 +369,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		for (i = 1; i <= covtable_lookup->ntry; ++i) {
 			p = tsi_random_real();
 			gauinv(&p, &xp, &ierr);
-			xp = xp * cstdev + vmy;
+			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
 			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,
 					general->zmin, general->zmax, general->ltail, general->ltpar,

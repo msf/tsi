@@ -148,10 +148,6 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "MASK", "NULL_VALUE")) == NULL) return 1;
     d->general->nosim_value = get_float(k);
 
-	/* mask is not supported */
-    //if ((k = get_key(r, "MASK", "USE_MASK")) == NULL) return 1;
-    d->general->imask = 0;
-
 
     /* search parameters */
     if ((k = get_key(r, "SEARCH", "NDMIN")) == NULL) return 1;
@@ -291,7 +287,7 @@ int  dss_parameters(dss *d, registry *r )
         printf("load_dss_configs(): WARNING: The sill of the variogram is not 1.0! sill = %f\n", sill);
     }
 
-    d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
+    //d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
 
     return 0;
 }
