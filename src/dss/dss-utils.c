@@ -16,7 +16,7 @@ int getPos(int x, int y, int z, int xlen, int xylen)
 
 void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 {
-	int ix, iy, iz;
+	int iy, iz;
 	int t;
 	
 	/* the same way that we subtract y & z in getPos, we increment here! */
@@ -50,7 +50,7 @@ int getIndex(float min, float siz, float loc)
 /* !Calculo do equivalente valor gaussiano        (SDSIM) */
 float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr)
 {
-    unsigned low, high, i, j;
+    unsigned low, i, j;
 
     float vmy;
     if (cmean <= vrtr[0]) {

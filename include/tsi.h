@@ -9,8 +9,6 @@
 
 #define TSI_VERSION		"v6.0"
 
-#define TSI_ASCII_FILE  1 /* this is the GSLIB format */
-#define TSI_BIN_FILE    2
 
 
 typedef struct corr_type {

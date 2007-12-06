@@ -8,6 +8,7 @@
 #include "registry.h"
 #include "grid_heap.h"
 #include "tsi.h"
+#include "tsi_io.h"
 #include "si.h"
 #include "si_math.h"
 #include "si_resume.h"
@@ -55,7 +56,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 		
     /* load wavelet */
     if ((k = get_key(r, "WAVELET", "USED_VALUES")) == NULL) {
-        printf_dbg("\tnew_si(): failed to get WAVELET:USED_VALUES from registry!\n");
+        printf("\tnew_si(): failed to get WAVELET:USED_VALUES from registry!\n");
         return NULL;
     }
 
@@ -63,14 +64,14 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     s->points = (int *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(int));
     s->values = (float *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(float));
     if (!s->points || !s->values) {
-        printf_dbg("\tnew_si(): failed to allocate space for wavelet!\n");
+        printf("\tnew_si(): failed to allocate space for wavelet!\n");
         return NULL;
     }
     
     if ((kpath = get_key(r, "WAVELET", "PATH")) == NULL)
         kpath = get_key(r, "GLOBAL", "INPUT_PATH");
     if ((k = get_key(r, "WAVELET", "FILENAME")) == NULL) {
-        printf_dbg("\tnew_si(): failed to get WAVELET:FILENAME from registry!\n");
+        printf("\tnew_si(): failed to get WAVELET:FILENAME from registry!\n");
         return NULL;
     }
     if (kpath)
@@ -79,7 +80,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         sprintf(filename, "%s", get_string(k));
     fp = fopen(filename, "r");
     if (!fp) {
-        printf_dbg("\tnew_si(): failed to open wavelet file!\n");
+        printf("\tnew_si(): failed to open wavelet file: %s\n", filename);
         return NULL;
     }
 
@@ -91,7 +92,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     fclose(fp);
 
     if (i < s->wavelet_used_values) {
-        printf_dbg("\tnew_si(): EOF found. Uncomplete wavelet.\nThis wavelet must have %d values.\n", s->wavelet_used_values);
+        printf("\tnew_si(): EOF found. Uncomplete wavelet.\nThis wavelet must have %d values.\n", s->wavelet_used_values);
         return NULL;
     }
     
@@ -99,14 +100,14 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 	s->random = 1;
 
     if ((k = get_key(r, "CORR", "LAYERS_MIN")) == NULL) {
-       printf_dbg("\tnew_si: failed to get number of layers setting from the registry!\n");
+       printf("\tnew_si: failed to get number of layers setting from the registry!\n");
        delete_si(s);
        return NULL;
     }
     s->min_number = get_int(k);
 
     if ((k = get_key(r, "CORR", "LAYER_SIZE_MIN")) == NULL) {
-       printf_dbg("\tnew_si: failed to get size of layers setting from the registry!\n");
+       printf("\tnew_si: failed to get size of layers setting from the registry!\n");
        delete_si(s);
        return NULL;
     }
@@ -130,7 +131,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     }
 
     s->dump_file = TSI_BIN_FILE;
-    if ((k = get_key(r, "DUMP", "FILE_TYPE")) != NULL) {
+    if ((k = get_key(r, "DUMP", "DUMP_TYPE")) != NULL) {
         if (!strcmp(get_string(k), "gslib")) s->dump_file = TSI_ASCII_FILE;
         else if (!strcmp(get_string(k), "tsi-bin")) s->dump_file = TSI_BIN_FILE;
     }
