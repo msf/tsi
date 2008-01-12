@@ -81,7 +81,6 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
 	
 	/* Function Body */
-	first = FALSE;
 	na = search->nclose + covtable_lookup->ncnode;
 
     if (na > krige_vars->last_na) {

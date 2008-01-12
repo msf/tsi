@@ -165,7 +165,7 @@ typedef struct krige_vars_type {
     double rotmat[5][3][3];
 
     double *rr,
-           *r__,    /* used to set and solve a system of equations */
+           *r,    /* used to set and solve a system of equations */
            *s,      /* search->nclose * covtable_lookp->ncnode */
            *a;
 
