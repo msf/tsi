@@ -130,7 +130,7 @@
 /* Table of constant values */
 
 
-int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *mask_data,
+int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int ktype,
 		general_vars_t			*	general,
 		search_vars_t			*	search,
 		simulation_vars_t		*	simulation,
@@ -162,7 +162,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 
 	/* Parameter adjustments */
-	--mask_data;
 	--order;
 	--bestCorrCube;
 	--bestAICube;
@@ -171,9 +170,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	printf_dbg2("\tdssim() called\n");
 
 	/* Function Body */
-	for (i = 1; i <= covariance->nst; ++i) {
-		setrot(covariance->ang1[i - 1], covariance->ang2[i - 1], covariance->ang3[i - 1],
-				covariance->anis1[i - 1], covariance->anis2[i - 1], i, krige_vars->rotmat);
+	for (i = 1; i <= covariance->varnum; ++i) {
+		setrot(	covariance->variogram[i-1].ang1,
+				covariance->variogram[i-1].ang2,
+				covariance->variogram[i-1].ang3,
+				covariance->variogram[i-1].anis1,
+				covariance->variogram[i-1].anis2,
+				i, krige_vars->rotmat);
 	}
 	covariance->isrot = 5;
 	setrot(search->sang1, search->sang2, search->sang3,
@@ -307,14 +310,14 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
         */
 		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
-		kinicial = general->ktype;
-		if (general->ktype == 5 && bestAICube[index] == general->nosim_value) {
-			general->ktype = 0;
+		kinicial = ktype;
+		if (ktype == 5 && bestAICube[index] == general->nosim_value) {
+			ktype = 0;
 		}
 		/* !Calculate the conditional mean and standard deviation.  This will be */
 		/* !done with kriging if there are data, otherwise, the global mean and */
 		/* !standard deviation will be used: */
-		if (general->ktype == 2 || general->ktype >= 4) {
+		if (ktype == 5) {
 			global_mean = bestAICube[index];
 		} else {
 			global_mean = simulation->vmedexp;
@@ -326,14 +329,14 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			/* !Perform the kriging.  Note that if there are fewer than four data */
 			/* !then simple kriging is prefered so that the variance of the */
 			/* !realization does not become artificially inflated: */
-			lktype = general->ktype;
-			if (	general->ktype == 1 && 
+			lktype = ktype;
+			if (	ktype == 1 && 
 					search->nclose + covtable_lookup->ncnode < 4) {
 				lktype = 0;
 			}
 			/* !Estimacao em xo (SDSIM) */
 			/* aceder ao bestCorrCube, apenas se ktype >= 4 */
-			if(general->ktype == 5) {
+			if(ktype == 5) {
 				clcorr = bestCorrCube[index];
 			}
 				
@@ -361,19 +364,18 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			}
 			*/
 		}
-		general->ktype = kinicial;
+		ktype = kinicial;
 		vmy = compute_gaussian_equiv( cmean, general->nd, general->vrtr, general->vrgtr);
 
 		/* !Gera um valor aleatorio com distribuicao Gaussiana */
 		vms = 0;
 		for (i = 1; i <= covtable_lookup->ntry; ++i) {
 			p = tsi_random_real();
-			gauinv(&p, &xp, &ierr);
+			gauinv(&p, &xp); // XXX: not checking return code
 			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
 			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,
-					general->zmin, general->zmax, general->ltail, general->ltpar,
-					general->utail, general->utpar);
+					general->min_value, general->max_value);
 			vms += simval;
 		}
 		vms /= covtable_lookup->ntry;
@@ -383,10 +385,10 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		} else {
 			sim[index] = simval;
 		}
-		if (sim[index] < general->tmin) {
-			sim[index] = general->tmin;
-		} else if (sim[index] > general->tmax) {
-			sim[index] = general->tmax;
+		if (sim[index] < general->min_value) {
+			sim[index] = general->min_value;
+		} else if (sim[index] > general->max_value) {
+			sim[index] = general->max_value;
 		}
 		/* !Condicionamento as medias locais */
 		/* used only when doing more than 1 simulation */

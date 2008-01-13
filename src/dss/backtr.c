@@ -7,6 +7,9 @@
 #define TRUE (1)
 #define FALSE (0)
 
+#define LTAIL	1
+#define UTAIL	1
+
 
 float gcum(float );
 
@@ -150,18 +153,11 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
  *
  *   vrgs             normal score value to be back transformed 
  *   nt               number of values in the back transform tbale 
- *   vr(nt)           original data values that were transformed 
- *   vrg(nt)          the corresponding transformed values 
- *   zmin,zmax        limits possibly used for linear or power model 
- *   ltail            option to handle values less than vrg(1): 
- *   ltpar            parameter required for option ltail 
- *   utail            option to handle values greater than vrg(nt): 
- *   utpar            parameter required for option utail 
- *
- *
+ *   vrtr(nt)           original data values that were transformed 
+ *   vrgtr(nt)          the corresponding transformed values 
+ *   min_value,max_value        limits possibly used for linear or power model 
  * ----------------------------------------------------------------------- */
-float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float zmax,
-		int ltail, float ltpar, int utail, float utpar)
+float backtr(float vrgs, int nt, float *vrtr, float *vrgtr, float min_value, float max_value)
 {
 
 	/* System generated locals */
@@ -181,52 +177,52 @@ float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float zmax,
 
 
 	/* Parameter adjustments */
-	--vrg;
-	--vr;
+	--vrgtr;
+	--vrtr;
 
 	b = vrgs;
 	/* Function Body */
-	if (vrgs <= vrg[1]) {
-		ret_val = vr[1];
-		a = vrg[1];
+	if (vrgs <= vrgtr[1]) {
+		ret_val = vrtr[1];
+		a = vrgtr[1];
 		cdflo = (float) gcum(a);
 		cdfbt = (float) gcum(b);
-		if (ltail == 1) {
-			ret_val = powint(0, cdflo, zmin, vr[1], cdfbt, 1);
-		} else if (ltail == 2) {
-			cpow = 1 / ltpar;
-			ret_val = powint(0, cdflo, zmin, vr[1], cdfbt, cpow);
+		if (LTAIL == 1) {
+			ret_val = powint(0, cdflo, min_value, vrtr[1], cdfbt, 1);
+		} else if (LTAIL == 2) {
+			cpow = 1 / min_value;
+			ret_val = powint(0, cdflo, min_value, vrtr[1], cdfbt, cpow);
 		}
 
 		/* Value in the upper tail?     1=linear, 2=power, 4=hyperbolic: */
 
-	} else if (vrgs >= vrg[nt]) {
-		ret_val = vr[nt];
-		a = vrg[nt];
+	} else if (vrgs >= vrgtr[nt]) {
+		ret_val = vrtr[nt];
+		a = vrgtr[nt];
 		cdfhi = (float) gcum(a);
 		cdfbt = (float) gcum(b);
-		if (utail == 1) {
-			ret_val = powint(cdfhi, 1, vr[nt], zmax, cdfbt, 1);
-		} else if (utail == 2) {
-			cpow = 1.f / utpar;
-			ret_val = powint(cdfhi, 1, vr[nt], zmax, cdfbt, cpow);
-		} else if (utail == 4) {
-			d__1 = (double) vr[nt];
-			d__2 = (double) (utpar);
+		if (UTAIL == 1) {
+			ret_val = powint(cdfhi, 1, vrtr[nt], max_value, cdfbt, 1);
+		} else if (UTAIL == 2) {
+			cpow = 1.f / max_value;
+			ret_val = powint(cdfhi, 1, vrtr[nt], max_value, cdfbt, cpow);
+		} else if (UTAIL == 4) {
+			d__1 = (double) vrtr[nt];
+			d__2 = (double) (max_value);
 			lambda =  pow(d__1, d__2) * (1 - gcum(a));
 			d__1 = (double) (lambda / (1 - gcum(b)));
-			d__2 = (double) (1 / utpar);
+			d__2 = (double) (1 / max_value);
 			ret_val = (float) pow(d__1, d__2);
 		}
 	} else {
 
 		/* Value within the transformation table: */
 
-		j = locate(&vrg[1], nt, 1, nt, vrgs);
+		j = locate(&vrgtr[1], nt, 1, nt, vrgs);
 		i__2 = nt - 1;
-		i__1 = MIN(i__2,j); /* min(i__2,j) */
-		j = MAX(i__1,1); /* max(i__1,1); */
-		ret_val = powint( vrg[j], vrg[j + 1], vr[j], vr[j + 1], vrgs, 1);
+		i__1 = MIN(i__2,j);
+		j = MAX(i__1,1);
+		ret_val = powint( vrgtr[j], vrgtr[j + 1], vrtr[j], vrtr[j + 1], vrgs, 1);
 	}
 	return ret_val;
 } /* backtr_ */

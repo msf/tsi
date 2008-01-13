@@ -32,8 +32,9 @@
  */
 
 
-int gauinv(double *p, float *xp, int *ierr)
+int gauinv(double *p, float *xp)
 {
+	int rc;
 	/* Initialized data */
 
 	static double lim = 1e-10;
@@ -58,16 +59,16 @@ int gauinv(double *p, float *xp, int *ierr)
 
 	/* Check for an error situation: */
 
-	*ierr = 1;
+	rc = 1;
 	if (*p < lim) {
 		*xp = -1e10f;
-		return 0;
+		return rc;
 	}
 	if (*p > 1.f - lim) {
 		*xp = 1e10f;
-		return 0;
+		return rc;
 	}
-	*ierr = 0;
+	rc = 0;
 
 	/* Get k for an error situation: */
 
@@ -77,7 +78,7 @@ int gauinv(double *p, float *xp, int *ierr)
 	}
 	*xp = 0.f;
 	if (*p == .5f) {
-		return 0;
+		return rc;
 	}
 
 	/* Approximate the function: */
@@ -91,7 +92,7 @@ int gauinv(double *p, float *xp, int *ierr)
 
 	/* Return with G^-1(p): */
 
-	return 0;
+	return rc;
 } /* gauinv_ */
 
 

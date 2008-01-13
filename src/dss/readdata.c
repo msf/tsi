@@ -11,6 +11,19 @@
 #define FALSE (0)
 
 
+#define NVARI 	4
+#define IXL		1
+#define IYL		2
+#define IZL		3
+#define IVRL	4
+#define IWT		0
+#define ISECVR	0
+#define ITRANS	1
+#define ISMOOTH 1
+#define ISVR	1
+#define	ISWT	2
+#define LTAIL	1
+#define UTAIL	1
 
 
 /* ----------------------------------------------------------------------- */
@@ -23,27 +36,6 @@
  * getIndex()
  */
 
-/** CUBOS utilizados
- * lvm
- * hard_data
- */ 
-
-/** CUBOS _nao_ utilizados
- * sim
- * clc
- * tmp
- * order
- * mask
- * bcm_data
- * bai_data
- */
-
-/** structs globais utilizadas:
- * general
- * simulation
- * search
- */
-
 
 int readdata(float *hard_data,
              unsigned int  hard_data_size,
@@ -51,9 +43,6 @@ int readdata(float *hard_data,
 	     search_vars_t * search,
 	     simulation_vars_t * simulation)
 {
-	/* Table of constant values */
-
-
 	/* System generated locals */
 	float r1;
 
@@ -71,6 +60,7 @@ int readdata(float *hard_data,
 	float vmedg;
 	float vvarg;
 	int icolvr, icolwt, istart;
+	int itrans = ITRANS;
 
 	float *var;
 	
@@ -87,23 +77,23 @@ int readdata(float *hard_data,
 		fprintf(stderr,"\t- Resetting sstrar to 1\n");
 		search->ndmin = 0;
 		search->ndmax = 0;
-		general->itrans = 0;
+		itrans = 0;
 	}
 	
-	var = (float *) tsi_malloc(sizeof(float)*general->nvari);
+	var = (float *) tsi_malloc(sizeof(float)*NVARI);
 	general->nd = 0;
 	av = 0;
 	ss = 0;
 	
 	/* !Establish the reference histogram for the simulation (provided that */
 	/* !we have data, and we are transforming the data): */
-	if (general->itrans == 1) {
-		if (general->ismooth == 1) {
-			icolvr = general->isvr;
-			icolwt = general->iswt;
+	if (itrans == 1) {
+		if (ISMOOTH == 1) {
+			icolvr = ISVR;
+			icolwt = ISWT;
 		} else {
-			icolvr = general->ivrl;
-			icolwt = general->iwt;
+			icolvr = IVRL;
+			icolwt = IWT;
 		}
 		/* !Now, read in the actual data: */
 
@@ -114,17 +104,17 @@ int readdata(float *hard_data,
         printf_dbg2("readdata(): read wells array %d\n", hard_data_size);
 		while(nelem < hard_data_size) {
 
-			for (j = 1; j <= general->nvari; ++j) {
+			for (j = 1; j <= NVARI; ++j) {
 				var[j-1] = hard_data[nelem + j];
 			}
-			nelem += general->nvari;
+			nelem += NVARI;
 			/* !Trim this data? */
-			if (var[icolvr - 1] < general->tmin || var[icolvr - 1] > general->tmax) {
+			if (var[icolvr - 1] < general->min_value || var[icolvr - 1] > general->max_value) {
 				++nt;
 				continue;
 			}
 
-			if (icolvr > general->nvari || icolwt > general->nvari) {
+			if (icolvr > NVARI || icolwt > NVARI) {
 				fprintf(stderr,"ERROR: too few columns in ref data\n");
 				fprintf(stderr,"\taborting.\n");
 				return -1; /* ERROR */
@@ -165,7 +155,7 @@ int readdata(float *hard_data,
 		for (j = 0; j < iend; ++j) {
 			cp += (double) (general->vrgtr[j] / twt);
 			w = (cp + oldcp) * .5f;
-			gauinv(&w, &vrg, &ierr);
+			ierr = gauinv(&w, &vrg);
 			if (ierr == 1) {
 				vrg = general->nosim_value;
 			}
@@ -187,12 +177,12 @@ int readdata(float *hard_data,
 	}
 
 	if (hard_data_size != 0) {
-		if ((general->ixl > general->nvari) ||
-            (general->iyl > general->nvari) || 
-		    (general->izl > general->nvari) ||
-            (general->ivrl > general->nvari) ||
-            (general->isecvr > general->nvari) ||
-		    (general->iwt > general->nvari)) {
+		if ((IXL > NVARI) ||
+            (IYL > NVARI) || 
+		    (IZL > NVARI) ||
+            (IVRL > NVARI) ||
+            (ISECVR > NVARI) ||
+		    (IWT > NVARI)) {
 			fprintf(stderr,"ERROR: you have asked for a column number\n");
 			fprintf(stderr,"\t\tgreater than available in file\n");
 			return -1; /* ERROR */
@@ -203,15 +193,15 @@ int readdata(float *hard_data,
 		nt = 0;
 		nelem = 0;
 		printf_dbg2("readdata(): ivrl: %d, ixl: %d, iyl: %d, izl: %d\n",
-				general->ivrl,general->ixl,general->iyl,general->izl);
+				IVRL,IXL,IYL,IZL);
 		while(nelem < hard_data_size) {
 
-			for (j = 1; j <= general->nvari; ++j) {
+			for (j = 1; j <= NVARI; ++j) {
 				var[j - 1] = hard_data[nelem + j];
 			}
-			nelem += general->nvari;
-			if (var[general->ivrl - 1] < general->tmin || 
-			    var[general->ivrl - 1] > general->tmax) {
+			nelem += NVARI;
+			if (var[IVRL - 1] < general->min_value || 
+			    var[IVRL - 1] > general->max_value) {
 				++nt;
 				continue;
 			}
@@ -220,36 +210,36 @@ int readdata(float *hard_data,
 				return -1; /* ERROR */
 			}
 			/* !Acceptable data, assign the value, X, Y, Z coordinates, and weight: */
-			general->vr[general->nd] = var[general->ivrl - 1];
+			general->vr[general->nd] = var[IVRL - 1];
 
-			if (general->ixl <= 0) {
+			if (IXL <= 0) {
 				general->x[general->nd] = general->xmn;
 			} else {
-				general->x[general->nd] = var[general->ixl - 1];
+				general->x[general->nd] = var[IXL - 1];
 			}
-			if (general->iyl <= 0) {
+			if (IYL <= 0) {
 				general->y[general->nd] = general->ymn;
 			} else {
-				general->y[general->nd] = var[general->iyl - 1];
+				general->y[general->nd] = var[IYL - 1];
 			}
-			if (general->izl <= 0) {
+			if (IZL <= 0) {
 				general->z[general->nd] = general->zmn;
 			} else {
-				general->z[general->nd] = var[general->izl - 1];
+				general->z[general->nd] = var[IZL - 1];
 			}
-			if (general->iwt <= 0) {
+			if (IWT <= 0) {
 				general->wt[general->nd] = 1.f;
 			} else {
-				general->wt[general->nd] = var[general->iwt - 1];
+				general->wt[general->nd] = var[IWT - 1];
 			}
-			if (general->isecvr <= 0) {
+			if (ISECVR <= 0) {
 				general->sec[general->nd] = general->nosim_value;
 			} else {
-				general->sec[general->nd] = var[general->isecvr - 1];
+				general->sec[general->nd] = var[ISECVR - 1];
 			}
 			twt += general->wt[general->nd];
-			av += var[general->ivrl - 1] * general->wt[general->nd];
-			ss += var[general->ivrl - 1] * var[general->ivrl - 1] * general->wt[general->nd];
+			av += var[IVRL - 1] * general->wt[general->nd];
+			ss += var[IVRL - 1] * var[IVRL - 1] * general->wt[general->nd];
 			printf_dbg2("readdata: Wells Point: (%f, %f, %f) = %f\n",
 					general->x[general->nd], general->y[general->nd], general->z[general->nd], general->vr[general->nd]);
 			++general->nd;

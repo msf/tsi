@@ -6,6 +6,22 @@
 #include "log.h"
 #include "registry.h"
 
+typedef struct harddata_point_type {
+	float x,y,z;
+	float val;
+	float weight;
+	float gauinv; // transformed value
+} harddata_point_t;
+
+typedef struct harddata_type {
+	int		numdata, numraw;
+	harddata_point_t *harddata;
+	harddata_point_t *rawdata; // unsorted harddata
+	float	minvalue, maxvalue;
+	short	lower_tail, upper_tail;
+	float	lowert_val, uppert_val;
+	
+} harddata_t;
 
 typedef struct general_vars_type {
     int    nd,      // number of acceptance harddata 
@@ -20,7 +36,7 @@ typedef struct general_vars_type {
            *vr,     // hard_data, orig order
            *wt,     // weights
            *vrtr,   // hard_data, sorted by value 
-           *vrgtr,  // weights of sorted, transformed to comulative probabilty. 
+           *vrgtr,  // hard_data,  sorted, transformed to ?. 
            *sec;    // NO SIM VALUE -> no secondary data.
 
     /* new wells hard data containers */
@@ -28,26 +44,22 @@ typedef struct general_vars_type {
     float *wellsDataVal;
 
     /* parameters from registry */
-    int    nvari,     /* =4 - HARDDATA:NVARI */
-           ixl,       /* =1 - HARDDATA:IXL */
-           iyl,       /* =2 - HARDDATA:IYL */
-           izl,       /* =3 - HARDDATA:IZL */
-           ivrl,      /* =4 - HARDDATA:IVRL */
-           iwt,       /* =0 - HARDDATA:IWT */
-           isecvr;    /* =0 - HARDDATA:ISECVR */
-    float  tmin,      /* HARDDATA:TMIN */
-           tmax;      /* HARDDATA:TMAX */
-
-    int    itrans,    /* =1 - HDTRANS:ITRANS */
-           ismooth,   /* =0 - HDTRANS:ISMOOTH */
-           isvr,      /* =1 - HDTRANS:ISVR */
-           iswt;      /* =2 - HDTRANS:ISWT */
-    int    ltail;     /* =1 - HDTRANS:LTAIL */
-    int    utail;     /* =1 - HDTRANS:UTAIL */
-    float  ltpar;     /* =TMIN - HDTRANS:LTPAR */
-    float  utpar,     /* =TMAX - HDTRANS:UTPAR */
-           zmin,      /* =TMIN - HDTRANS:ZMIN */
-           zmax;      /* =TMAX - HDTRANS:ZMAX */
+//    int    nvari,     /* =4 - HARDDATA:NVARI */
+//           ixl,       /* =1 - HARDDATA:IXL */
+//           iyl,       /* =2 - HARDDATA:IYL */
+//           izl,       /* =3 - HARDDATA:IZL */
+//           ivrl,      /* =4 - HARDDATA:IVRL */
+//           iwt,       /* =0 - HARDDATA:IWT */
+//           isecvr;    /* =0 - HARDDATA:ISECVR */
+//
+//    int    itrans,    /* =1 - HDTRANS:ITRANS */
+//           ismooth,   /* =0 - HDTRANS:ISMOOTH */
+//           isvr,      /* =1 - HDTRANS:ISVR */
+//           iswt;      /* =2 - HDTRANS:ISWT */
+//    int    ltail;     /* =1 - HDTRANS:LTAIL */
+//    int    utail;     /* =1 - HDTRANS:UTAIL */
+    float  min_value; /* =TMIN & HDTRANS:LTPAR */
+    float  max_value;/* =TMAX & HDTRANS:UTPAR */
 
     int    nx,        /* GRID:XNUMBER */
            ny,        /* GRID:YNUMBER */
@@ -61,26 +73,16 @@ typedef struct general_vars_type {
     int    nxy,       /* = nx * ny */
            nxyz;      /* = nx * ny * nz */
 
-//  int    icollvm,   /* =1 - SOFT:ICOLLVM */
-//         nvaril;    /* =1 - SOFT:NVARIL */
-
     float  nosim_value;  /* MASK:NULL_VALUE */
-
-    int    ktype;     /* =1 (and 5)- KRIG:KTYPE */
-//    float  colocorr,  /* =0 - KRIG:COLOCORR */
-//           varred;    /* =0.6 - KRIG:VARRED */
 } general_vars_t;
 
 
 typedef struct search_vars_type {
-    int    nclose;   /* LPL SHOULD BE INT!!!!! */
+    int    nclose;
 
     /* parameters from registry */
     int    ndmin,    /* SEARCH:NDMIN */
            ndmax;    /* SEARCH:NDMAX */
-    /* NOT USED, ALLWAYS 1 & 0 */
-//    int    sstrat,   /* =1 - SEARCH_SSTRAT */
-//           noct;     /* =0 - SEARCH:NOCT */
     float  radius,   /* SEARCH:RADIUS */
            radsqd,   /* radius^2 */
            sang1,    /* SEARCH:SANG */
@@ -96,10 +98,6 @@ typedef struct simulation_vars_type {
            vvarexp,    /* variance... */
            vmedsec,    /* secondary (AI data) */
            vvarsec;    /* secondary...*/
-
-    /* parameters from registry */
-//    int    nsim;         /* const = 1, number of simulations */
-//    int    nsim_bk;
 } simulation_vars_t;
 
 
@@ -108,21 +106,17 @@ typedef struct covariance_vars_type {
     float  cmax;
 
     /* parameters from registry */
-    int    nst;   /* VARIOGRAM:NUMBER */
-    float  c0;    /* VARIOGRAM:NUGGET */
-
-    int    *it;      /* VARIOGRAMn:TYPE */
-    float  *cc,      /* VARIOGRAMn:COV */
-           *ang1,    /* VARIOGRAMn:ANG1 */
-           *ang2,    /* VARIOGRAMn:ANG2 */
-           *ang3,    /* VARIOGRAMn:ANG3 */
-           *aa,      /* VARIOGRAMn:AA */
-           *anis1,   /* VARIOGRAMn:AA1 / (aa>1e-20 ? aa : 1e-20) */ 
-           *anis2;   /* VARIOGRAMn:AA2 / (aa>1e-20 ? aa : 1e-20) */
+    int    varnum;   /* VARIOGRAM:NUMBER */
+    float  nugget;    /* VARIOGRAM:NUGGET */
 
     struct variogram_type *variogram;
 } covariance_vars_t;
 
+#define VARIOGRAM_TYPE_SPHERICAL	1
+#define VARIOGRAM_TYPE_EXPONENCIAL	2
+#define VARIOGRAM_TYPE_GAUSSIAN		3
+#define VARIOGRAM_TYPE_POWER		4
+#define VARIOGRAM_TYPE_HOLE			5
 typedef struct variogram_type {
     int     type; /* it */
     float   cov;  /* cc */
@@ -155,10 +149,6 @@ typedef struct covtable_lookup_vars_type {
     /* parameters from registry */
     int    nodmax;  /* SEARCH:NODMAX */
     int    ntry;    /* QUALITY:NTRY */
-    /* USED WHEN DSS DID MORE THAN 1 SIM */
-//  int    icmean,  /* =1 - QUALITY:ICMEAN */
-//         icvar;   /* =1 - QUALITY:ICVAR */
-
 } covtable_lookup_vars_t;
 
 
