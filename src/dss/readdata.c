@@ -88,7 +88,6 @@ int readdata(float *hard_data,
 		search->ndmin = 0;
 		search->ndmax = 0;
 		general->itrans = 0;
-		search->sstrat = 1;
 	}
 	
 	var = (float *) tsi_malloc(sizeof(float)*general->nvari);
@@ -256,10 +255,6 @@ int readdata(float *hard_data,
 			++general->nd;
 		}
 		
-		if (general->imask == 1) {
-			fprintf(stderr,"imaks = 1\n");
-		}
-
 		tsi_free(var);
 
 		simulation->vmedexp = 0;

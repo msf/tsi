@@ -110,9 +110,6 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	}
 	else if (lktype >= 4) {
 		neq += 1;
-		if (lktype == 5) {
-			general->colocorr = clcorr;
-		}
 	}
 	/* Set up kriging matrices: */
 	in = 0;
@@ -284,7 +281,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		i1 = na;
 		for (i = 1; i <= i1; ++i) {
 			++in;
-			krige_vars->a[in - 1] = (double) general->colocorr * 
+			krige_vars->a[in - 1] = (double) clcorr * 
 				krige_vars->r[i - 1];
 			if (krige_vars->a[in - 1] < sfmin) {
 				sfmin = krige_vars->a[in - 1];
@@ -296,7 +293,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		++in;
 		krige_vars->a[in - 1] = 1.f;
 		ii = na + 1;
-		krige_vars->r[ii - 1] = (double) general->colocorr;
+		krige_vars->r[ii - 1] = (double) clcorr;
 		krige_vars->rr[ii - 1] = krige_vars->r[ii - 1];
 		/* apagar */
 		/*           if((sfmax-sfmin).lt.EPSLON) neq = neq - 1 */

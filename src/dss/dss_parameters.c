@@ -105,11 +105,11 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;
     d->clookup->ntry = get_int(k);
 
-    if ((k = get_key(r, "QUALITY", "ICVAR")) == NULL) return 1;
-    d->clookup->icvar = get_int(k);
+    if (get_key(r, "QUALITY", "ICVAR"))
+    	printf("[QUALITY] ICVAR is NOT used\n");
 
-    if ((k = get_key(r, "QUALITY", "ICMEAN")) == NULL) return 1;
-    d->clookup->icmean = get_int(k);
+    if (get_key(r, "QUALITY", "ICMEAN"))
+    	printf("[QUALITY] ICMEAN is NOT used\n");
 
     
     /* grid parameters */
@@ -153,21 +153,18 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "SEARCH", "NDMIN")) == NULL) return 1;
     d->search->ndmin = get_int(k);
 
-    if ((k = get_key(r, "SEARCH", "NDMAX")) == NULL) return 1;
-    d->search->ndmax = get_int(k);
+    if (get_key(r, "SEARCH", "NDMAX"))
+    	printf("[SEARCH] NDMAX is NOT used\n");
+    d->search->ndmax = 0;
 
     if ((k = get_key(r, "SEARCH", "NODMAX")) == NULL) return 1;
     d->clookup->nodmax = get_int(k);
 
-    if ((k = get_key(r, "SEARCH", "SSTRAT")) == NULL) return 1;
-    d->search->sstrat = get_int(k);
-    if (d->search->sstrat == 1)  {
-        printf("Resetting NDMAX to 0\n");
-		d->search->ndmax = 0;
-    }
+    if (get_key(r, "SEARCH", "SSTRAT"))
+    	printf("[SEARCH] SSTRAT is NOT used\n");
 
-    if ((k = get_key(r, "SEARCH", "NOCT")) == NULL) return 1;
-    d->search->noct = get_int(k);
+    if (get_key(r, "SEARCH", "NOCT"))
+    	printf("[SEARCH] NOCT is NOT used\n");
 
     if ((k = get_key(r, "SEARCH", "RADIUS")) == NULL) return 1;
     d->search->radius = get_float(k);
@@ -197,20 +194,18 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "KRIG", "TYPE")) == NULL) return 1;
     d->general->ktype = get_int(k);
 
-    if ((k = get_key(r, "KRIG", "COLOCORR")) == NULL) return 1;
-    d->general->colocorr = get_float(k);
+    if (get_key(r, "KRIG", "COLOCORR"))
+    	printf("[KRIG] COLOCORR is NOT used\n");
 
-    if ((k = get_key(r, "KRIG", "VARRED")) == NULL) return 1;
-    d->general->varred = get_float(k);
-
+    if (get_key(r, "KRIG", "VARRED"))
+    	printf("[KRIG] VARRED is NOT used\n");
 
     /* softdata parameters */
-    if ((k = get_key(r, "SOFT", "NVARIL")) == NULL) return 1;
-    d->general->nvaril = get_int(k);
-
-    if ((k = get_key(r, "SOFT", "ICOLLVM")) == NULL) return 1;
-    d->general->icollvm = get_int(k);
-
+    if (get_key(r, "SOFT", "NVARIL"))
+    	printf("[SOFT] NVARIL is NOT used\n");
+    
+    if (get_key(r, "SOFT", "ICOLLVM"))
+    	printf("[SOFT] ICOLLVM is NOT used\n");
 
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;

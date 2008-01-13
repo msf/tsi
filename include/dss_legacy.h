@@ -1,6 +1,7 @@
 #ifndef _DSS_LEGACY_H
 #define _DSS_LEGACY_H
 
+#include "dss.h"
 
 /* Float functions */
 #define ZERO_THRESHOLD 1e-6
