@@ -263,10 +263,10 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			++in;
 			krige_vars->a[in - 1] = krige_vars->vrea[i - 1];
 			if (krige_vars->a[in - 1] < edmin) {
-				edmin = krige_vars->a[in - 1];
+				edmin = (float) krige_vars->a[in - 1];
 			}
 			else if (krige_vars->a[in - 1] > edmax) {
-				edmax = krige_vars->a[in - 1];
+				edmax = (float) krige_vars->a[in - 1];
 			}
 		}
 		++in;
@@ -287,13 +287,12 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		i1 = na;
 		for (i = 1; i <= i1; ++i) {
 			++in;
-			krige_vars->a[in - 1] = (double) general->colocorr * 
-				krige_vars->r__[i - 1];
+			krige_vars->a[in - 1] = (double) general->colocorr * krige_vars->r__[i - 1];
 			if (krige_vars->a[in - 1] < sfmin) {
-				sfmin = krige_vars->a[in - 1];
+				sfmin = (float) krige_vars->a[in - 1];
 			}
 			else if (krige_vars->a[in - 1] > sfmax) {
-				sfmax = krige_vars->a[in - 1];
+				sfmax = (float) krige_vars->a[in - 1];
 			}
 		}
 		++in;

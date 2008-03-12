@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include "debug.h"
 #include "tsi.h"
 #include "tsi_io.h"

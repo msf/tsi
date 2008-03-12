@@ -136,7 +136,8 @@ int merge_registry(registry **r, char *filename)
                             section->klist = key;
                             key->name = strdup(buf);
                             key->value = NULL;
-                            key->type = key->kval.lli = 0;
+                            key->type = 0;
+                            key->kval.lli = 0;
                         } else {
                             tsi_free(key->value);
                         }
