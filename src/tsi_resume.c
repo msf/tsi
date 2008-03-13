@@ -124,7 +124,62 @@ int tsi_backup_iteration(tsi *t, int i)
 
 int tsi_restore_iteration(tsi *t, int i)
 {
+	char buf[2048];
+	char *fname;
+
     if (!t->resume) return 0;
+	/* resume allways starts at sim = 0, iteration = 1 */
+	if( s != 0 && s!= 0) return 0;
+
+	/* load currBCM, currBAI
+	 * at the begginning of the iteration, nextBAI & nextBCM will be 
+	 * adopted has the currBCM and currBAI, so what we load here, is the
+	 * next*
+	 */
+
+	t->nextBCM_idx = new_grid(t->heap);
+	t->nextBCM = load_grid(t->nextBCM_idx);
+
+
+	if ((k = get_key(reg, "RESUME", "BCM")) == NULL) {
+		printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
+		delete_tsi(t);
+		return NULL;
+	}
+	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
+	if ((fp = fopen(buf, "r")) == NULL) {
+		printf("ERROR: Failed to open the BCM grid file: %s\n", buf);
+		delete_tsi(t);
+		return NULL;
+	}
+	if (!tsi_read_grid(t, fp, t->nextBCM, t->seismic_file)) {
+		printf("ERROR: Failed to load BCM file: %s\n", buf);
+		delete_tsi(t);
+		return NULL;
+	}
+	dirty_grid(t->heap, t->nextBCM_idx);
+
+	t->nextBAI_idx = new_grid(t->heap);
+	t->nextBAI = load_grid(t->nextBAI_idx);
+
+	if ((k = get_key(reg, "RESUME", "BAI")) == NULL) {
+		printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
+		delete_tsi(t);
+		return NULL;
+	}
+	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
+	if ((fp = fopen(buf, "r")) == NULL) {
+		printf("ERROR: Failed to open the BAI grid file: %s\n", buf);
+		delete_tsi(t);
+		return NULL;
+	}
+	if (!tsi_read_grid(t, fp, t->nextBAI, t->seismic_file)) {
+		printf("ERROR: Failed to load BAI file: %s\n", buf);
+		delete_tsi(t);
+		return NULL;
+	}
+	dirty_grid(t->heap, t->nextBAI_idx);
+
     return 1;
 } /* tsi_restore_iteration */
 

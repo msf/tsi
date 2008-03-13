@@ -527,17 +527,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
 		t->currBCM_idx = t->nextBCM_idx;
 		t->nextBAI_idx = -1;
 		t->nextBCM_idx = -1;
-
-		//t->currBAI = load_grid(t->heap, t->currBAI_idx);
-		/* expand compressed correlations grid from previous iteration */
-		/* this now done at finish_iteration/distributed compare&update */
-		/*
-		t->currBCM_idx = new_grid(t->heap);
-		t->currBCM = load_grid(t->heap, t->currBCM_idx);
-		expand_correlations_grid(t->nextBCM_c, t->currBCM);
-		dirty_grid(t->heap, t->currBCM_idx);
-		delete_cmgrid(t->nextBCM_c);
-		*/
 	}
 
 	/* prepare seismic inversion (new set of layers) */
@@ -828,17 +817,17 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
             //////////////////////////////////////////////////////// TODO
 			/**/
 			printf_dbg2("loading CM grid from SI");
-                        load_cmgrid(get_cmgrid(t->si_eng));
+			load_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("loading nextBCM");
-                        load_cmgrid(t->nextBCM_c);
-                        /**/
+			load_cmgrid(t->nextBCM_c);
+			/**/
 			getCurrTime(&t4);
 			/* update  nextBAI and nextBCM */
 			result = tsi_compare(t->ai, get_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
 			getCurrTime(&t5);
 			//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
 			//////////////////////////////////////////////////////// TODO
-            /**/
+			/**/
 			printf_dbg2("clearing CM grid");
 			clear_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("clearing nextBCM");
