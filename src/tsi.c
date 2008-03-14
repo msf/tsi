@@ -513,10 +513,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	log_iteration_number(t->l, iteration);
 	log_message(t->l, 0, "tsi_setup_iteration() setup Direct Sequential [Co]-Simulation");
 	
-	if (tsi_restore_iteration(t, iteration)) {
-		//log_message
-		return 1;
-	}
+	tsi_restore_iteration(t, iteration);
 
 	getCurrTime(&t1);
 	if (iteration == 0) { /* first iteration */

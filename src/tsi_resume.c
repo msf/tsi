@@ -124,12 +124,16 @@ int tsi_backup_iteration(tsi *t, int i)
 
 int tsi_restore_iteration(tsi *t, int i)
 {
+	FILE *fp;
+	reg_key	*k;
 	char buf[2048];
 	char *fname;
 
     if (!t->resume) return 0;
 	/* resume allways starts at sim = 0, iteration = 1 */
-	if( s != 0 && s!= 0) return 0;
+	if( i != 0 ) return 0;
+
+	log_print(t->l, "RESUME: restoring iteration %d\n", i);
 
 	/* load currBCM, currBAI
 	 * at the begginning of the iteration, nextBAI & nextBCM will be 
@@ -138,49 +142,43 @@ int tsi_restore_iteration(tsi *t, int i)
 	 */
 
 	t->nextBCM_idx = new_grid(t->heap);
-	t->nextBCM = load_grid(t->nextBCM_idx);
+	t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
 
 
-	if ((k = get_key(reg, "RESUME", "BCM")) == NULL) {
-		printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
-		delete_tsi(t);
-		return NULL;
+	if ((k = get_key(t->reg, "RESUME", "BCM")) == NULL) {
+		ERROR(t->l, "tsi_restore_iteration", "failed to get BCM grid from config");
+		return 1;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
 	if ((fp = fopen(buf, "r")) == NULL) {
-		printf("ERROR: Failed to open the BCM grid file: %s\n", buf);
-		delete_tsi(t);
-		return NULL;
+		ERROR(t->l, "Failed to open the BCM grid file", buf);
+		return 1;
 	}
 	if (!tsi_read_grid(t, fp, t->nextBCM, t->seismic_file)) {
-		printf("ERROR: Failed to load BCM file: %s\n", buf);
-		delete_tsi(t);
-		return NULL;
+		ERROR(t->l, "Failed to read the BCM grid file", buf);
+		return 1;
 	}
 	dirty_grid(t->heap, t->nextBCM_idx);
 
 	t->nextBAI_idx = new_grid(t->heap);
-	t->nextBAI = load_grid(t->nextBAI_idx);
+	t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
 
-	if ((k = get_key(reg, "RESUME", "BAI")) == NULL) {
-		printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
-		delete_tsi(t);
-		return NULL;
+	if ((k = get_key(t->reg, "RESUME", "BAI")) == NULL) {
+		ERROR(t->l, "tsi_restore_iteration", "failed to get BAI grid from config");
+		return 1;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
 	if ((fp = fopen(buf, "r")) == NULL) {
-		printf("ERROR: Failed to open the BAI grid file: %s\n", buf);
-		delete_tsi(t);
-		return NULL;
+		ERROR(t->l, "Failed to open the BAI grid file", buf);
+		return 1;
 	}
 	if (!tsi_read_grid(t, fp, t->nextBAI, t->seismic_file)) {
-		printf("ERROR: Failed to load BAI file: %s\n", buf);
-		delete_tsi(t);
-		return NULL;
+		ERROR(t->l, "Failed to read the BAI grid file", buf);
+		return 1;
 	}
 	dirty_grid(t->heap, t->nextBAI_idx);
 
-    return 1;
+    return 0;
 } /* tsi_restore_iteration */
 
 
