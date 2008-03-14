@@ -4,11 +4,12 @@
 # Compiler settings (gcc, icc, win32)
 COMPILER := mpicc
 COMPILER := gcc
-COMPILER := icc
+#COMPILER := icc
 
 # Targets
-RELEASE_TARGET := tsi-mpi
-DEBUG_TARGET   := tsi-64-debug
+RELEASE_TARGET := tsi
+DEBUG_TARGET   := tsid
+
 
 # Default settings for gcc
 CC      := gcc#-3.4
@@ -19,16 +20,7 @@ OPTS    := -O3 -fomit-frame-pointer -ffast-math
 #OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
-#OPTS	+= -g -DTSI_DEBUG
-#OPTS   += -fthread-jumps -fcrossjumping -foptimize-sibling-calls
-#OPTS   += -fcse-follow-jumps  -fcse-skip-blocks -fgcse  -fgcse-lm
-#OPTS   += -fexpensive-optimizations -fstrength-reduce -frerun-cse-after-loop
-#OPTS   += -frerun-loop-opt -fcaller-saves -fforce-mem -fpeephole2
-#OPTS   += -fschedule-insns  -fschedule-insns2 -fsched-interblock
-#OPTS   += -fsched-spec -fregmove -fstrict-aliasing -fdelete-null-pointer-checks
-#OPTS   += -freorder-blocks -freorder-functions -funit-at-a-time
-#OPTS   += -falign-functions  -falign-jumps -falign-loops  -falign-labels
-#OPTS   += -ftree-pre -finline-functions -funswitch-loops -fgcse-after-reload
+OPTS	+= -g -DTSI_DEBUG 
 DEBUG   := -g -ggdb
 #DEBUG	+= -m32
 #DEBUG  += -pg
@@ -39,22 +31,18 @@ DEBUG	+= -Wall -Wextra -std=gnu99 -DTSI_DEBUG2 -DNEW_RAND
 #DEBUG  += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
 
 ifeq ($(COMPILER), icc)
+RELEASE_TARGET := tsi-icc
+DEBUG_TARGET   := tsi-iccd
 CC      := icc
 CPP     := icc
 OPTS    += -ipo
 DEBUG   := -std=gnu99 -Wp64 -DTSI_DEBUG2 -DNEW_RAND -Wall
 endif
 
-ifeq ($(COMPILER), win32)
-CC       := cl
-CPP      := cl
-CFLAGS   :=
-LDFLAGS  :=
-OPTS     :=
-DEBUG    := -DTSI_DEBUG2
-endif
 
 ifeq ($(COMPILER), mpicc)
+RELEASE_TARGET := tsi-mpi
+DEBUG_TARGET   := tsi-mpid
 CC       := mpicc
 CPP      := mpiCC
 # use gcc settings

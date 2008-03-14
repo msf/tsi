@@ -87,7 +87,7 @@ void debug_check(void)
 	struct tsi_mem *m, *mtmp;
 
 	list_for_each_entry_safe(m, mtmp, &tsi_mem_list, mem_list) {
-		printf("debug_check(): leak %p (size: %lubytes) allocated from %p\n", 
+		printf("debug_check(): leak %p (size: %ubytes) allocated from %p\n", 
 			(char *)m + sizeof(struct tsi_mem), m->size*sizeof(char), m->callerpc);
 	}
 }
