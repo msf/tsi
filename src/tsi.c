@@ -446,15 +446,18 @@ int run_tsi(tsi *t) {
 } /* run_tsi */
 
 
-
 int tsi_recurse_iterations(tsi *t, int i, int s) {
 	if (--i) {
-		if (tsi_recurse_iterations(t, i, s))
-			if (tsi_recurse_simulations(t, i, s))
-				return tsi_finish_iteration(t, i);
+		if ( tsi_restore_iteration( t, i) )
+			return 1;
+		else if (tsi_recurse_iterations(t, i, s))
+				if (tsi_recurse_simulations(t, i, s))
+					return tsi_finish_iteration(t, i);
 	} else {
-		if (tsi_recurse_simulations(t, i, s))
-			return tsi_finish_iteration(t, i);
+		if ( tsi_restore_iteration(t, i) )
+			return 1;
+		else if (tsi_recurse_simulations(t, i, s))
+				return tsi_finish_iteration(t, i);
 	}
 	return 0;
 } /* tsi_recurse_iterations */
@@ -482,11 +485,6 @@ int tsi_simulation(tsi *t, int i, int s)
 	log_separator(t->l);
 	log_simulation_number(t->l, s);
 
-	if (tsi_restore_simulation(t, i, s)) {
-		//log_message();
-		return 1;
-	}
-
 	getCurrTime(&t1);
 	r = tsi_direct_sequential_simulation(t, i, s);
 	if (r) {
@@ -513,8 +511,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	log_iteration_number(t->l, iteration);
 	log_message(t->l, 0, "tsi_setup_iteration() setup Direct Sequential [Co]-Simulation");
 	
-	tsi_restore_iteration(t, iteration);
-
 	getCurrTime(&t1);
 	if (iteration == 0) { /* first iteration */
 		t->currBAI_idx = -1; 
@@ -889,12 +885,13 @@ int tsi_finish_iteration(tsi *t, int iteration)
 			t->bestAI_idx = -1;
 		}
 	}
-        getCurrTime(&t2);
+	getCurrTime(&t2);
 
 	if (!t->optimize_last || (iteration+1 < t->iterations)) {
 		if (tsi_compare_parallel(t))
 		    return 0;
-		tsi_backup_iteration(t, iteration);
+		if( !t->resume || iteration != 0)
+			tsi_backup_iteration(t, iteration);
 	}
 	
 	log_message(t->l, 0, "tsi_finish_iteration(): deleting currBAI & currBCM");

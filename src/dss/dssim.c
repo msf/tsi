@@ -241,8 +241,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		}
 	}
 
-	printf_dbg("dssim(): grid Points: %d\twells Points: %d\t toSim Points: %d\t should be: %d\n",
-			general->nxyz, general->nd, toSim, general->nxyz - general->nd);
+	printf_dbg("dssim(): hard data Points: %d\t hard data points in grid: %d\n",
+			general->nd, general->nxyz - toSim);
 	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
 	ierr = 0;
@@ -409,13 +409,15 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	printf_dbg("dssim(): DEBUG: SKIP points: %d\n",ierr);
 
 	ierr = 0;
+	index = 0; //tmp
 	for(i = 0; i < general->wellsNPoints; i++) {
 		in = general->wellsDataPos[i];
 		simval = sim[in] - general->wellsDataVal[i];
-		if(simval != 0) {
+		if(simval != 0 && in != index ) {
 			printf_dbg("sim[%d] - wellsData = %f\n",in,simval);
 			ierr++;
-		}
+		} 
+		index = in;
 	}	
 	printf_dbg("dssim(): sim grid disrespects %d wells data points\n",ierr);
 

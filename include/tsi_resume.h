@@ -6,8 +6,6 @@
 
 int tsi_backup_simulation(tsi *t, int i, int s);
 
-int tsi_restore_simulation(tsi *t, int i, int s);
-
 int tsi_backup_iteration(tsi *t, int i);
 
 int tsi_restore_iteration(tsi *t, int i);

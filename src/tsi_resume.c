@@ -71,15 +71,6 @@ int tsi_backup_simulation(tsi *t, int i, int s)
 
 
 
-int tsi_restore_simulation(tsi *t, int i, int s)
-{
-    if (!t->resume) return 0;
-    /* recurse each node sim sequence for best results -> fuck up... develop new model for sim sequence... */
-    return 1;
-} /* tsi_restore_simulation */
-
-
-
 int tsi_backup_iteration(tsi *t, int i)
 {
     float *g;
@@ -103,7 +94,7 @@ int tsi_backup_iteration(tsi *t, int i)
     }
 
     if (t->dump_bcm) {
-        printf_dbg("\ttsi_backup_simulation(): dumping BCM...\n");
+        printf_dbg("\ttsi_backup_iteration(): dumping BCM...\n");
         sprintf(desc, "BCM_%d", i);        
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         g_idx = t->nextBCM_idx;
@@ -147,16 +138,16 @@ int tsi_restore_iteration(tsi *t, int i)
 
 	if ((k = get_key(t->reg, "RESUME", "BCM")) == NULL) {
 		ERROR(t->l, "tsi_restore_iteration", "failed to get BCM grid from config");
-		return 1;
+		return 0;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
 	if ((fp = fopen(buf, "r")) == NULL) {
 		ERROR(t->l, "Failed to open the BCM grid file", buf);
-		return 1;
+		return 0;
 	}
 	if (!tsi_read_grid(t, fp, t->nextBCM, t->seismic_file)) {
 		ERROR(t->l, "Failed to read the BCM grid file", buf);
-		return 1;
+		return 0;
 	}
 	dirty_grid(t->heap, t->nextBCM_idx);
 
@@ -165,20 +156,20 @@ int tsi_restore_iteration(tsi *t, int i)
 
 	if ((k = get_key(t->reg, "RESUME", "BAI")) == NULL) {
 		ERROR(t->l, "tsi_restore_iteration", "failed to get BAI grid from config");
-		return 1;
+		return 0;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
 	if ((fp = fopen(buf, "r")) == NULL) {
 		ERROR(t->l, "Failed to open the BAI grid file", buf);
-		return 1;
+		return 0;
 	}
 	if (!tsi_read_grid(t, fp, t->nextBAI, t->seismic_file)) {
 		ERROR(t->l, "Failed to read the BAI grid file", buf);
-		return 1;
+		return 0;
 	}
 	dirty_grid(t->heap, t->nextBAI_idx);
 
-    return 0;
+    return 1;
 } /* tsi_restore_iteration */
 
 
