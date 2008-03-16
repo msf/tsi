@@ -4,6 +4,7 @@
 #include "tsi.h"
 #include "tsi_resume.h"
 #include "tsi_io.h"
+#include "log.h"
 
 
 int tsi_backup_simulation(tsi *t, int i, int s)
@@ -118,7 +119,6 @@ int tsi_restore_iteration(tsi *t, int i)
 	FILE *fp;
 	reg_key	*k;
 	char buf[2048];
-	char *fname;
 
     if (!t->resume) return 0;
 	/* resume allways starts at sim = 0, iteration = 1 */
@@ -138,16 +138,19 @@ int tsi_restore_iteration(tsi *t, int i)
 
 
 	if ((k = get_key(t->reg, "RESUME", "BCM")) == NULL) {
-		ERROR(t->l, "tsi_restore_iteration", "failed to get BCM grid from config");
+		ERROR(t->l, "tsi_restore_iteration", "get BCM grid from config");
+		clear_grid(t->heap, t->nextBCM_idx);
 		return 0;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
 	if ((fp = fopen(buf, "r")) == NULL) {
-		ERROR(t->l, "Failed to open the BCM grid file", buf);
+		ERROR(t->l, "fopen() the BCM grid file", buf);
+		clear_grid(t->heap, t->nextBCM_idx);
 		return 0;
 	}
 	if (!tsi_read_grid(t, fp, t->nextBCM, t->seismic_file)) {
-		ERROR(t->l, "Failed to read the BCM grid file", buf);
+		ERROR(t->l, "tsi_read_grid() the BCM grid file", buf);
+		clear_grid(t->heap, t->nextBCM_idx);
 		return 0;
 	}
 	dirty_grid(t->heap, t->nextBCM_idx);
@@ -156,16 +159,19 @@ int tsi_restore_iteration(tsi *t, int i)
 	t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
 
 	if ((k = get_key(t->reg, "RESUME", "BAI")) == NULL) {
-		ERROR(t->l, "tsi_restore_iteration", "failed to get BAI grid from config");
+		ERROR(t->l, "tsi_restore_iteration", "get BAI grid from config");
+		clear_grid(t->heap, t->nextBAI_idx);
 		return 0;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
 	if ((fp = fopen(buf, "r")) == NULL) {
-		ERROR(t->l, "Failed to open the BAI grid file", buf);
+		ERROR(t->l, "fopen() the BAI grid file", buf);
+		clear_grid(t->heap, t->nextBAI_idx);
 		return 0;
 	}
 	if (!tsi_read_grid(t, fp, t->nextBAI, t->seismic_file)) {
-		ERROR(t->l, "Failed to read the BAI grid file", buf);
+		ERROR(t->l, "tsi_read_grid() the BAI grid file", buf);
+		clear_grid(t->heap, t->nextBAI_idx);
 		return 0;
 	}
 	dirty_grid(t->heap, t->nextBAI_idx);

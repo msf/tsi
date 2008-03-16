@@ -4,8 +4,8 @@
 #include "registry.h"
 
 #define ERROR(_log_,_func_x_,_str_x_) {\
-        fprintf( (_log_)->logFile, "ERROR: %s failed in %s, file %s, line %d\n",\
-         (_func_x_), (_str_x_), __FILE__, __LINE__); \
+        log_print( (_log_), "%s:%d ERROR: %s failed in %s.\n",\
+         __FILE__, __LINE__, (_func_x_), (_str_x_) ); \
 	}
 
 
@@ -22,7 +22,7 @@ log_t *new_log(registry *, int proc_id);
 
 void delete_log(log_t *l);
 
-void log_msg(log_t *l, char *fmt, ...);
+void log_print(log_t *l, char *fmt, ...);
 
 void log_iteration_number(log_t *l, int iterNum);
 void log_simulation_number(log_t *l, int simulNum);

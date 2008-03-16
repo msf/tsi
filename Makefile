@@ -20,15 +20,13 @@ OPTS    := -O3 -fomit-frame-pointer -ffast-math
 #OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
-OPTS	+= -g -DTSI_DEBUG 
+OPTS	+= -g 
+#OPTS	+= -DTSI_DEBUG
 DEBUG   := -g -ggdb
 #DEBUG	+= -m32
 #DEBUG  += -pg
-DEBUG	+= -Wall -Wextra -std=gnu99 -DTSI_DEBUG2 -DNEW_RAND
-#DEBUG  += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
-#DEBUG  += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow
-#DEBUG  += -Wunreachable-code -Wdisabled-optimization
-#DEBUG  += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
+DEBUG	+= -Wall -std=gnu99 
+DEBUG	+= -Wextra
 
 ifeq ($(COMPILER), icc)
 RELEASE_TARGET := tsi-icc
