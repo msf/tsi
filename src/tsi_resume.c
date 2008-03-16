@@ -124,7 +124,8 @@ int tsi_restore_iteration(tsi *t, int i)
 	/* resume allways starts at sim = 0, iteration = 1 */
 	if( i != 0 ) return 0;
 
-	log_print(t->l, "RESUME: restoring iteration %d\n", i);
+	log_iteration_number(t->l, i);
+	log_message(t->l, 0, "RESUME: restoring Iteration from files");
 
 	/* load currBCM, currBAI
 	 * at the begginning of the iteration, nextBAI & nextBCM will be 
