@@ -10,7 +10,7 @@
 #include "dss_legacy.h"
 #include "tsi_io.h"
 
-float * load_harddata_file(char *, unsigned int *);
+float * load_harddata_file(log_t *, char *, unsigned int *);
 
 dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     dss *d;
@@ -53,7 +53,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
 
     printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, r)){
-		printf("new_dss(): ERROR loaging dss configs\n");
+		ERROR(l, "new_dss()", "dss_parameters()");
 		return NULL;
 	}
 	
@@ -70,7 +70,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     else
         sprintf(filename, "%s", get_string(k));
 
-    if ((d->harddata = load_harddata_file(filename, &d->harddata_size)) == NULL) {
+    if ((d->harddata = load_harddata_file(l, filename, &d->harddata_size)) == NULL) {
         printf("new_dss(): ERROR - failed to load harddata file!\n");
         return NULL;
     }
@@ -335,7 +335,7 @@ void delete_dss(dss *d) {
 
 
 
-float *load_harddata_file(char *filename,  unsigned int *size) {
+float *load_harddata_file(log_t *l, char *filename,  unsigned int *size) {
     float x, y, z, val;
     int i, m;
 	char line[256];
@@ -343,10 +343,24 @@ float *load_harddata_file(char *filename,  unsigned int *size) {
 	TSI_FILE *fp;
 
     if ((fp = fopen(filename, "r")) == NULL) {
-        fprintf(stderr,"load_harddata_file(): ERROR - Can't open Hard Data file: %s\n", filename);
+		ERROR(l, "fopen()", filename);
         return NULL;
     }
 	
+    /* ignore gslib header */
+    if (fgets(line, 255, fp) == NULL) {
+		ERROR(l, "load_harddata_file()", "reading 1st line of harddata file");
+		return NULL;
+	}
+	if (fgets(line, 255, fp) == NULL) {
+		ERROR(l, "load_harddata_file()", "reading 2nd line of harddata file");
+		return NULL;
+	}
+	if (fgets(line, 255, fp) == NULL) {
+		ERROR(l, "load_harddata_file()", "reading 3rd line of harddata file");
+		return NULL;
+	}
+
 	/* first find out how many values */
 	i = 0;
 	while(fgets(line, 255, fp) != NULL)
@@ -360,7 +374,7 @@ float *load_harddata_file(char *filename,  unsigned int *size) {
 	m = 0;
 	while( (m = fscanf(fp,"%f %f %f %f", &x, &y, &z, &val)) != EOF ) {
 		if(m != 4)
-			fprintf(stdout,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 1+(i/4));
+			log_print(l,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 1+(i/4));
 		buf[i++] = x;
 		buf[i++] = y;
 		buf[i++] = z;
