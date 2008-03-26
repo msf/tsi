@@ -110,8 +110,7 @@ extern int sort_permute_int(int , int , float *, int *);
 
 
 /* dss_backtr */
-extern float backtr(float vrgs, int nt, float *vr, float *vrg, float zmin, float zmax,
-                    int ltail, float ltpar, int utail, float utpar);
+extern float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float max_value);
 
 /*extern int sortemi(int *, int *,
            float *,

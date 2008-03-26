@@ -22,12 +22,12 @@ int readWellsData(general_vars_t * general, float * wellsData, unsigned int well
 	unsigned int *temp;
 	float *vals;
 
-	t = wellsDataSize / general->nvari;
+	t = wellsDataSize / NVARI;
 	
 	temp = (unsigned int *) tsi_malloc(sizeof(unsigned int) * t);
 	vals = (float *) tsi_malloc(sizeof(float) * t);		
 
-	if( wellsDataSize % general->nvari ) {
+	if( wellsDataSize % NVARI ) {
 		printf("readWellsData: ERROR: incorrect number of values\n");
 		return -1;
 	}

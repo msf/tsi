@@ -76,7 +76,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     }
 
     /* ugly hack for "readdata" */
-    d->general->maxdat = d->harddata_size / d->general->nvari;
+    d->general->maxdat = d->harddata_size / NVARI;
     d->general->x = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->y = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->z = (float *) tsi_malloc(d->general->maxdat * sizeof(float));

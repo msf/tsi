@@ -261,8 +261,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		if(index < 1)
 			printf("dssim(): ERROR, INDEX(%d) < 1\n", index);
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
-		/* if( sim[index] >= general->tmin &&
-		    sim[index] <= general->tmax) { */
+		/* if( sim[index] >= general->min_value &&
+		    sim[index] <= general->max_value) { */
 		/*
 		 if (sim[index] > general->nosim_value + 1e-20f || 
 				 sim[index] < general->nosim_value * 2.f) {
@@ -372,8 +372,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
 			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,
-					general->zmin, general->zmax, general->ltail, general->ltpar,
-					general->utail, general->utpar);
+					general->min_value, general->max_value);
 			vms += simval;
 		}
 		vms /= covtable_lookup->ntry;
@@ -383,10 +382,10 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		} else {
 			sim[index] = simval;
 		}
-		if (sim[index] < general->tmin) {
-			sim[index] = general->tmin;
-		} else if (sim[index] > general->tmax) {
-			sim[index] = general->tmax;
+		if (sim[index] < general->min_value) {
+			sim[index] = general->min_value;
+		} else if (sim[index] > general->max_value) {
+			sim[index] = general->max_value;
 		}
 		/* !Condicionamento as medias locais */
 		/* used only when doing more than 1 simulation */

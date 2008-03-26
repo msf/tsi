@@ -10,96 +10,56 @@
 int  dss_parameters(dss *d, registry *r )
 {
     int i, varnum;
-    char variogram[16];
     float aa1, aa2, aa, sill;
     reg_key *k;
 
     /* harddata parameters */
-    if ((k = get_key(r, "HARDDATA", "NVARI")) == NULL) return 1;
-    d->general->nvari = get_int(k);
-    
-    if ((k = get_key(r, "HARDDATA", "IXL")) == NULL) return 1;
-    d->general->ixl = get_int(k);
-
-    if ((k = get_key(r, "HARDDATA", "IYL")) == NULL) return 1;
-    d->general->iyl = get_int(k);
-    
-    if ((k = get_key(r, "HARDDATA", "IZL")) == NULL) return 1;
-    d->general->izl = get_int(k);
-    
-    if ((k = get_key(r, "HARDDATA", "IVRL")) == NULL) return 1;
-
-    d->general->ivrl = get_int(k);
-    if ((k = get_key(r, "HARDDATA", "IWT")) == NULL) return 1;
-    d->general->iwt = get_int(k);
-
-    if ((k = get_key(r, "HARDDATA", "ISECVR")) == NULL) return 1;
-    d->general->isecvr = get_int(k);
-
     if ((k = get_key(r, "HARDDATA", "TMIN")) == NULL) return 1;
-    d->general->tmin = get_float(k);
+    d->general->min_value = get_float(k);
 
     if ((k = get_key(r, "HARDDATA", "TMAX")) == NULL) return 1;
-    d->general->tmax = get_float(k);
+    d->general->max_value = get_float(k);
 
+    if (get_key(r, "HARDDATA", "NVARI"))
+    	printf("[HARDDATA] NVARI is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "IXL"))
+    	printf("[HARDDATA] IXL is NOT used\n");
+    
+     if (get_key(r, "HARDDATA", "IYL"))
+    	printf("[HARDDATA] IYL is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "IZL"))
+    	printf("[HARDDATA] IZL is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "IVRL"))
+    	printf("[HARDDATA] IVRL is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "IWT"))
+    	printf("[HARDDATA] IWT is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "ISECVR"))
+    	printf("[HARDDATA] ISECVR is NOT used\n");
+    
 
     /* harddata transformations */
-    if ((k = get_key(r, "HDTRANS", "ITRANS")) == NULL) return 1;
-    d->general->itrans = get_int(k);
+    if (get_key(r, "HDTRANS", "ITRANS"))
+    	printf("[HDTRANS] ITRANS is NOT used\n");
+ 
+    if (get_key(r, "HDTRANS", "ISMOOTH"))
+    	printf("[HDTRANS] ISMOOTH is NOT used\n");
 
-    if ((k = get_key(r, "HDTRANS", "ISMOOTH")) == NULL) return 1;
-    d->general->ismooth = get_int(k);
+    if (get_key(r, "HDTRANS", "ISVR"))
+    	printf("[HDTRANS] ISVR is NOT used\n");
+    
+    if (get_key(r, "HDTRANS", "ISWT"))
+    	printf("[HDTRANS] ISWT is NOT used\n");
 
-    if ((k = get_key(r, "HDTRANS", "ISVR")) == NULL) return 1;
-    d->general->isvr = get_int(k);
+    if (get_key(r, "HDTRANS", "LTAIL"))
+    	printf("[HDTRANS] LTAIL is NOT used\n");
 
-    if ((k = get_key(r, "HDTRANS", "ISWT")) == NULL) return 1;
-    d->general->iswt = get_int(k);
-
-    if ((k = get_key(r, "HDTRANS", "ZMIN")) == NULL) return 1;
-    d->general->zmin = get_float(k);
-
-    if ((k = get_key(r, "HDTRANS", "ZMAX")) == NULL) return 1;
-    d->general->zmax = get_float(k);
-
-    if ((k = get_key(r, "HDTRANS", "LTAIL")) == NULL) return 1;
-    d->general->ltail = get_int(k);
-
-    if ((k = get_key(r, "HDTRANS", "LTPAR")) == NULL) return 1;
-    d->general->ltpar = get_float(k);
-
-    if ((k = get_key(r, "HDTRANS", "UTAIL")) == NULL) return 1;
-    d->general->utail = get_int(k);
-
-    if ((k = get_key(r, "HDTRANS", "UTPAR")) == NULL) return 1;
-    d->general->utpar = get_float(k);
-
-    if ((d->general->ltail != 1) && (d->general->ltail != 2)) {
-        printf_dbg("ERROR invalid lower tail option: %d\n", (int) d->general->ltail);
-        printf_dbg("\t\tonly allowed 1 or 2 - see manual.\n");
-        return 1;
-    }
-    if ((d->general->utail != 1) && (d->general->utail != 2) && (d->general->utail != 4)) {
-        printf_dbg("ERROR invalid upper tail option: %d\n", (int) d->general->utail);
-        printf_dbg("\t\tonly allowed 1, 2 or 4 - see manual.\n");
-        return 1;
-    }
-    if ((d->general->utail == 4) && (d->general->utpar < 1)) {
-        printf_dbg("ERROR invalid power for hyperbolic tail: %f\n", d->general->utpar);
-        printf_dbg("\t\tmust be greater than 1.0.\n");
-        return 1;
-    }
-    if ((d->general->ltail == 2) && (d->general->ltpar < 0)) {
-        printf_dbg("ERROR invalid power for power model: %f\n",d->general->ltpar);
-        printf_dbg("\t\tmust be greater than 0.0.\n");
-        return 1;
-    }
-    if ((d->general->utail == 2) && (d->general->utpar < 0)) {
-        printf_dbg("ERROR invalid power for power model: %f\n",d->general->utpar);
-        printf_dbg("\t\tmust be greater than 0.0.\n");
-        return 1;
-    }
-
+    if (get_key(r, "HDTRANS", "UTAIL"))
+    	printf("[HDTRANS] UTAIL is NOT used\n");
     
     /* simulations quality */
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;

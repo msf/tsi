@@ -28,26 +28,22 @@ typedef struct general_vars_type {
     float *wellsDataVal;
 
     /* parameters from registry */
-    int    nvari,     /* =4 - HARDDATA:NVARI */
-           ixl,       /* =1 - HARDDATA:IXL */
-           iyl,       /* =2 - HARDDATA:IYL */
-           izl,       /* =3 - HARDDATA:IZL */
-           ivrl,      /* =4 - HARDDATA:IVRL */
-           iwt,       /* =0 - HARDDATA:IWT */
-           isecvr;    /* =0 - HARDDATA:ISECVR */
-    float  tmin,      /* HARDDATA:TMIN */
-           tmax;      /* HARDDATA:TMAX */
+#define NVARI	4
+#define IXL		1
+#define IYL		2
+#define IZL		3
+#define IVRL	4
+#define IWT		0
+#define ISECVR	0
+    float  min_value;      /* HARDDATA:TMIN */
+    float  max_value;      /* HARDDATA:TMAX */
 
-    int    itrans,    /* =1 - HDTRANS:ITRANS */
-           ismooth,   /* =0 - HDTRANS:ISMOOTH */
-           isvr,      /* =1 - HDTRANS:ISVR */
-           iswt;      /* =2 - HDTRANS:ISWT */
-    int    ltail;     /* =1 - HDTRANS:LTAIL */
-    int    utail;     /* =1 - HDTRANS:UTAIL */
-    float  ltpar;     /* =TMIN - HDTRANS:LTPAR */
-    float  utpar,     /* =TMAX - HDTRANS:UTPAR */
-           zmin,      /* =TMIN - HDTRANS:ZMIN */
-           zmax;      /* =TMAX - HDTRANS:ZMAX */
+#define ITRANS	1
+#define ISMOOTH 0
+#define ISVR    1
+#define ISWT    2
+#define LTAIL	1
+#define UTAIL	1
 
     int    nx,        /* GRID:XNUMBER */
            ny,        /* GRID:YNUMBER */
@@ -61,14 +57,9 @@ typedef struct general_vars_type {
     int    nxy,       /* = nx * ny */
            nxyz;      /* = nx * ny * nz */
 
-//  int    icollvm,   /* =1 - SOFT:ICOLLVM */
-//         nvaril;    /* =1 - SOFT:NVARIL */
-
     float  nosim_value;  /* MASK:NULL_VALUE */
 
     int    ktype;     /* =1 (and 5)- KRIG:KTYPE */
-//    float  colocorr,  /* =0 - KRIG:COLOCORR */
-//           varred;    /* =0.6 - KRIG:VARRED */
 } general_vars_t;
 
 
@@ -78,9 +69,6 @@ typedef struct search_vars_type {
     /* parameters from registry */
     int    ndmin,    /* SEARCH:NDMIN */
            ndmax;    /* SEARCH:NDMAX */
-    /* NOT USED, ALLWAYS 1 & 0 */
-//    int    sstrat,   /* =1 - SEARCH_SSTRAT */
-//           noct;     /* =0 - SEARCH:NOCT */
     float  radius,   /* SEARCH:RADIUS */
            radsqd,   /* radius^2 */
            sang1,    /* SEARCH:SANG */
@@ -97,9 +85,6 @@ typedef struct simulation_vars_type {
            vmedsec,    /* secondary (AI data) */
            vvarsec;    /* secondary...*/
 
-    /* parameters from registry */
-//    int    nsim;         /* const = 1, number of simulations */
-//    int    nsim_bk;
 } simulation_vars_t;
 
 
@@ -155,9 +140,6 @@ typedef struct covtable_lookup_vars_type {
     /* parameters from registry */
     int    nodmax;  /* SEARCH:NODMAX */
     int    ntry;    /* QUALITY:NTRY */
-    /* USED WHEN DSS DID MORE THAN 1 SIM */
-//  int    icmean,  /* =1 - QUALITY:ICMEAN */
-//         icvar;   /* =1 - QUALITY:ICVAR */
 
 } covtable_lookup_vars_t;
 
