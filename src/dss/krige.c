@@ -142,7 +142,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			iz1 += iz - covtable_lookup->nctz -1;
 
 			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
-			if(general->ktype == 5)
+			if(lktype == 5)
 				krige_vars->vrea[j - 1] = bestAICube[index];
 		}
 		if (lktype == 0) {
@@ -185,9 +185,9 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			if ((float) j <= search->nclose || (float) i <= search->nclose) 
 			{
 				double cmax;
-				krige_vars->a[in - 1] = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
-						covariance->c0, covariance->it, covariance->cc, 
-						covariance->aa, krige_vars->rotmat, &cmax);
+				krige_vars->a[in - 1] = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
+						covariance->nugget, covariance->variogram, 
+						krige_vars->rotmat, &cmax);
 				
 				covariance->cmax = (float) cmax;
 			} else {
@@ -199,9 +199,9 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 					jj < 1 || jj > general->ny ||
 					kk < 1 || kk > general->nz) {
 					double cmax, c;
-					c = cova3(x1, y1, z1, x2, y2, z2, covariance->nst,
-							covariance->c0, covariance->it, covariance->cc,
-							covariance->aa, krige_vars->rotmat, &cmax);
+					c = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
+							covariance->nugget, covariance->variogram,
+							krige_vars->rotmat, &cmax);
 					cov = (float) c;
 					covariance->cmax = (float) cmax;
 				} else {
@@ -213,8 +213,8 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		/* Get the RHS value (possibly with covariance look-up table): */
 		if ((float) j <= search->nclose) {
 			double cmax;
-			krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->nst,
-					covariance->c0, covariance->it, covariance->cc, covariance->aa,
+			krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
+					covariance->nugget, covariance->variogram,
 					krige_vars->rotmat, &cmax);
 			covariance->cmax = (float) cmax;
 		} else {
@@ -226,8 +226,8 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 				jj < 1 || jj > general->ny ||
 				kk < 1 || kk > general->nz) {
 				double cmax;
-				krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->nst,
-						covariance->c0, covariance->it, covariance->cc, covariance->aa, 
+				krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
+						covariance->nugget, covariance->variogram, 
 						krige_vars->rotmat, &cmax);
 				covariance->cmax = (float) cmax;
 			} else {

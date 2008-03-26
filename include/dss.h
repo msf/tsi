@@ -6,6 +6,22 @@
 #include "log.h"
 #include "registry.h"
 
+typedef struct harddata_point_type {
+	float x,y,z;
+	float val;
+	float weight;
+	float gauinv; // transformed value
+} harddata_point_t;
+
+typedef struct harddata_type {
+	int		numdata, numraw;
+	harddata_point_t *harddata;
+	harddata_point_t *rawdata; // unsorted harddata
+	float	minvalue, maxvalue;
+	short	lower_tail, upper_tail;
+	float	lowert_val, uppert_val;
+	
+} harddata_t;
 
 typedef struct general_vars_type {
     int    nd,      // number of acceptance harddata 
@@ -29,21 +45,10 @@ typedef struct general_vars_type {
 
     /* parameters from registry */
 #define NVARI	4
-#define IXL		1
-#define IYL		2
-#define IZL		3
-#define IVRL	4
-#define IWT		0
-#define ISECVR	0
-    float  min_value;      /* HARDDATA:TMIN */
-    float  max_value;      /* HARDDATA:TMAX */
-
-#define ITRANS	1
-#define ISMOOTH 0
-#define ISVR    1
-#define ISWT    2
 #define LTAIL	1
 #define UTAIL	1
+    float  min_value;      /* HARDDATA:TMIN */
+    float  max_value;      /* HARDDATA:TMAX */
 
     int    nx,        /* GRID:XNUMBER */
            ny,        /* GRID:YNUMBER */
@@ -93,21 +98,17 @@ typedef struct covariance_vars_type {
     float  cmax;
 
     /* parameters from registry */
-    int    nst;   /* VARIOGRAM:NUMBER */
-    float  c0;    /* VARIOGRAM:NUGGET */
-
-    int    *it;      /* VARIOGRAMn:TYPE */
-    float  *cc,      /* VARIOGRAMn:COV */
-           *ang1,    /* VARIOGRAMn:ANG1 */
-           *ang2,    /* VARIOGRAMn:ANG2 */
-           *ang3,    /* VARIOGRAMn:ANG3 */
-           *aa,      /* VARIOGRAMn:AA */
-           *anis1,   /* VARIOGRAMn:AA1 / (aa>1e-20 ? aa : 1e-20) */ 
-           *anis2;   /* VARIOGRAMn:AA2 / (aa>1e-20 ? aa : 1e-20) */
+    int    varnum;   /* VARIOGRAM:NUMBER */
+    float  nugget;    /* VARIOGRAM:NUGGET */
 
     struct variogram_type *variogram;
 } covariance_vars_t;
 
+#define VARIOGRAM_TYPE_SPHERICAL	1
+#define VARIOGRAM_TYPE_EXPONENCIAL	2
+#define VARIOGRAM_TYPE_GAUSSIAN		3
+#define VARIOGRAM_TYPE_POWER		4
+#define VARIOGRAM_TYPE_HOLE			5
 typedef struct variogram_type {
     int     type; /* it */
     float   cov;  /* cc */

@@ -151,8 +151,8 @@ int  dss_parameters(dss *d, registry *r )
 
 
     /* kriging parameters */
-    if ((k = get_key(r, "KRIG", "TYPE")) == NULL) return 1;
-    d->general->ktype = get_int(k);
+    if (get_key(r, "KRIG", "TYPE"))
+    	printf("[KRIG] TYPE is NOT used\n");
 
     if (get_key(r, "KRIG", "COLOCORR"))
     	printf("[KRIG] COLOCORR is NOT used\n");
@@ -169,74 +169,69 @@ int  dss_parameters(dss *d, registry *r )
 
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;
-    varnum = d->covariance->nst = get_int(k);
+    varnum = d->covariance->varnum = get_int(k);
     printf_dbg2("load_dss_configs(): varnum = %d\n", varnum);
 
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
-    sill = d->covariance->c0 = get_float(k);
+    sill = d->covariance->nugget = get_float(k);
 
 
-    //d->covariance->variogram = (variogram_t *) tsi_malloc(varnum * sizeof(variogram_t));
+	variogram_t *variogram = (variogram_t *) tsi_malloc(varnum * sizeof(variogram_t));
 
-    d->covariance->it = (int *) tsi_malloc(varnum * sizeof(int));
-    d->covariance->cc = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->aa = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->ang1 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->ang2 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->ang3 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->anis1 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->anis2 = (float *) tsi_malloc(varnum * sizeof(float));
-    if (!d->covariance->it ||
-        !d->covariance->cc ||
-        !d->covariance->aa ||
-        !d->covariance->ang1 ||
-        !d->covariance->ang2 ||
-        !d->covariance->ang3 ||
-        !d->covariance->anis1 ||
-        !d->covariance->anis2) {
+    if (!variogram ) {
         printf("load_dss_configs(): ERROR - Failed to allocate space for variograms!\n");
         return 1;
     }
 
+    char varname[16];
+
     for (i = 0; i < varnum; i++) {
-        sprintf(variogram, "VARIOGRAM%d", i+1);
-        if ((k = get_key(r, variogram, "TYPE")) == NULL) return 1;
-        d->covariance->it[i] = get_int(k);
-		printf_dbg2("%s - type: %d\t %d\n",variogram,get_int(k),d->covariance->it[i]);
-        if (d->covariance->it[i] == 4) {
+        sprintf(varname, "VARIOGRAM%d", i+1);
+        if ((k = get_key(r, varname, "TYPE")) == NULL) return 1;
+        variogram[i].type = get_int(k);
+        
+		printf_dbg2("%s - type: %d\t %d\n", varname, get_int(k), variogram[i].type);
+        if (variogram[i].type == 4) {
             printf("load_dss_configs(): ERROR - A power model is not allowed! Choose a different model and re-start.\n");
             return 1;
         }
 
-        if ((k = get_key(r, variogram, "COV")) == NULL) return 1;
-        d->covariance->cc[i] = get_float(k);
-        sill += d->covariance->cc[i];
+        if ((k = get_key(r, varname, "COV")) == NULL) return 1;
+        variogram[i].cov = get_float(k);
+        sill += variogram[i].cov;
 
-        if ((k = get_key(r, variogram, "ANG1")) == NULL) return 1;
-        d->covariance->ang1[i] = get_float(k);
+        if ((k = get_key(r, varname, "ANG1")) == NULL) return 1;
+        variogram[i].ang1 = get_float(k);
 
-        if ((k = get_key(r, variogram, "ANG2")) == NULL) return 1;
-        d->covariance->ang2[i] = get_float(k);
+        if ((k = get_key(r, varname, "ANG2")) == NULL) return 1;
+        variogram[i].ang2 = get_float(k);
 
-        if ((k = get_key(r, variogram, "ANG3")) == NULL) return 1;
-        d->covariance->ang3[i] = get_float(k);
+        if ((k = get_key(r, varname, "ANG3")) == NULL) return 1;
+        variogram[i].ang3 = get_float(k);
 
-        if ((k = get_key(r, variogram, "AA")) == NULL) return 1;
-        aa = d->covariance->aa[i] = get_float(k);
+        if ((k = get_key(r, varname, "AA")) == NULL) return 1;
+        aa = variogram[i].aa = get_float(k);
         if (aa < 1e-20)
 			aa = (float) 1e-20;
 
-        if ((k = get_key(r, variogram, "AA1")) == NULL) return 1;
+        if ((k = get_key(r, varname, "AA1")) == NULL) return 1;
         aa1 = get_float(k);
-        d->covariance->anis1[i] = aa1 / aa; 
+        variogram[i].anis1 = aa1 / aa;
 
-        if ((k = get_key(r, variogram, "AA2")) == NULL) return 1;
+        if ((k = get_key(r, varname, "AA2")) == NULL) return 1;
         aa2 = get_float(k);
-        d->covariance->anis2[i] = aa2 / aa;
+        variogram[i].anis2 = aa2 / aa;
+        
 		printf_dbg2("load_dss_configs(): variogram %d\n \ttype:\t%d\n \tcov:\t%.2f\n \tang1:\t%.2f\n \tang2:\t%.2f\n \tang3:\t%.2f\n \taa:\t%.2f\n \taa1:\t%.2f\n \taa2:\t%.2f\n\n",
-				i,d->covariance->it[i],d->covariance->cc[i], 
-				d->covariance->ang1[i],d->covariance->ang2[i],d->covariance->ang3[i],aa,aa1,aa2);
+				i,
+				variogram[i].type,
+				variogram[i].cov,
+				variogram[i].ang1,
+				variogram[i].ang2,
+				variogram[i].ang3,
+				aa,aa1,aa2);
     } /* for */
+    d->covariance->variogram = variogram;
 
     if ((sill < 1) || (sill > 1)) {
         printf("load_dss_configs(): WARNING: The sill of the variogram is not 1.0! sill = %f\n", sill);

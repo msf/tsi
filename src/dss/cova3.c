@@ -76,15 +76,12 @@
 /* these variables used to be passed has arguments, but have _allways_ these values */
 #define MAXROT	5
 
-double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
-		int nst, float c0, int *it, float *cc,
-		float *aa, double rotmat[5][3][3], double *cmax)
 /* Calculate the maximum covariance value (used for zero distances and */
 /* for power model covariance): */
+double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
+		int varnum, float nugget, variogram_t *variogram,
+		double rotmat[5][3][3], double *cmax)
 {
-	/* System generated locals */
-	int temp;
-	
 	/* Local variables */
 	double cova;
 	double h, hr;
@@ -94,20 +91,17 @@ double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 
 
 	/* Parameter adjustments */
-	--it;
-	--cc;
-	--aa;
+	--variogram;
 
 
 	/* Function Body */
 	istart = 1;
-	*cmax = c0;
-	temp = nst;
-	for (is = 1; is <= nst; ++is) {
-		if (it[is] == 4) {
+	*cmax = nugget;
+	for (is = 1; is <= varnum; ++is) {
+		if (variogram[is].type == 4) {
 			*cmax += 999.f;
 		} else {
-			*cmax += cc[is];
+			*cmax += variogram[is].cov;
 		}
 	}
 
@@ -122,7 +116,7 @@ double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 	/* Loop over all the structures: */
 
 	cova = 0;
-	for (is = 1; is <= nst; ++is) {
+	for (is = 1; is <= varnum; ++is) {
 
 		/* Compute the appropriate distance: */
 
@@ -135,36 +129,32 @@ double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 
 		/* Spherical Variogram Model? */
 
-		if (it[is] == 1) {
-			hr = h / aa[is];
+		if (variogram[is].type == VARIOGRAM_TYPE_SPHERICAL) {
+			hr = h / variogram[is].aa;
 			if (hr < 1) {
-				cova += cc[is] * (1 - hr * (1.5 - hr * 0.5 * hr));
+				cova += variogram[is].cov * (1 - hr * (1.5 - hr * 0.5 * hr));
 			}
 
-			/* Exponential Variogram Model? */
+		/* Exponential Variogram Model? */
+		} else if (variogram[is].type == VARIOGRAM_TYPE_EXPONENCIAL) {
+			cova +=  variogram[is].cov * exp(h * -3 /  variogram[is].aa);
 
-		} else if (it[is] == 2) {
-			cova += cc[is] * exp(h * -3 / aa[is]);
-
-			/* Gaussian Variogram Model? */
-
-		} else if (it[is] == 3) {
+		/* Gaussian Variogram Model? */
+		} else if ( variogram[is].type == VARIOGRAM_TYPE_GAUSSIAN) {
 			/* Computing 2nd power */
-			double tmp = h / aa[is];
-			cova += cc[is] * exp(tmp * tmp * -3);
+			double tmp = h /  variogram[is].aa;
+			cova +=  variogram[is].cov * exp(tmp * tmp * -3);
 
-			/* Power Variogram Model? */
+		/* Power Variogram Model? */
+		} else if (variogram[is].type == VARIOGRAM_TYPE_POWER) {
+			double t = variogram[is].aa;
+			cova += *cmax - variogram[is].cov * pow(h, t);
 
-		} else if (it[is] == 4) {
-			double t = aa[is];
-			cova += *cmax - cc[is] * pow(h, t);
-
-			/* Hole Effect Model? */
-
-		} else if (it[is] == 5) {
+		/* Hole Effect Model? */
+		} else if (variogram[is].type == VARIOGRAM_TYPE_HOLE) {
 			/*                 d = 10.0 * aa(ist) */
 			/*                 cova = cova + cc(ist)*exp(-3.0*h/d)*cos(h/aa(ist)*PI) */
-			cova += cc[is] * cos(h / aa[is] * PI );
+			cova += variogram[is].cov * cos(h / variogram[is].aa * PI );
 		}
 	}
 

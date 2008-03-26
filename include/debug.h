@@ -15,7 +15,7 @@
 
 #ifdef TSI_DEBUG2
 	#define printf_dbg2(...)	printf(__VA_ARGS__)
-	#undef  printf_dbg(...)
+	#undef  printf_dbg
 	#undef  tsi_malloc
 	#undef  tsi_free
 	#define printf_dbg(...) 	printf(__VA_ARGS__)

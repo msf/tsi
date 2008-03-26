@@ -107,9 +107,6 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
 
 int setup_dss(dss *d, int ktype) {
     printf_dbg2("setup_dss(): called\n");
-    d->general->ktype = 1;
-    if (ktype != 1) 
-		d->general->ktype = 5;
 
     /* restore initial values */
     d->search->nclose =   0;
@@ -120,7 +117,8 @@ int setup_dss(dss *d, int ktype) {
 
 
 int run_dss(dss *d, float *AI) {
-    int *order, *mask;
+    int *order;
+    int ktype = 1;
 
     printf_dbg2("run_dss(): called\n");
     d->covtab_idx = new_grid(d->heap);
@@ -133,7 +131,6 @@ int run_dss(dss *d, float *AI) {
     d->clookup->iynode = (int *) load_grid(d->heap, d->iynode_idx);
     d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
-    mask = NULL;
 
     /* restore initial values */
     d->search->nclose =   0;
@@ -141,7 +138,7 @@ int run_dss(dss *d, float *AI) {
 
     /* SIMULATION */
 	printf_dbg2("run_dss(): grids allocated, calling dssim()\n");
-    dssim(AI, NULL, NULL, order, mask,
+    dssim(AI, NULL, NULL, order, ktype,
           d->general,
           d->search,
           d->simulation,
@@ -162,7 +159,8 @@ int run_dss(dss *d, float *AI) {
 
 
 int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
-    int *order, *mask;
+    int *order;
+    int ktype = 5;
 
     printf_dbg2("run_codss(): called\n");
     d->covtab_idx = new_grid(d->heap);
@@ -175,12 +173,10 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     d->clookup->iynode = (int *) load_grid(d->heap, d->iynode_idx);
     d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
-	mask = NULL;
-	d->general->ktype = 5;
 
 
     /* CO-SIMULATION */
-    dssim(AI, currBAI, currBCM, order, mask,
+    dssim(AI, currBAI, currBCM, order, ktype,
           d->general,
           d->search,
           d->simulation,
@@ -219,15 +215,8 @@ void delete_dss(dss *d) {
         if (d->search) tsi_free(d->search);
         if (d->simulation) tsi_free(d->simulation);
         if (d->covariance) {
-            if (d->covariance->it) tsi_free(d->covariance->it);
-            if (d->covariance->cc) tsi_free(d->covariance->cc);
-            if (d->covariance->aa) tsi_free(d->covariance->aa);
-            if (d->covariance->ang1) tsi_free(d->covariance->ang1);
-            if (d->covariance->ang2) tsi_free(d->covariance->ang2);
-            if (d->covariance->ang3) tsi_free(d->covariance->ang3);
-            if (d->covariance->anis1) tsi_free(d->covariance->anis1);
-            if (d->covariance->anis2) tsi_free(d->covariance->anis2);
-            tsi_free(d->covariance);
+            if (d->covariance->variogram) tsi_free(d->covariance->variogram);
+        	tsi_free(d->covariance);
         }
         if (d->clookup) tsi_free(d->clookup);
         if (d->krige) {

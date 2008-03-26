@@ -11,6 +11,16 @@
 #define FALSE (0)
 
 
+#define IXL		1
+#define IYL		2
+#define IZL		3
+#define IVRL	4
+#define IWT		0
+#define ISECVR	0
+#define ITRANS	1
+#define ISMOOTH 0
+#define ISVR    1
+#define ISWT    2
 
 
 /* ----------------------------------------------------------------------- */
@@ -23,27 +33,6 @@
  * getIndex()
  */
 
-/** CUBOS utilizados
- * lvm
- * hard_data
- */ 
-
-/** CUBOS _nao_ utilizados
- * sim
- * clc
- * tmp
- * order
- * mask
- * bcm_data
- * bai_data
- */
-
-/** structs globais utilizadas:
- * general
- * simulation
- * search
- */
-
 
 int readdata(float *hard_data,
              unsigned int  hard_data_size,
@@ -51,9 +40,6 @@ int readdata(float *hard_data,
 	     search_vars_t * search,
 	     simulation_vars_t * simulation)
 {
-	/* Table of constant values */
-
-
 	/* System generated locals */
 	float r1;
 
@@ -164,7 +150,7 @@ int readdata(float *hard_data,
 		for (j = 0; j < iend; ++j) {
 			cp += (double) (general->vrgtr[j] / twt);
 			w = (cp + oldcp) * .5f;
-			gauinv(&w, &vrg, &ierr);
+			ierr = gauinv(w, &vrg);
 			if (ierr == 1) {
 				vrg = general->nosim_value;
 			}

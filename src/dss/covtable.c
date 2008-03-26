@@ -105,8 +105,8 @@ int covtable(int *order, float * tmp,
 
 	/* Initialize the covariance subroutine and cbb at the same time: */
 	/*    printf("Calling cova3\n"); */
-	krige_vars->cbb = (float) cova3(0, 0, 0, 0, 0, 0, covariance->nst,
-			covariance->c0, covariance->it, covariance->cc, covariance->aa, 
+	krige_vars->cbb = (float) cova3(0, 0, 0, 0, 0, 0, covariance->varnum,
+			covariance->nugget, covariance->variogram, 
 			krige_vars->rotmat, &cmax);
 	covariance->cmax = (float) cmax;
 	/* 		Now, set up the table and keep track of the node offsets that are */
@@ -129,8 +129,7 @@ int covtable(int *order, float * tmp,
 				kc = covtable_lookup->nctz + 1 + k;
 
 				covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] = (float) cova3(0, 0 , 0, xx, yy, zz, 
-						covariance->nst, covariance->c0, covariance->it, 
-						covariance->cc, covariance->aa,
+						covariance->varnum, covariance->nugget, covariance->variogram,
 						krige_vars->rotmat, &cmax);
 
 				covariance->cmax = (float) cmax;

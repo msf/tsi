@@ -17,7 +17,7 @@ extern int readWellsData(general_vars_t *, float *, unsigned int);
 
 
 /* dss_sim */
-extern int dssim(float *, float *, float *, int *, int *, general_vars_t *,
+extern int dssim(float *, float *, float *, int *, int ktype, general_vars_t *,
                  search_vars_t *, simulation_vars_t *, covariance_vars_t *,
                  covtable_lookup_vars_t *, krige_vars_t *);
 
@@ -26,7 +26,7 @@ extern int setrot(float, float, float , float , float,  int, double rotmat[5][3]
 extern int srchnod(int, int, int, float *, general_vars_t *, search_vars_t *, 
                    covtable_lookup_vars_t *);
 
-extern int gauinv(double *, float *, int *);
+extern int gauinv(double, float *result);
 
 extern int readdata(float *, unsigned int, general_vars_t *, search_vars_t *,
                     simulation_vars_t *);
@@ -96,9 +96,9 @@ extern int krige5(int *, int *, int *, float * , float *, float *,
 extern int ksol(int nright, int neq, int nsb, double *a, double *r, double *s);
 extern int ksol_opt(int neq, double *a, double *r, double *s);
 
-extern double cova3(float x1, float y1, float z1, float x2, float y2, float z2, int nst,
-                   float c0, int *it, float *cc, float *aa, double rotmat[5][3][3],
-                   double *cmax);
+extern double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
+					int varnum, float nugget, variogram_t *variogram,
+					double rotmat[5][3][3], double *cmax);
 
 extern int covtable(int *, float *, general_vars_t *, search_vars_t *, covariance_vars_t *,
                     covtable_lookup_vars_t *, krige_vars_t *);
