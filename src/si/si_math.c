@@ -66,7 +66,7 @@ int make_reflections_grid(si *s, float *AI, float *RG)
 int make_synthetic_grid(si *s, float *RG, float *SY) {
     int x, y, z, nxy, nxyz;
     int wavelet_spots;
-    int j, it;
+    int j, it, tmp;
     struct my_time t1, t2;
     unsigned int aux;
 
@@ -85,8 +85,9 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
             for (z = 0; z < s->zsize; z++) {
                 it = z + 1;
                 for (j = -wavelet_spots+1; j <= wavelet_spots; j++) {
-                    if ((it+j >= 0) && (it+j < s->zsize-1)) {
-                        SY[getPoint(s,x,y,it+j)] += RG[getPoint(s,x,y,z)] * point_value(s, j);
+					tmp = it+j;
+                    if ((tmp >= 0) && (tmp < s->zsize)) {
+                        SY[getPoint(s, x, y, tmp)] += RG[getPoint( s, x, y, z)] * point_value(s, j);
                         aux++;
                     }
                 }
@@ -105,7 +106,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
  * 	
  * 	calculates correlations by layers between two cubes.
  */
-int make_correlations_grid(si *s, float *seismic, float *synthetic, float *CM)
+int make_correlations_grid(si *s, float *seismic, float *synthetic, float *UNUSED)
 {
     int x, y, z;
     int z1, z2;

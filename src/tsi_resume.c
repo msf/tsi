@@ -4,6 +4,7 @@
 #include "tsi.h"
 #include "tsi_resume.h"
 #include "tsi_io.h"
+#include "log.h"
 
 
 int tsi_backup_simulation(tsi *t, int i, int s)
@@ -71,15 +72,6 @@ int tsi_backup_simulation(tsi *t, int i, int s)
 
 
 
-int tsi_restore_simulation(tsi *t, int i, int s)
-{
-    if (!t->resume) return 0;
-    /* recurse each node sim sequence for best results -> fuck up... develop new model for sim sequence... */
-    return 1;
-} /* tsi_restore_simulation */
-
-
-
 int tsi_backup_iteration(tsi *t, int i)
 {
     float *g;
@@ -103,7 +95,7 @@ int tsi_backup_iteration(tsi *t, int i)
     }
 
     if (t->dump_bcm) {
-        printf_dbg("\ttsi_backup_simulation(): dumping BCM...\n");
+        printf_dbg("\ttsi_backup_iteration(): dumping BCM...\n");
         sprintf(desc, "BCM_%d", i);        
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         g_idx = t->nextBCM_idx;
@@ -124,7 +116,66 @@ int tsi_backup_iteration(tsi *t, int i)
 
 int tsi_restore_iteration(tsi *t, int i)
 {
+	FILE *fp;
+	reg_key	*k;
+	char buf[2048];
+
     if (!t->resume) return 0;
+	/* resume allways starts at sim = 0, iteration = 1 */
+	if( i != 0 ) return 0;
+
+	log_iteration_number(t->l, i);
+	log_message(t->l, 0, "RESUME: restoring Iteration from files");
+
+	/* load currBCM, currBAI
+	 * at the begginning of the iteration, nextBAI & nextBCM will be 
+	 * adopted has the currBCM and currBAI, so what we load here, is the
+	 * next*
+	 */
+
+	t->nextBCM_idx = new_grid(t->heap);
+	t->nextBCM = load_grid(t->heap, t->nextBCM_idx);
+
+
+	if ((k = get_key(t->reg, "RESUME", "BCM")) == NULL) {
+		ERROR(t->l, "tsi_restore_iteration", "get BCM grid from config");
+		clear_grid(t->heap, t->nextBCM_idx);
+		return 0;
+	}
+	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
+	if ((fp = fopen(buf, "r")) == NULL) {
+		ERROR(t->l, "fopen() the BCM grid file", buf);
+		clear_grid(t->heap, t->nextBCM_idx);
+		return 0;
+	}
+	if (!tsi_read_grid(t, fp, t->nextBCM, t->seismic_file)) {
+		ERROR(t->l, "tsi_read_grid() the BCM grid file", buf);
+		clear_grid(t->heap, t->nextBCM_idx);
+		return 0;
+	}
+	dirty_grid(t->heap, t->nextBCM_idx);
+
+	t->nextBAI_idx = new_grid(t->heap);
+	t->nextBAI = load_grid(t->heap, t->nextBAI_idx);
+
+	if ((k = get_key(t->reg, "RESUME", "BAI")) == NULL) {
+		ERROR(t->l, "tsi_restore_iteration", "get BAI grid from config");
+		clear_grid(t->heap, t->nextBAI_idx);
+		return 0;
+	}
+	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
+	if ((fp = fopen(buf, "r")) == NULL) {
+		ERROR(t->l, "fopen() the BAI grid file", buf);
+		clear_grid(t->heap, t->nextBAI_idx);
+		return 0;
+	}
+	if (!tsi_read_grid(t, fp, t->nextBAI, t->seismic_file)) {
+		ERROR(t->l, "tsi_read_grid() the BAI grid file", buf);
+		clear_grid(t->heap, t->nextBAI_idx);
+		return 0;
+	}
+	dirty_grid(t->heap, t->nextBAI_idx);
+
     return 1;
 } /* tsi_restore_iteration */
 

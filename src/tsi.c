@@ -99,7 +99,7 @@ tsi *new_tsi(registry *reg) {
 		delete_tsi(t);
 		return NULL;
 	}
-	sprintf(buf,"TSI %s - started, seed: %ld\n",TSI_VERSION, timeSeed);
+	sprintf(buf,"TSI %s - started, seed: %lu\n",TSI_VERSION, timeSeed);
 	log_string(t->l, buf); 
 
 	t->global_best.value = t->last_corr.value = -999;
@@ -234,14 +234,14 @@ tsi *new_tsi(registry *reg) {
 		heap_size = get_int(k);
 	else {
 		printf_dbg("new_tsi(%d): failed to get heap size flag from the registry! Using defaults...\n", t->proc_id);
-		heap_size = 13;
+		heap_size = 10;
 	}
 	k = get_key(reg, "HEAP", "THRESHOLD");
 	if (k)
 		swap_thr = get_int(k);
 	else {
 		printf_dbg("new_tsi(%d): failed to get swap threshold from the registry! Using defaults...\n", t->proc_id);
-		swap_thr = 8;
+		swap_thr = 5;
 	}
 
 	/* get correlation data */
@@ -288,10 +288,11 @@ tsi *new_tsi(registry *reg) {
 	log_string(t->l, buf);
 
 	int size = t->grid_size / (1024*1024) * sizeof(float);
+	int dss_extra = 3 * t->grid_size / (1024*1024) * sizeof(short);
 	if(usefs)
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) +  32);
+		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) + dss_extra + 32);
 	else 
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + 32); 
+		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + dss_extra + 32); 
 	log_string(t->l, buf);
 
 
@@ -371,13 +372,13 @@ tsi *new_tsi(registry *reg) {
 		return NULL;
 	}
 	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
-	if ((fp = open_file(buf)) == NULL) {
+	if ((fp = fopen(buf, "r")) == NULL) {
 		printf("ERROR: Failed to open the seismic grid file!\n");
 		delete_tsi(t);
 		return NULL;
 	}
 	if (!tsi_read_grid(t, fp, t->seismic, t->seismic_file)) {
-		printf("ERROR: Failed to load seismic file!\n");
+		printf("ERROR: Failed to load seismic file: %s\n", buf);
 		delete_tsi(t);
 		return NULL;
 	}
@@ -445,15 +446,18 @@ int run_tsi(tsi *t) {
 } /* run_tsi */
 
 
-
 int tsi_recurse_iterations(tsi *t, int i, int s) {
 	if (--i) {
-		if (tsi_recurse_iterations(t, i, s))
-			if (tsi_recurse_simulations(t, i, s))
-				return tsi_finish_iteration(t, i);
+		if ( tsi_restore_iteration( t, i) )
+			return 1;
+		else if (tsi_recurse_iterations(t, i, s))
+				if (tsi_recurse_simulations(t, i, s))
+					return tsi_finish_iteration(t, i);
 	} else {
-		if (tsi_recurse_simulations(t, i, s))
-			return tsi_finish_iteration(t, i);
+		if ( tsi_restore_iteration(t, i) )
+			return 1;
+		else if (tsi_recurse_simulations(t, i, s))
+				return tsi_finish_iteration(t, i);
 	}
 	return 0;
 } /* tsi_recurse_iterations */
@@ -481,11 +485,6 @@ int tsi_simulation(tsi *t, int i, int s)
 	log_separator(t->l);
 	log_simulation_number(t->l, s);
 
-	if (tsi_restore_simulation(t, i, s)) {
-		//log_message();
-		return 1;
-	}
-
 	getCurrTime(&t1);
 	r = tsi_direct_sequential_simulation(t, i, s);
 	if (r) {
@@ -512,11 +511,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	log_iteration_number(t->l, iteration);
 	log_message(t->l, 0, "tsi_setup_iteration() setup Direct Sequential [Co]-Simulation");
 	
-	if (tsi_restore_iteration(t, iteration)) {
-		//log_message
-		return 1;
-	}
-
 	getCurrTime(&t1);
 	if (iteration == 0) { /* first iteration */
 		t->currBAI_idx = -1; 
@@ -526,17 +520,6 @@ int tsi_setup_iteration(tsi *t, int iteration)
 		t->currBCM_idx = t->nextBCM_idx;
 		t->nextBAI_idx = -1;
 		t->nextBCM_idx = -1;
-
-		//t->currBAI = load_grid(t->heap, t->currBAI_idx);
-		/* expand compressed correlations grid from previous iteration */
-		/* this now done at finish_iteration/distributed compare&update */
-		/*
-		t->currBCM_idx = new_grid(t->heap);
-		t->currBCM = load_grid(t->heap, t->currBCM_idx);
-		expand_correlations_grid(t->nextBCM_c, t->currBCM);
-		dirty_grid(t->heap, t->currBCM_idx);
-		delete_cmgrid(t->nextBCM_c);
-		*/
 	}
 
 	/* prepare seismic inversion (new set of layers) */
@@ -827,17 +810,17 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
             //////////////////////////////////////////////////////// TODO
 			/**/
 			printf_dbg2("loading CM grid from SI");
-                        load_cmgrid(get_cmgrid(t->si_eng));
+			load_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("loading nextBCM");
-                        load_cmgrid(t->nextBCM_c);
-                        /**/
+			load_cmgrid(t->nextBCM_c);
+			/**/
 			getCurrTime(&t4);
 			/* update  nextBAI and nextBCM */
 			result = tsi_compare(t->ai, get_cmgrid(t->si_eng), t->nextBAI, t->nextBCM_c);
 			getCurrTime(&t5);
 			//delete_grid(t->heap, t->cm_idx); /* not needed anymore, delete it */
 			//////////////////////////////////////////////////////// TODO
-            /**/
+			/**/
 			printf_dbg2("clearing CM grid");
 			clear_cmgrid(get_cmgrid(t->si_eng));
 			printf_dbg2("clearing nextBCM");
@@ -902,12 +885,13 @@ int tsi_finish_iteration(tsi *t, int iteration)
 			t->bestAI_idx = -1;
 		}
 	}
-        getCurrTime(&t2);
+	getCurrTime(&t2);
 
 	if (!t->optimize_last || (iteration+1 < t->iterations)) {
 		if (tsi_compare_parallel(t))
 		    return 0;
-		tsi_backup_iteration(t, iteration);
+		if( !t->resume || iteration != 0)
+			tsi_backup_iteration(t, iteration);
 	}
 	
 	log_message(t->l, 0, "tsi_finish_iteration(): deleting currBAI & currBCM");

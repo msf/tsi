@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "debug.h"
 #include "registry.h"
@@ -155,6 +156,22 @@ void log_string(log_t *l, char* dump)
 		fflush(stdout);
 	}
 	fflush(l->logFile);
+}
+
+
+void log_print(log_t *l, char *fmt, ...)
+{
+	va_list	args;
+	va_start(args, fmt);
+	
+	vfprintf(l->logFile, fmt, args);
+	if(l->verbose) {
+		vprintf(fmt, args);
+		fflush(stdout);
+	}
+	fflush(l->logFile);
+
+	va_end(args);
 }
 
 void log_separator(log_t *l)

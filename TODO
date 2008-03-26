@@ -12,8 +12,6 @@ DOING DSS CLEANUP.
 
 ---------------------------------------------------------------
 TO BE DONE:
-- remove grid_heap usage from cmgrid.
-- make a "free_grids()" in grid_heap to remove grids from memory. 
 - convert lookup tables for x, y z to "index" table.
 - significantly reduce lookup table sizes, implies:
     - search radius must be significantly smaller than grid size.
@@ -21,8 +19,12 @@ TO BE DONE:
 	- set lookup table size from search radius for x, y, z
 
 
+GRID HEAP:
+- remove grid_heap usage from cmgrid.
+- remove covtable grids from grid_heap
+- make a "dump_grid()" for BestAI and nextBAI, nextBCM at the end of any iteration.
+- make a "free_grids()" in grid_heap to remove grids from memory -> seismic_grid 
 
-LONG TERM:
 - forward "grid_heap" knowledge inside DSS.
 - simplify grid_heap algorithm.
 

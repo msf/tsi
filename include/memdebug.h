@@ -6,6 +6,6 @@
 
 void * debug_malloc(unsigned int size);
 void debug_free(void *);
-void debug_check();
+void debug_check(void);
 
 #endif

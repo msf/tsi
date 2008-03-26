@@ -71,7 +71,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     if ((kpath = get_key(r, "WAVELET", "PATH")) == NULL)
         kpath = get_key(r, "GLOBAL", "INPUT_PATH");
     if ((k = get_key(r, "WAVELET", "FILENAME")) == NULL) {
-        printf("\tnew_si(): failed to get WAVELET:FILENAME from registry!\n");
+        ERROR(s->l, "new_si()","get WAVELET:FILENAME from registry!");
         return NULL;
     }
     if (kpath)
@@ -80,11 +80,20 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         sprintf(filename, "%s", get_string(k));
     fp = fopen(filename, "r");
     if (!fp) {
-        printf("\tnew_si(): failed to open wavelet file: %s\n", filename);
+		ERROR(s->l, "fopen()", filename);
         return NULL;
     }
 
+	/* read wavelet, put this in a separate function */
     i = 0;
+
+    /* ignore gslib header */
+	if( !read_gslib_header(l, fp, 2) ) {
+		ERROR(l, "load_harddata_file()", "read_gslib_header()");
+		return NULL;
+	}
+
+	/* read all the others in pairs */
     while (fscanf(fp,"%d %f\n", &(s->points[i]), &(s->values[i])) != EOF) {
         printf_dbg2("Wavelet[%d] = Pair(%d, %f)\n", i, s->points[i], s->values[i]);
         i++;
@@ -92,7 +101,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     fclose(fp);
 
     if (i < s->wavelet_used_values) {
-        printf("\tnew_si(): EOF found. Uncomplete wavelet.\nThis wavelet must have %d values.\n", s->wavelet_used_values);
+        ERROR(s->l, "new_si()","not enough points found in wavelet file.");
         return NULL;
     }
     

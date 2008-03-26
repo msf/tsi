@@ -2,52 +2,52 @@
 
 #                                     
 # Compiler settings (gcc, icc, win32)
-COMPILER := mpicc
+
 COMPILER := gcc
+ifeq ($(CC), mpicc)
+COMPILER := mpicc
+endif
+
+ifeq ($(CC), icc)
+COMPILER := icc
+endif
+
 
 # Targets
 RELEASE_TARGET := tsi
-DEBUG_TARGET   := tsi-64-debug
+DEBUG_TARGET   := tsid
+
 
 # Default settings for gcc
-CC      := gcc
-CPP     := g++
-CFLAGS  := -pipe 
-LDFLAGS := -lm -lgcc
-OPTS    := -O3 -ffast-math -fomit-frame-pointer 
+CC      := gcc#-3.4
+CPP     := g++#-3.4
+CFLAGS  := -pipe  -DNEW_RAND 
+LDFLAGS := -lm -lgcc 
+OPTS    := -O3 -fomit-frame-pointer -ffast-math 
 #OPTS	+= -msse -msse2 -mfpmath=sse 
 #OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
 #OPTS	+= -march=k8
-#OPTS	+= -g -DTSI_DEBUG
-
-DEBUG   := -g -ggdb
+OPTS	+= -g 
+#OPTS	+= -DTSI_DEBUG
+DEBUG   := -g -ggdb -DTSI_DEBUG2
 #DEBUG	+= -m32
 #DEBUG  += -pg
-DEBUG	+= -Wall -Wextra -std=gnu99 -DTSI_DEBUG2
-#DEBUG  += -Wall -Wextra -Wcast-qual -Wcast-align -Wconversion -std=gnu99 -pedantic
-#DEBUG  += -Winit-self -Wswitch-default -Wswitch-enum  -Wfloat-equal -Wshadow
-#DEBUG  += -Wunreachable-code -Wdisabled-optimization
-#DEBUG  += -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement 
+DEBUG	+= -Wall -std=gnu99 
+DEBUG	+= -Wextra
 
 ifeq ($(COMPILER), icc)
+RELEASE_TARGET := tsi-icc
+DEBUG_TARGET   := tsi-iccd
 CC      := icc
 CPP     := icc
-CFLAGS  := -O3 -mP2OPT_hlo_prefetch=F
-LDFLAGS := -lm -lpthread -lgcc
-OPTS    :=
-DEBUG   := -DTSI_DEBUG2
+OPTS    += -ipo
+DEBUG   := -std=gnu99 -Wp64 -DTSI_DEBUG2 -DNEW_RAND -Wall
 endif
 
-ifeq ($(COMPILER), win32)
-CC       := cl
-CPP      := cl
-CFLAGS   :=
-LDFLAGS  :=
-OPTS     :=
-DEBUG    := -DTSI_DEBUG2
-endif
 
 ifeq ($(COMPILER), mpicc)
+RELEASE_TARGET := tsi-mpi
+DEBUG_TARGET   := tsi-mpid
 CC       := mpicc
 CPP      := mpiCC
 # use gcc settings
@@ -60,7 +60,6 @@ endif
 #	CFLAGS += -DLINUX
 #endif
 
-LDFLAGS	+= ${OPTS}
 
 # Include files
 INCLUDE_DIR := include
@@ -99,15 +98,10 @@ DSS_OBJS_DEBUG := $(subst $(DSS_DIR),$(DEBUG_DIR),$(DSS_DEPS_DEBUG))
 
 
 # RELEASE RULES
-#release: $(RELEASE_DIR)/$(RELEASE_TARGET)
 release: $(RELEASE_TARGET)
 
-#$(RELEASE_DIR)/$(RELEASE_TARGET): $(DSS_OBJS) $(SI_OBJS) $(COMP_OBJS)
-#	$(CC) $(LDFLAGS) $(OPTS) -o $@ -O $(DSS_OBJS) $(SI_OBJS)
-
-#$(RELEASE_DIR)/$(RELEASE_TARGET): $(SRC_OBJS)
 $(RELEASE_TARGET): $(SRC_OBJS) $(SI_OBJS) $(DSS_OBJS)
-	$(CC) $(LDFLAGS) $(OPTS) -o $@ -O $(SRC_OBJS) $(SI_OBJS) $(DSS_OBJS)
+	$(CC) $(OPTS) $(SRC_OBJS) $(SI_OBJS) $(DSS_OBJS) $(LDFLAGS) -o $@
 
 $(SRC_OBJS): $(RELEASE_DIR)/%.o: $(SOURCE_DIR)/%.c $(INCLUDE_FILES) Makefile
 	$(CC) $(CFLAGS) $(OPTS) -c -o $@ $< -I$(INCLUDE_DIR)
@@ -118,19 +112,12 @@ $(DSS_OBJS): $(RELEASE_DIR)/%.o: $(DSS_DIR)/%.c $(INCLUDE_FILES) Makefile
 $(SI_OBJS): $(RELEASE_DIR)/%.o: $(SI_DIR)/%.c $(INCLUDE_FILES) Makefile
 	$(CC) $(CFLAGS) $(OPTS) -c -o $@ $< -I$(INCLUDE_DIR)
 
-#$(COMP_OBJS): $(RELEASE_DIR)/%.o: $(COMP_DIR)/%.c $(INCLUDE_FILES)
-#	$(CC) $(CFLAGS) $(OPTS) -c -o $@ $< -I$(INCLUDE_DIR)
-
 
 # DEBUG RULES
 debug: $(DEBUG_TARGET)
 
-#$(DEBUG_DIR)/$(DEBUG_TARGET): $(DSS_OBJS_DEBUG) $(SI_OBJS_DEBUG) $(COMP_OBJS_DEBUG)
-#	$(CC) $(LDFLAGS) $(DEBUG) -o $@ -O $(DSS_OBJS_DEBUG) $(SI_OBJS_DEBUG)
-
-#$(DEBUG_DIR)/$(DEBUG_TARGET): $(SRC_OBJS_DEBUG)
 $(DEBUG_TARGET): $(SRC_OBJS_DEBUG) $(SI_OBJS_DEBUG) $(DSS_OBJS_DEBUG)
-	$(CC) $(LDFLAGS) $(DEBUG) -o $@ -O $(SRC_OBJS_DEBUG) $(SI_OBJS_DEBUG) $(DSS_OBJS_DEBUG)
+	$(CC) $(DEBUG) $(SRC_OBJS_DEBUG) $(SI_OBJS_DEBUG) $(DSS_OBJS_DEBUG) $(LDFLAGS) -o $@ 
 
 $(SRC_OBJS_DEBUG): $(DEBUG_DIR)/%.o: $(SOURCE_DIR)/%.c $(INCLUDE_FILES) Makefile
 	$(CC) $(CFLAGS) $(DEBUG) -c -o $@ $< -I$(INCLUDE_DIR)
@@ -141,8 +128,6 @@ $(DSS_OBJS_DEBUG): $(DEBUG_DIR)/%.o: $(DSS_DIR)/%.c $(INCLUDE_FILES) Makefile
 $(SI_OBJS_DEBUG): $(DEBUG_DIR)/%.o: $(SI_DIR)/%.c $(INCLUDE_FILES) Makefile
 	$(CC) $(CFLAGS) $(DEBUG) -c -o $@ $< -I$(INCLUDE_DIR)
 
-#$(COMP_OBJS_DEBUG): $(DEBUG_DIR)/%.o: $(COMP_DIR)/%.c $(INCLUDE_FILES)
-#	$(CC) $(CFLAGS) $(DEBUG) -c -o $@ $< -I$(INCLUDE_DIR)
 
 # OTHER
 wc:
@@ -158,4 +143,4 @@ all: release debug
 rebuild: clean all
 
 FORCE:
-#end of Makefile
+#
