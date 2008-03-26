@@ -250,14 +250,16 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	zmean = 0.f;
 	zvariance = 0.f;
 	while( toSim > 0 ) {
-		
-		if(toSim == (general->nxyz * 0.75)) {
+
+#ifdef TSI_DEBUG
+		if(toSim < (general->nxyz * 0.75)) {
 			printf_dbg("\tdsssim(): 1/4 completed.\n");
-		} else if(toSim == (general->nxyz / 2)) {
+		} else if(toSim < (general->nxyz / 2)) {
 			printf_dbg("\tdsssim(): 1/2 completed.\n");
-		} else if(toSim == (general->nxyz / 4)) {
+		} else if(toSim < (general->nxyz / 4)) {
 			printf_dbg("\tdsssim(): 3/4 completed.\n");
  		}
+#endif
 
 		/* generate point to simulate */
 		in = ((int) tsi_random() % toSim) +1; /* +1 because of fortran offsets */
@@ -408,6 +410,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 
 	printf_dbg("dssim(): DEBUG: SKIP points: %d\n",ierr);
 
+#ifdef TSI_DEBUG
 	ierr = 0;
 	index = 0; //tmp
 	for(i = 0; i < general->wellsNPoints; i++) {
@@ -420,6 +423,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		index = in;
 	}	
 	printf_dbg("dssim(): sim grid disrespects %d wells data points\n",ierr);
+#endif
 
 	/* !Return to the main program: */
 	return 0;

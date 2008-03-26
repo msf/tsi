@@ -129,15 +129,13 @@ int run_dss(dss *d, float *AI) {
 
     printf_dbg2("run_dss(): called\n");
     d->covtab_idx = new_grid(d->heap);
-    d->ixnode_idx = new_grid(d->heap);
-    d->iynode_idx = new_grid(d->heap);
-    d->iznode_idx = new_grid(d->heap);
     d->order_idx =  new_grid(d->heap);
     d->clookup->covtab = load_grid(d->heap, d->covtab_idx);
-    d->clookup->ixnode = (int *) load_grid(d->heap, d->ixnode_idx);
-    d->clookup->iynode = (int *) load_grid(d->heap, d->iynode_idx);
-    d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
+
+	d->clookup->ixnode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
+	d->clookup->iynode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
+	d->clookup->iznode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
     mask = NULL;
 
     /* restore initial values */
@@ -170,10 +168,11 @@ int run_dss(dss *d, float *AI) {
           d->clookup,
           d->krige);                                                                        
 
-    delete_grid(d->heap, d->covtab_idx);
-    delete_grid(d->heap, d->ixnode_idx);
-    delete_grid(d->heap, d->iynode_idx);
-    delete_grid(d->heap, d->iznode_idx);
+	tsi_free(d->clookup->ixnode);
+	tsi_free(d->clookup->iynode);
+	tsi_free(d->clookup->iznode);
+
+	delete_grid(d->heap, d->covtab_idx);
     delete_grid(d->heap, d->order_idx);
 
 /*
@@ -205,19 +204,18 @@ int run_dss(dss *d, float *AI) {
 int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
     int *order, *mask;
 
+	d->general->ktype = 5;
+
     printf_dbg2("run_codss(): called\n");
     d->covtab_idx = new_grid(d->heap);
-    d->ixnode_idx = new_grid(d->heap);
-    d->iynode_idx = new_grid(d->heap);
-    d->iznode_idx = new_grid(d->heap);
     d->order_idx =  new_grid(d->heap);
     d->clookup->covtab = load_grid(d->heap, d->covtab_idx);
-    d->clookup->ixnode = (int *) load_grid(d->heap, d->ixnode_idx);
-    d->clookup->iynode = (int *) load_grid(d->heap, d->iynode_idx);
-    d->clookup->iznode = (int *) load_grid(d->heap, d->iznode_idx);
     order = (int *) load_grid(d->heap, d->order_idx);
+
+	d->clookup->ixnode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
+	d->clookup->iynode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
+	d->clookup->iznode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
 	mask = NULL;
-	d->general->ktype = 5;
 
     /* restore initial values */
     d->search->nclose =   0;
@@ -250,10 +248,11 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
           d->clookup,
           d->krige);
                                                     
+	tsi_free(d->clookup->ixnode);
+	tsi_free(d->clookup->iynode);
+	tsi_free(d->clookup->iznode);
+
     delete_grid(d->heap, d->covtab_idx);
-    delete_grid(d->heap, d->ixnode_idx);
-    delete_grid(d->heap, d->iynode_idx);
-    delete_grid(d->heap, d->iznode_idx);
     delete_grid(d->heap, d->order_idx);
 
 /*
@@ -335,6 +334,9 @@ void delete_dss(dss *d) {
 
 
 
+
+
+
 float *load_harddata_file(log_t *l, char *filename,  unsigned int *size) {
     float x, y, z, val;
     int i, m;
@@ -348,16 +350,8 @@ float *load_harddata_file(log_t *l, char *filename,  unsigned int *size) {
     }
 	
     /* ignore gslib header */
-    if (fgets(line, 255, fp) == NULL) {
-		ERROR(l, "load_harddata_file()", "reading 1st line of harddata file");
-		return NULL;
-	}
-	if (fgets(line, 255, fp) == NULL) {
-		ERROR(l, "load_harddata_file()", "reading 2nd line of harddata file");
-		return NULL;
-	}
-	if (fgets(line, 255, fp) == NULL) {
-		ERROR(l, "load_harddata_file()", "reading 3rd line of harddata file");
+	if( !read_gslib_header(l, fp, 4) ) {
+		ERROR(l, "load_harddata_file()", "read_gslib_header()");
 		return NULL;
 	}
 
@@ -368,13 +362,20 @@ float *load_harddata_file(log_t *l, char *filename,  unsigned int *size) {
 	*size = i * 4; // 4 values per line
 	printf_dbg("read_harddata_file(): %d lines\n",i);
 	buf = (float *) tsi_malloc(sizeof(float) * *size);
+
 	fseek(fp, 0, SEEK_SET); // back to start of file
+
+    /* ignore gslib header */
+	if( !read_gslib_header(l, fp, 4) ) {
+		ERROR(l, "load_harddata_file()", "read_gslib_header()");
+		return NULL;
+	}
 	
 	i = 0;
 	m = 0;
 	while( (m = fscanf(fp,"%f %f %f %f", &x, &y, &z, &val)) != EOF ) {
 		if(m != 4)
-			log_print(l,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 1+(i/4));
+			log_print(l,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 6+(i/4));
 		buf[i++] = x;
 		buf[i++] = y;
 		buf[i++] = z;

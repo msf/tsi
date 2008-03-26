@@ -235,14 +235,14 @@ tsi *new_tsi(registry *reg) {
 		heap_size = get_int(k);
 	else {
 		printf_dbg("new_tsi(%d): failed to get heap size flag from the registry! Using defaults...\n", t->proc_id);
-		heap_size = 13;
+		heap_size = 10;
 	}
 	k = get_key(reg, "HEAP", "THRESHOLD");
 	if (k)
 		swap_thr = get_int(k);
 	else {
 		printf_dbg("new_tsi(%d): failed to get swap threshold from the registry! Using defaults...\n", t->proc_id);
-		swap_thr = 8;
+		swap_thr = 5;
 	}
 
 	/* get correlation data */
@@ -289,10 +289,11 @@ tsi *new_tsi(registry *reg) {
 	log_string(t->l, buf);
 
 	int size = t->grid_size / (1024*1024) * sizeof(float);
+	int dss_extra = 3 * t->grid_size / (1024*1024) * sizeof(short);
 	if(usefs)
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) +  32);
+		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) + dss_extra + 32);
 	else 
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + 32); 
+		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + dss_extra + 32); 
 	log_string(t->l, buf);
 
 

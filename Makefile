@@ -2,9 +2,16 @@
 
 #                                     
 # Compiler settings (gcc, icc, win32)
-COMPILER := mpicc
+
 COMPILER := gcc
-#COMPILER := icc
+ifeq ($(CC), mpicc)
+COMPILER := mpicc
+endif
+
+ifeq ($(CC), icc)
+COMPILER := icc
+endif
+
 
 # Targets
 RELEASE_TARGET := tsi
@@ -22,7 +29,7 @@ OPTS    := -O3 -fomit-frame-pointer -ffast-math
 #OPTS	+= -march=k8
 OPTS	+= -g 
 #OPTS	+= -DTSI_DEBUG
-DEBUG   := -g -ggdb
+DEBUG   := -g -ggdb -DTSI_DEBUG2
 #DEBUG	+= -m32
 #DEBUG  += -pg
 DEBUG	+= -Wall -std=gnu99 

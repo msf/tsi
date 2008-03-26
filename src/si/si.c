@@ -86,19 +86,10 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 
 	/* read wavelet, put this in a separate function */
     i = 0;
-    char str[65];
 
-    /* ignore header */
-    if (fgets(str, 64, fp) == NULL) {
-		ERROR(s->l, "new_si()", "reading 1st line of wavelet file");
-		return NULL;
-	}
-	if (fgets(str, 64, fp) == NULL) {
-		ERROR(s->l, "new_si()", "reading 2nd line of wavelet file");
-		return NULL;
-	}
-	if (fgets(str, 64, fp) == NULL) {
-		ERROR(s->l, "new_si()", "reading 3rd line of wavelet file");
+    /* ignore gslib header */
+	if( !read_gslib_header(l, fp, 2) ) {
+		ERROR(l, "load_harddata_file()", "read_gslib_header()");
 		return NULL;
 	}
 

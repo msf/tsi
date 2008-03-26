@@ -16,11 +16,11 @@
 int tsi_read_grid(tsi *t, TSI_FILE *fp, float *grid, int type) {
 	switch(type) {
 		case TSI_ASCII_FILE:
-			return read_gslib_grid(fp, grid, t->xsize * t->ysize * t->zsize);
+			return read_gslib_grid(t->l, fp, grid, t->xsize * t->ysize * t->zsize);
 		case TSI_BIN_FILE:
 			return read_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
 		default:
-			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			ERROR(t->l, "tsi_read_grid()", "unkown grid file type");
 			return 0;
 	} /* switch */
 } /* tsi_read_grid */
@@ -32,7 +32,7 @@ int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
 		case TSI_BIN_FILE:
 			return write_tsi_grid(fp, grid, t->xsize, t->ysize, t->zsize);
 		default:
-			fprintf(stderr, "ERROR: Unknown grid file type!\n");
+			ERROR(t->l, "tsi_write_grid()", "unkown grid file type");
 			return 0;
 	} /* switch */ 
 } /* tsi_write_grid */
@@ -84,7 +84,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
     }
 
     fscanf(fp, "%d %d %d %d\n", &type, &x1, &y1, &z1);
-    if ((type != 1) && (type != 2)) {
+    if (type != 2) {
         fprintf(stderr,"\tread_tsi_grid(): incompatible format\n");
         return 0;
     }
@@ -93,11 +93,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
         return 0;
     }
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
-	/* support both file types, even if we only use type 2 - BIN now */
     switch (type) {
-        case 1:      /* ASCII data */
-            return read_gslib_grid(fp, grid, grid_size);
-
         case 2:      /* data in binary floats */
             return read_float(fp, grid, grid_size);
 
@@ -139,15 +135,39 @@ int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     return i;
 } /* write_cartesian_grid */
 
+int read_gslib_header(log_t *l, FILE *fp, int fields_per_line)
+{
+	int i;
+	char line[254];
 
+    if (fgets(line, 255, fp) == NULL) {
+		ERROR(l, "read_gslib_header()", "reading 1st line of gslib file");
+		return 0;
+	}
 
-int read_gslib_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
-    char str[65];
+	if (fscanf(fp, "%d\n", &i) != 1 ) {
+		ERROR(l, "read_gslib_header()", "reading 2nd line of gslib file");
+		return 0;
+	} else if(i != fields_per_line) {
+		ERROR(l, "read_gslib_header()", "invalide nº of fields per line");
+		return 0;
+	}
+
+	while(i-- > 0) {
+		if (fgets(line, 255, fp) == NULL) {
+			ERROR(l, "read_gslib_header()", "reading gslib header");
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+int read_gslib_grid(log_t *l, TSI_FILE *fp, float *grid, unsigned int grid_size) {
 
     /* ignore header */
-    if (fgets(str, 64, fp) == NULL) return 0;
-    if (fgets(str, 64, fp) == NULL) return 0;
-    if (fgets(str, 64, fp) == NULL) return 0;
+	if( !read_gslib_header(l, fp, 1) )
+		return 0;
 
     return read_cartesian_grid(fp, grid, grid_size);
 } /* read_gslib_grid */

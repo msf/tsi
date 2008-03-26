@@ -146,7 +146,7 @@ typedef struct covtable_lookup_vars_type {
 
     /* auxiliar grids allocated in run_dss */
     float  *covtab;
-    int    *ixnode,
+    short  *ixnode,
            *iynode,
            *iznode;
     
