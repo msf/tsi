@@ -149,7 +149,7 @@ int read_gslib_header(log_t *l, FILE *fp, int fields_per_line)
 		ERROR(l, "read_gslib_header()", "reading 2nd line of gslib file");
 		return 0;
 	} else if(i != fields_per_line) {
-		ERROR(l, "read_gslib_header()", "invalide nº of fields per line");
+		ERROR(l, "read_gslib_header()", "invalid nº of fields per line");
 		return 0;
 	}
 

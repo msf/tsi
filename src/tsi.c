@@ -212,6 +212,8 @@ tsi *new_tsi(registry *reg) {
 	k = get_key(reg, "GLOBAL", "RESUME");
 	if (k) {
 		t->resume = get_int(k);
+		if(t->resume)
+			t->iterations++;
 	} else {
 		printf_dbg("new_tsi(%d): failed to get resume flag from the registry! Using defaults...\n", t->proc_id);
 		t->resume = 0;
@@ -289,6 +291,7 @@ tsi *new_tsi(registry *reg) {
 
 	int size = t->grid_size / (1024*1024) * sizeof(float);
 	int dss_extra = 3 * t->grid_size / (1024*1024) * sizeof(short);
+	log_print(t->l, "grid_heap: %u MB, covtable: %u MB, total -> %u\n", size*swap_thr, dss_extra, size*swap_thr + dss_extra + 32);
 	if(usefs)
 		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) + dss_extra + 32);
 	else 
