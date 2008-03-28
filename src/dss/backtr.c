@@ -23,11 +23,7 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
  * ----------------------------------------------------------------------- */
 float gcum(float z)
 {
-	/* System generated locals */
-	/* float ret_val; */
 	double ret_val;
-
-
 
 	double t;
     double zd;
@@ -158,12 +154,6 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
  * ----------------------------------------------------------------------- */
 float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float max_value)
 {
-
-	/* System generated locals */
-	int i__1, i__2;
-	double d__1, d__2;
-
-	/* Local variables */
 	int j;
 	float cpow, cdfhi, cdfbt, cdflo;
 	double lambda;
@@ -186,12 +176,15 @@ float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float m
 		a = vrg[1];
 		cdflo = (float) gcum(a);
 		cdfbt = (float) gcum(b);
+		/* 
 		if (LTAIL == 1) {
 			ret_val = powint(0, cdflo, min_value, vr[1], cdfbt, 1);
 		} else if (LTAIL == 2) {
 			cpow = 1 / min_value;
 			ret_val = powint(0, cdflo, min_value, vr[1], cdfbt, cpow);
 		}
+		*/
+		ret_val = powint(0, cdflo, min_value, vr[1], cdfbt, 1);
 
 		/* Value in the upper tail?     1=linear, 2=power, 4=hyperbolic: */
 
@@ -200,6 +193,7 @@ float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float m
 		a = vrg[nt];
 		cdfhi = (float) gcum(a);
 		cdfbt = (float) gcum(b);
+		/*
 		if (UTAIL == 1) {
 			ret_val = powint(cdfhi, 1, vr[nt], max_value, cdfbt, 1);
 		} else if (UTAIL == 2) {
@@ -212,15 +206,18 @@ float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float m
 			d__1 = (double) (lambda / (1 - gcum(b)));
 			d__2 = (double) (1 / max_value);
 			ret_val = (float) pow(d__1, d__2);
-		}
+		} 
+		*/
+		ret_val = powint(cdfhi, 1, vr[nt], max_value, cdfbt, 1);
 	} else {
 
 		/* Value within the transformation table: */
+		int i,t;
 
 		j = locate(&vrg[1], nt, 1, nt, vrgs);
-		i__2 = nt - 1;
-		i__1 = MIN(i__2,j); /* min(i__2,j) */
-		j = MAX(i__1,1); /* max(i__1,1); */
+		i = nt - 1;
+		t = MIN(i,j); /* min(i__2,j) */
+		j = MAX( t, 1); /* max(i__1,1); */
 		ret_val = powint( vrg[j], vrg[j + 1], vr[j], vr[j + 1], vrgs, 1);
 	}
 	return ret_val;
