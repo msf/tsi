@@ -81,22 +81,18 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->general->y = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->z = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->vr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
-    d->general->wt = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->vrtr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     d->general->vrgtr = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
-    d->general->sec = (float *) tsi_malloc(d->general->maxdat * sizeof(float));
     if (!d->general->x ||
         !d->general->y ||
         !d->general->z ||
         !d->general->vr ||
-        !d->general->wt ||
         !d->general->vrtr ||
-        !d->general->vrgtr ||
-        !d->general->sec)
+        !d->general->vrgtr )
         return NULL;
         
     /* read data & readWellsData */    
-    readdata(d->harddata, d->harddata_size, d->general, d->search, d->simulation);
+    readdata(l, d->harddata, d->harddata_size, d->general, d->search, d->simulation);
 	readWellsData(d->general, d->harddata, d->harddata_size);
 
     printf_dbg2("new_dss(): DSS engine started sucessfully.\n");
@@ -200,10 +196,8 @@ void delete_dss(dss *d) {
             if (d->general->y) tsi_free(d->general->y);
             if (d->general->z) tsi_free(d->general->z);
             if (d->general->vr) tsi_free(d->general->vr);
-            if (d->general->wt) tsi_free(d->general->wt);
             if (d->general->vrtr) tsi_free(d->general->vrtr);
             if (d->general->vrgtr) tsi_free(d->general->vrgtr);
-            if (d->general->sec) tsi_free(d->general->sec);
 			if (d->general->wellsDataPos) tsi_free(d->general->wellsDataPos);
 			if (d->general->wellsDataVal) tsi_free(d->general->wellsDataVal);
             tsi_free(d->general);

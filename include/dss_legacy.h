@@ -2,6 +2,7 @@
 #define _DSS_LEGACY_H
 
 #include "dss.h"
+#include "log.h"
 
 /* Float functions */
 #define ZERO_THRESHOLD 1e-6
@@ -28,7 +29,7 @@ extern int srchnod(int, int, int, float *, general_vars_t *, search_vars_t *,
 
 extern int gauinv(double, float *result);
 
-extern int readdata(float *, unsigned int, general_vars_t *, search_vars_t *,
+extern int readdata(log_t *l, float *, unsigned int, general_vars_t *, search_vars_t *,
                     simulation_vars_t *);
 
 extern int getPos(int, int, int, int, int);
@@ -39,7 +40,7 @@ extern int getIndex(float min, float siz, float loc);
 /* this is in dss-utils.c */
 extern float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr);
 
-
+extern int cmpfloat(const void *a1, const void *b1);
 
 /* dss_supr */
 extern int setsupr(int *, float *, float *, int *, float *, float *, int *, float *,

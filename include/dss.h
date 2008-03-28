@@ -8,36 +8,41 @@
 
 typedef struct harddata_point_type {
 	float x,y,z;
-	float val;
-	float weight;
-	float gauinv; // transformed value
+	float val;				// value of point
+	float gauss_cprob; 		// gaussian comulative probability
 } harddata_point_t;
+
+typedef struct {
+	short x;
+	short y;
+	short z;
+	float value;
+} value_point_t;
 
 typedef struct harddata_type {
 	int		numdata, numraw;
-	harddata_point_t *harddata;
+	harddata_point_t *points;
 	harddata_point_t *rawdata; // unsorted harddata
 	float	minvalue, maxvalue;
 	short	lower_tail, upper_tail;
 	float	lowert_val, uppert_val;
+	double	gauss_prob_average;
+	double	gauss_prob_variance;
 	
 } harddata_t;
 
 typedef struct general_vars_type {
-    int    nd,      // number of acceptance harddata 
-           ntr;     // init to 0, inc to harddata 
     float  close[7000]; // same size as harddata??? 
 
+	harddata_t	harddata;
     /* used by "readdata" for harddata processing */
     int    maxdat;  // harddata size... 
     float  *x,      // same size as harddata 
            *y,      // same size as harddata 
            *z,      // same size as harddata 
            *vr,     // hard_data, orig order
-           *wt,     // weights
            *vrtr,   // hard_data, sorted by value 
-           *vrgtr,  // weights of sorted, transformed to comulative probabilty. 
-           *sec;    // NO SIM VALUE -> no secondary data.
+           *vrgtr;  // weights of sorted, transformed to comulative probabilty. 
 
     /* new wells hard data containers */
     unsigned int wellsNPoints, *wellsDataPos; 

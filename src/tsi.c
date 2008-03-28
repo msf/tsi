@@ -639,6 +639,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 	if(mm_time > 0.01)
 		log_action_time(t->l, 1, "tsi_DSSimulation() Time in memory management", mm_time);
 	log_action_time(t->l, 1, "tsi_DSSimulation() Time",run_time); 
+	log_result(t->l, 1, "Thousands of points simulated per second", 
+			t->grid_size / 1000 / run_time);
 	log_string(t->l,"\n");
 
 	return 1;

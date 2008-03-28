@@ -182,23 +182,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 	setrot(search->sang1, search->sang2, search->sang3,
 			search->sanis1, search->sanis2, covariance->isrot, 
 			krige_vars->rotmat);
-	/* !Set up the super block search: */
-    /* TSI NOTE: SSTRAT IS ALLWAYS 1 */
-    /*
-	if (search->sstrat == 0) {
-		nsec = 1;
-		setsupr(&general->nx, &general->xmn, &general->xsiz, &general->ny,
-				&general->ymn, &general->ysiz, &general->nz, &general->zmn,
-				&general->zsiz, &general->nd, general->x, general->y, 
-				general->z, general->vr, general->wt, &nsec, general->sec,
-				&sec2, &sec3, &five, &five, &five, nisb, &nxsup, &xmnsup,
-				&xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, &zmnsup, &zsizsup)
-			;
-		picksup(nxsup, xsizsup, nysup, ysizsup, nzsup, zsizsup,
-				covariance->isrot, krige_vars->rotmat, search->radsqd,
-				&nsbtosr, ixsbtosr, iysbtosr, izsbtosr);
-	}
-    */
 	printf_dbg2("dssim() calling covtable\n");
 	/* !Set up the covariance table and the spiral search: */
 	covtable(&order[1], &sim[1], general, search, covariance, covtable_lookup, krige_vars);
@@ -229,12 +212,12 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		toSim--;
 	}
 
-	printf_dbg2("wellsNPoints: %d\tgeneral->nd: %d\n",general->wellsNPoints,general->nd);
+	printf_dbg2("wellsNPoints: %d\tgeneral->maxdat: %d\n",general->wellsNPoints,general->maxdat);
 
 	/* codigo reescrito ..................................... FIM */
 
 	printf_dbg("dssim(): hard data Points: %d\t hard data points in grid: %d\n",
-			general->nd, general->nxyz - toSim);
+			general->maxdat, general->nxyz - toSim);
 	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
 	ierr = 0;
@@ -281,40 +264,20 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		get3Dcoords(index, general->nx, general->nxy, &ix, &iy, &iz);
 
 		/* getting absolute coords from relative coords */
-		xx = general->xmn + (float) (ix - 1) * general->xsiz;
-		yy = general->ymn + (float) (iy - 1) * general->ysiz;
-		zz = general->zmn + (float) (iz - 1) * general->zsiz;
+		xx = getAbsolutePos(general->xmn, general->xsiz, ix);
+		yy = getAbsolutePos(general->ymn, general->ysiz, iy);
+		zz = getAbsolutePos(general->zmn, general->zsiz, iz);
 
 		/* !Now, we'll simulate the point ix,iy,iz.  First, get the close data */
 		/* !and make sure that there are enough to actually simulate a value, */
 		/* !we'll only keep the closest "ndmax" data, and look for previously */
 		/* !simulated grid nodes: */
-        /*
-         * TSI NODE: SSTRAT IS ALLWAYS 1
-		if (search->sstrat == 0) {
-			srchsupr(xx, yy, zz, search->radsqd, covariance->isrot,
-					krige_vars->rotmat, nsbtosr, ixsbtosr, iysbtosr, 
-					izsbtosr, search->noct, general->x, 
-					general->y, general->z, general->wt, nisb,
-					nxsup, xmnsup, xsizsup,
-					nysup, ymnsup, ysizsup,
-					nzsup, zmnsup, zsizsup,
-					&search->nclose, general->close);
-			if (search->nclose < search->ndmin) {
-				ierr++;
-				printf("dssim(): SKIP2  %d\n",index);
-				continue;
-			}
-			if (search->nclose > search->ndmax) {
-				search->nclose = search->ndmax;
-			}
-		}
-        */
+
 		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = ktype;
 		if (ktype == 5 && bestAICube[index] == general->nosim_value) {
-			ktype = 0;
+			ktype = 1;
 		}
 		/* !Calculate the conditional mean and standard deviation.  This will be */
 		/* !done with kriging if there are data, otherwise, the global mean and */
@@ -347,35 +310,18 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 					general, search, simulation,
 					covariance, covtable_lookup, krige_vars);
 
-			/* this was used when dss did more than one simulation */
-			/*
-			if (simulation->nsim > 0) {
-				if (covtable_lookup->icmean == 1) {
-					cmean -= zmean / simulation->nsim - simulation->vmedexp;
-				}
-				// Computing 2nd power
-				d__1 = zmean / simulation->nsim;
-				cpdev = zvariance / simulation->nsim - d__1 * d__1;
-				if (cpdev > 0.f) {
-					cpdev = sqrt(cpdev);
-					if (covtable_lookup->icvar == 1) {
-						std_deviation = std_deviation * sqrt(simulation->vvarexp) / cpdev;
-					}
-				}
-			}
-			*/
 		}
 		general->ktype = kinicial;
-		vmy = compute_gaussian_equiv( cmean, general->nd, general->vrtr, general->vrgtr);
+		vmy = compute_gaussian_equiv( cmean, general->maxdat, general->vrtr, general->vrgtr);
 
 		/* !Gera um valor aleatorio com distribuicao Gaussiana */
 		vms = 0;
-		for (i = 1; i <= covtable_lookup->ntry; ++i) {
+		for (i = 0; i < covtable_lookup->ntry; ++i) {
 			p = tsi_random_real();
 			gauinv(p, &xp);
 			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
-			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,
+			simval = backtr(xp, general->maxdat, general->vrtr, general->vrgtr,
 					general->min_value, general->max_value);
 			vms += simval;
 		}

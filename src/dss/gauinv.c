@@ -14,22 +14,10 @@
 /* function with a numerical approximation from : Statistical Computing, */
 /* by W.J. Kennedy, Jr. and James E. Gentle, 1980, p. 95. */
 /* INPUT/OUTPUT: */
-/*   p    = double precision cumulative probability value: dble(psingle) */
+/*   p    = double precision cumulative probability value: ] 0, 1 [  */
 /*   xp   = G^-1 (p) in single precision */
 /*   ierr = 1 - then error situation (p out of range), 0 - OK */
 /* ----------------------------------------------------------------------- */
-
-/** funcoes utilizadas
- */
-
-/** CUBOS utilizados
- */ 
-
-/** CUBOS _nao_ utilizados
- */
-
-/** structs globais utilizadas:
- */
 
 
 int gauinv(double p, float *xp)
@@ -64,7 +52,7 @@ int gauinv(double p, float *xp)
 		*xp = -1e10f;
 		return rc;
 	}
-	if (p > 1.f - lim) {
+	if (p > 1 - lim) {
 		*xp = 1e10f;
 		return rc;
 	}

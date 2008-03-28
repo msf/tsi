@@ -46,6 +46,11 @@ int getIndex(float min, float siz, float loc)
 	return (int) my_roundf( 1 + (loc - min) / siz );
 }
 
+/* getting absolute coords from relative coords */
+int getAbsolutePos(float base, float siz, int index)
+{
+	return base + (float) (index -1) * siz;
+}
 
 /* !Calculo do equivalente valor gaussiano        (SDSIM) */
 float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr)
@@ -81,3 +86,7 @@ float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrg
     return vmy;
 }
 
+int cmpfloat(const void *a, const void *b)
+{
+	return (int) ( *(float *)a - *(float *)b ); 
+}
