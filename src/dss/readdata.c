@@ -1,10 +1,12 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "dss.h"
 #include "dss_legacy.h"
 #include "debug.h"
 #include "log.h"
+#include "tsi_io.h"
 
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
@@ -24,138 +26,212 @@
 #define ISWT    2
 
 
-/* ----------------------------------------------------------------------- */
-/*     Read primary data and secondary data */
-/* ----------------------------------------------------------------------- */
 
-/** Funcoes utilizadas
- * sortem()
- * gauinv()
- * getIndex()
- */
-
-
-int readdata(log_t *l, float *hard_data,
-             unsigned int  hard_data_size,
-	     general_vars_t * general, 
-	     search_vars_t * search,
-	     simulation_vars_t * simulation)
+int load_harddata_file(log_t *l, char *filename, harddata_t *harddata) 
 {
-	/* System generated locals */
-	float r1;
+
+    int i, j, m;
+	char line[256];
+	harddata_point_t point;
+	TSI_FILE *fp;
+
+    if ((fp = fopen(filename, "r")) == NULL) {
+		ERROR(l, "fopen()", filename);
+        return 1;
+    }
+	
+    /* ignore gslib header */
+	if( !read_gslib_header(l, fp, 4) ) {
+		ERROR(l, "load_harddata_file()", "read_gslib_header()");
+		return 1;
+	}
+
+	/* first find out how many values */
+	j = 0;
+	while(fgets(line, 255, fp) != NULL)
+		j++;
+	printf_dbg("read_harddata_file(): %d lines\n",i);
+
+	harddata->point = (harddata_point_t *) tsi_malloc(sizeof(harddata_point_t) * j);
+	if(harddata->point == NULL) {
+		ERROR(l, "load_harddata_file", "NOT ENOUGH MEMORY");
+		exit(1);
+	}
+
+	fseek(fp, 0, SEEK_SET); // back to start of file
+
+    /* ignore gslib header */
+	if( !read_gslib_header(l, fp, 4) ) {
+		ERROR(l, "load_harddata_file()", "read_gslib_header()");
+		return 1;
+	}
+	
+	i = 0;
+	m = 0;
+	while( (m = fscanf(fp,"%f %f %f %f", &point.x, &point.y, &point.z, &point.val)) != EOF ) {
+		if(m != 4)
+			log_print(l,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 6+(i/4));
+
+		/* skip points that aren't in the [min, max] interval */
+		if(point.val < harddata->min_value || point.val > harddata->max_value)
+			continue;
+
+		harddata->point[i++] = point;
+	}
+
+	/* trim point array to correct size */
+	if( j > i) {
+		unsigned int siz = i * sizeof(harddata_point_t);
+		harddata_point_t *new = (harddata_point_t *) tsi_malloc(siz);
+		if(new == NULL) {
+			ERROR(l, "load_harddata_file", "NOT ENOUGH MEMORY");
+			exit(1);
+		}
+		memcpy(new, harddata->point, siz);
+		tsi_free(harddata->point);
+		harddata->point = new;
+	}
+
+	harddata->point_count = i;
+
+    fclose(fp);
+	return 0;
+} /* load_harddata_file */
 
 
-	/* Local variables */
+int readdata(log_t *l, 
+			harddata_t *harddata,
+			general_vars_t * general)
+{
 	int i, j;
-	double avg; /* weighted average */
-	double variance; /* weighted variance */
 	double w;
-	int nt;
-	float vrg, twt;
-	int iend, ierr;
-	unsigned int nelem;
-	int istart;
-
-	float var[4];
+	float vrg;
+	int ierr;
+	value_index_t *temp;
 
     printf_dbg2("readdata(): begin\n");
 	/* Function Body */
-	if (hard_data_size == 0) {
-		/* !it means that there is no Hard Data file! */
-		fprintf(stderr,"WARNING data file does not exist!");
-		fprintf(stderr,"\t- creating an *unconditional simulation*\n");
-		fprintf(stderr,"\t- Resetting ndmin, ndmax to 0\n");
-		fprintf(stderr,"\t- Resetting sstrar to 1\n");
-		search->ndmin = 0;
-		search->ndmax = 0;
-	}
-	
-	/* !Establish the reference histogram for the simulation (provided that */
-	/* !we have data, and we are transforming the data): */
-	/* !Now, read in the actual data: */
-
-    printf_dbg2("readdata(): read wells array %d\n", hard_data_size);
-	i = 0;
-	nt = 0;
-	nelem = 0;
-	simulation->vmedexp = 0;
-	while(nelem < hard_data_size) {
-
-		for (j = 0; j < NVARI; ++j) {
-			var[j] = hard_data[nelem + j];
-		}
-		nelem += NVARI;
-		/* !Trim this data? */
-		if (var[3] < general->min_value || var[3] > general->max_value) {
-			++nt;
-			continue;
-		}
-
-		/* !Keep this data: Assign the data value and coordinate location: */
-		/* !Acceptable data, assign the value, X, Y, Z coordinates, and weight: */
-		general->x[i] = var[0];
-		general->y[i] = var[1];
-		general->z[i] = var[2];
-		general->vr[i] = var[3];
-		general->vrtr[i] = var[3];
-
-
-		simulation->vmedexp += var[3];
-		/*
-		printf_dbg2("readdata: Wells Point: (%f, %f, %f) = %f\n",
-				general->x[i], 
-				general->y[i], 
-				general->z[i], 
-				general->vr[i]);
-				*/
-		i++;
-	}
-	general->maxdat = i;
-	simulation->vmedexp /= general->maxdat;
-
-    printf_dbg2("readdata(): wells data transformation\n");
-	if (general->maxdat <= 1) {
-		fprintf(stderr,"EROOR: too few data for transformation\n");
-		fprintf(stderr,"\taborting.\n");
+	if (harddata->point_count <= 1) {
+		ERROR(l, "readdata", "no harddata/histogram");
 		return -1; /* ERROR */
 	}
 	/* !Sort data by value: */
-	istart = 0;
-	iend = general->maxdat;
-	sort_permute_float( istart, iend, general->vrtr, general->vrgtr);
-//	qsort(general->vrtr, general->maxdat, sizeof(float), cmpfloat);
-	/* !Compute the cumulative probabilities and write transformation table */
+	qsort(harddata->point, harddata->point_count, sizeof(harddata_point_t), cmpharddata_point_val);
+
+	temp = (value_index_t *) tsi_malloc(sizeof(value_index_t) * harddata->point_count);
+	if(temp == NULL) {
+		ERROR(l, "readdata", "NOT ENOUGH MEMORY");
+		exit(1);
+	}
+
+	/* Compute:
+	 * 	average of value.
+	 *  the cumulative probabilities (gaussian distribution)
+	 */
 	double cp = 0;
 	double oldcp = 0;
-	for (j = 0; j < general->maxdat; ++j) {
-		cp = (double) (j+1) / (double) general->maxdat;
-		w = (cp + oldcp) / 2;
-		ierr = gauinv( w, &vrg);
-		if (ierr == 1) {
-			vrg = general->nosim_value;
+	harddata->average = 0;
+	int x, y, z;
+	int ig = -1;
+	harddata_point_t point;
+	for (j = 0; j < harddata->point_count; ++j) {
+		point = harddata->point[j];
+		harddata->average += point.val;
+
+		/* see if value is inside grid */
+		x = getIndex(general->xmn, general->xsiz, point.x); 
+		y = getIndex(general->ymn, general->ysiz, point.y);
+		z = getIndex(general->zmn, general->zsiz, point.z);
+		if((x >= 0 && x < general->nx) &&
+		   (y >= 0 && y < general->ny) &&
+		   (z >= 0 && z < general->nz) ) {
+
+			ig++;
+			temp[ig].index = getPos(x,y,z,general->nx,general->nxy);
+			temp[ig].value = point.val;
 		}
+
+		cp = (double) (j+1) / (double) harddata->point_count;
+		w = (cp + oldcp) / 2;
 		oldcp = cp;
-		/* !Now, reset the weight to the normal scores value: */
-		general->vrgtr[j] = vrg;
-		printf("readdata(): vrtr[%u] = %f,\tvrgtr[%u] = %f\n",
-				j, general->vrtr[j], j, general->vrgtr[j]);
+
+		ierr = gauinv( w, &vrg);
+		if (ierr == 1) 
+			harddata->point[j].gauss_cprob = general->nosim_value;
+		else
+			harddata->point[j].gauss_cprob = vrg;
+		if(j < 100)
+			printf_dbg2("harddata->point[%u] (%f, %f, %f) value = %f,\t gauss_cprob = %f\n",
+				j, 
+				harddata->point[j].x,
+				harddata->point[j].y,
+				harddata->point[j].z,
+				harddata->point[j].val,
+				harddata->point[j].gauss_cprob);
+	}
+	harddata->average /= harddata->point_count;
+
+	/* sort by grid index, so that candidates to the same cell become adjacent */
+	qsort(temp, ig, sizeof(value_index_t), cmpvalue_index);
+
+	j = 0;
+	harddata->in_grid = (value_index_t *) tsi_malloc(sizeof(value_index_t) * ig);
+	if(harddata->in_grid == NULL) {
+		ERROR(l, "readdata", "NOT ENOUGH MEMORY");
+		exit(1);
 	}
 
-	/* !Read all the data until the end of the file: */
+	/* temp might have several values candidate for same grid cell.
+	 * (when harddata has more resolution that our grid cells this is very common)
+	 * make shure in_grid has only one value (the 1st seen ) for each different index
+	 */
+	harddata->in_grid[0].index = -1;
+	for(i = 0; i < ig; i++) {
+		if(temp[i].index == harddata->in_grid[j-1].index)
+			continue;
 
-	simulation->vvarexp = 0;
-	for (i = 0; i < general->maxdat; ++i) {
+		harddata->in_grid[j].index = temp[i].index;
+		harddata->in_grid[j].value = temp[i].value;
+		if(j < 100)
+			printf_dbg2("in_grid[%u] idx = %u, value = %f\n", 
+				j,
+				harddata->in_grid[j].index,
+				harddata->in_grid[j].value);
+		j++;
+	}
+	harddata->in_grid_count = j;
+
+	tsi_free(temp);
+	/* trim in_grid to only the needed size */
+	if(ig > harddata->in_grid_count) {
+		unsigned int siz = harddata->in_grid_count * sizeof(value_index_t);
+		value_index_t *new = (value_index_t *) tsi_malloc(siz);
+		if(new == NULL) {
+			ERROR(l, "readdata", "NOT ENOUGH MEMORY");
+			exit(1);
+		}
+		memcpy(new, harddata->in_grid, siz);
+		tsi_free(harddata->in_grid);
+		harddata->in_grid = new;
+	}
+
+	printf_dbg("harddata():\tharddata->in_grid_count: %d\tharddata->point_count: %d\n",
+			harddata->in_grid_count, harddata->point_count);
+
+
+	double r1;
+	harddata->variance = 0;
+	for (i = 0; i < harddata->point_count; ++i) {
 		/* Computing 2nd power */
-		r1 = general->vr[i] - simulation->vmedexp;
-		simulation->vvarexp += r1 * r1;
+		r1 = harddata->point[i].val - harddata->average;
+		harddata->variance += r1 * r1;
 	}
-	simulation->vvarexp /= general->maxdat;
+	harddata->variance /= harddata->point_count;
 
-	printf_dbg2("readdata(): vmedexp: %f, vvarexp: %f\n",
-		   simulation->vmedexp, simulation->vvarexp);
-	printf_dbg2(" Number of acceptable data: %d\nNumber trimmed: %d\n", general->maxdat, nt);
+	printf_dbg2("readdata(): average: %f, variance: %f\n",
+			harddata->average, harddata->variance);
 
 	return 0;
-} /* readdata_ */
+} /* readdata */
 
 

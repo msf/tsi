@@ -15,10 +15,10 @@ int  dss_parameters(dss *d, registry *r )
 
     /* harddata parameters */
     if ((k = get_key(r, "HARDDATA", "TMIN")) == NULL) return 1;
-    d->general->min_value = get_float(k);
+    d->harddata->min_value = get_float(k);
 
     if ((k = get_key(r, "HARDDATA", "TMAX")) == NULL) return 1;
-    d->general->max_value = get_float(k);
+    d->harddata->max_value = get_float(k);
 
     if (get_key(r, "HARDDATA", "NVARI"))
     	printf("[HARDDATA] NVARI is NOT used\n");

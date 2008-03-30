@@ -90,29 +90,6 @@
  * srchnod
  */
 
-/** CUBOS utilizados
- * sim
- * bestCorrCube
- * bestAICube
- * order
- * ??
- * 
- */ 
-
-/** CUBOS _nao_ utilizados
- * tmp - e' apenas passado para covtable(). 
- * -
- */
-
-/** structs globais utilizadas:
- * generl_1
- * search_1
- * simula_1
- * cova3d_1
- * clooku_1
- * krige_varsv_1
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -132,6 +109,7 @@
 
 int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int ktype,
 		general_vars_t			*	general,
+		harddata_t				*	harddata,
 		search_vars_t			*	search,
 		simulation_vars_t		*	simulation,
 		covariance_vars_t		*	covariance,
@@ -170,13 +148,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 	printf_dbg2("\tdssim() called\n");
 
 	/* Function Body */
-	for (i = 1; i <= covariance->varnum; ++i) {
-		setrot( covariance->variogram[i-1].ang1,
-				covariance->variogram[i-1].ang2,
-				covariance->variogram[i-1].ang3,
-				covariance->variogram[i-1].anis1,
-				covariance->variogram[i-1].anis2,
-				i, krige_vars->rotmat);
+	for (i = 0; i < covariance->varnum; ++i) {
+		setrot( covariance->variogram[i].ang1,
+				covariance->variogram[i].ang2,
+				covariance->variogram[i].ang3,
+				covariance->variogram[i].anis1,
+				covariance->variogram[i].anis2,
+				i+1, krige_vars->rotmat);
 	}
 	covariance->isrot = 5;
 	setrot(search->sang1, search->sang2, search->sang3,
@@ -198,13 +176,10 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 	toSim = general->nxyz;
 	index = in = 0;
 
-	/* copy wells data to simulation grid */
-	for(i = 0; i < (int) general->wellsNPoints; i++) {
-		in = general->wellsDataPos[i];
-		/* there can be several wells datapoints for the same grid point */
-		if( sim[in] != general->nosim_value )
-			continue;
-		sim[in] = (float) general->wellsDataVal[i];
+	/* copy hard data to simulation grid */
+	for(i = 0; i < harddata->in_grid_count; i++) {
+		in = harddata->in_grid[i].index;
+		sim[in] = harddata->in_grid[i].value;
 
 		// mark point has simulated
 		order[in] = order[toSim];
@@ -212,12 +187,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		toSim--;
 	}
 
-	printf_dbg2("wellsNPoints: %d\tgeneral->maxdat: %d\n",general->wellsNPoints,general->maxdat);
 
-	/* codigo reescrito ..................................... FIM */
-
-	printf_dbg("dssim(): hard data Points: %d\t hard data points in grid: %d\n",
-			general->maxdat, general->nxyz - toSim);
 	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
 	ierr = 0;
@@ -249,8 +219,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		if(index < 1)
 			printf("dssim(): ERROR, INDEX(%d) < 1\n", index);
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
-		/* if( sim[index] >= general->min_value &&
-		    sim[index] <= general->max_value) { */
+		/* if( sim[index] >= harddata->min_value &&
+		    sim[index] <= harddata->max_value) { */
 		/*
 		 if (sim[index] > general->nosim_value + 1e-20f || 
 				 sim[index] < general->nosim_value * 2.f) {
@@ -307,12 +277,12 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			krige(ix, iy, iz, xx, yy, zz, lktype, global_mean, 
 					&cmean, &std_deviation, // these are the output vars of krige
 					&bestAICube[1], clcorr,
-					general, search, simulation,
+					general, harddata, search, simulation,
 					covariance, covtable_lookup, krige_vars);
 
 		}
 		general->ktype = kinicial;
-		vmy = compute_gaussian_equiv( cmean, general->maxdat, general->vrtr, general->vrgtr);
+		vmy = compute_gaussian_equiv( cmean, harddata->point_count, harddata->point);
 
 		/* !Gera um valor aleatorio com distribuicao Gaussiana */
 		vms = 0;
@@ -321,8 +291,8 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			gauinv(p, &xp);
 			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
-			simval = backtr(xp, general->maxdat, general->vrtr, general->vrgtr,
-					general->min_value, general->max_value);
+			simval = backtr(xp, harddata->point_count, harddata->point,
+					harddata->min_value, harddata->max_value);
 			vms += simval;
 		}
 		vms /= covtable_lookup->ntry;
@@ -332,10 +302,10 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		} else {
 			sim[index] = simval;
 		}
-		if (sim[index] < general->min_value) {
-			sim[index] = general->min_value;
-		} else if (sim[index] > general->max_value) {
-			sim[index] = general->max_value;
+		if (sim[index] < harddata->min_value) {
+			sim[index] = harddata->min_value;
+		} else if (sim[index] > harddata->max_value) {
+			sim[index] = harddata->max_value;
 		}
 		/* !Condicionamento as medias locais */
 		/* used only when doing more than 1 simulation */
@@ -351,15 +321,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 
 #ifdef TSI_DEBUG
 	ierr = 0;
-	index = 0; //tmp
-	for(i = 0; i < general->wellsNPoints; i++) {
-		in = general->wellsDataPos[i];
-		simval = sim[in] - general->wellsDataVal[i];
-		if(simval != 0 && in != index) {
-			printf_dbg("sim[%d] - wellsData = %f\n",in,simval);
+	for(i = 0; i < harddata->in_grid_count; i++) {
+		in = harddata->in_grid[i].index;
+		simval = sim[in] - harddata->in_grid[i].value;
+		if(simval != 0 ) {
+			printf_dbg("sim[%d] - harddata = %f\n",in,simval);
 			ierr++;
 		}
-		index = in;
 	}	
 	printf_dbg("dssim(): sim grid disrespects %d wells data points\n",ierr);
 #endif

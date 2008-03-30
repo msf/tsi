@@ -53,40 +53,69 @@ int getAbsolutePos(float base, float siz, int index)
 }
 
 /* !Calculo do equivalente valor gaussiano        (SDSIM) */
-float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr)
+float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point)
 {
     unsigned low, i, j;
 
     float vmy;
-    if (cmean <= vrtr[0]) {
-        return	vrgtr[0];
+    if (cmean <= point[0].val) {
+        return	point[0].gauss_cprob;
     }
-    if (cmean >= vrtr[size - 1]) {
-        return vrgtr[size - 1];
+    if (cmean >= point[size-1].val) {
+        return point[size-1].gauss_cprob;
     }
 
     low = 0;
     i = size/2;
     // binary search for value closer to cmean in global histogram 
     do {
-        if(vrtr[i] < cmean) {
+        if(point[i].val < cmean) {
             j = (i-low)/2;
             low = i;
             i += j;
-        } else if(vrtr[i] > cmean) {
+        } else if(point[i].val > cmean) {
             i -= (i-low)/2;
 
         } else
             break;
     } while( low + 2 < i);
 
-    vmy = vrgtr[i - 1] + (cmean - vrtr[i - 1]) * 
-        (vrgtr[i] - vrgtr[i - 1]) / (vrtr[i] - vrtr[i - 1]);
+    vmy = point[i-1].gauss_cprob + 
+		(cmean - point[i-1].val) * 
+        (point[i].gauss_cprob - point[i-1].gauss_cprob) / 
+		(point[i].val - point[i-1].val);
 
     return vmy;
 }
 
 int cmpfloat(const void *a, const void *b)
 {
-	return (int) ( *(float *)a - *(float *)b ); 
+	float r = *(float *)a - *(float *)b ; 
+
+	return (int) my_roundf(r);
 }
+
+int cmpharddata_point_val(const void *a, const void *b)
+{
+	harddata_point_t *p1 = (harddata_point_t *) a;
+	harddata_point_t *p2 = (harddata_point_t *) b;
+
+	return (int) my_roundf( p1->val - p2->val );
+}
+
+int cmpharddata_point_gauss_cprob(const void *a, const void *b)
+{
+	harddata_point_t *p1 = (harddata_point_t *) a;
+	harddata_point_t *p2 = (harddata_point_t *) b;
+	float r = p1->gauss_cprob - p2->gauss_cprob;
+	return (int) my_roundf(r);
+}
+
+int cmpvalue_index(const void *a, const void *b)
+{
+	value_index_t *v1 = (value_index_t *) a;
+	value_index_t *v2 = (value_index_t *) b;
+
+	return v1->index - v2->index;
+}
+

@@ -19,22 +19,6 @@
  * bestAICube quando ktype == 5
  */ 
 
-/** CUBOS _nao_ utilizados
- * sim
- * tmp
- * order
- * clc
- * e os cov*
- */
-
-/** structs globais utilizadas:
- * generl_1
- * clooku_1
- * krigev_1
- * search_1
- * simula_1
- */
-
 #include <math.h>
 #include "dss.h"
 #include "dss_legacy.h"
@@ -52,6 +36,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		int lktype, float global_mean, float *cmean, float * std_deviation, 
 		float *bestAICube, float clcorr,
 		general_vars_t * general,
+		harddata_t *	harddata,
 		search_vars_t * search,
 		simulation_vars_t * simulation,
 		covariance_vars_t * covariance,
@@ -118,10 +103,10 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		/* Sort out the actual location of point "j" */
 		if ((float) j <= search->nclose) {
 			index = (int) general->close[j - 1];
-			x1 = general->x[index - 1];
-			y1 = general->y[index - 1];
-			z1 = general->z[index - 1];
-			krige_vars->vra[j - 1] = general->vr[index - 1];
+			x1 = harddata->point[index -1].x;
+			y1 = harddata->point[index -1].y;
+			z1 = harddata->point[index -1].z;
+			krige_vars->vra[j - 1] = harddata->point[index -1].val;
 			krige_vars->vrea[j - 1] = general->nosim_value;
 		} else {
 			/* It is a previously simulated node (keep index for table look-up): */
@@ -159,9 +144,9 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			/* Sort out the actual location of point "i" */
 			if ((float) i <= search->nclose) {
 				index = (int) general->close[i - 1];
-				x2 = general->x[index - 1];
-				y2 = general->y[index - 1];
-				z2 = general->z[index - 1];
+				x2 = harddata->point[index -1].x;
+				y2 = harddata->point[index -1].y;
+				z2 = harddata->point[index -1].z;
 			} else {
 				/* It is a previously simulated node (keep index for table
 				   look-up): */

@@ -19,42 +19,28 @@ typedef struct {
 	float value;
 } value_point_t;
 
+typedef struct {
+	unsigned int index;
+	float	value;
+} value_index_t;
+
 typedef struct harddata_type {
-	int		numdata, numraw;
-	harddata_point_t *points;
-	harddata_point_t *rawdata; // unsorted harddata
-	float	minvalue, maxvalue;
-	short	lower_tail, upper_tail;
-	float	lowert_val, uppert_val;
-	double	gauss_prob_average;
-	double	gauss_prob_variance;
-	
+	int		point_count;
+	harddata_point_t *point;
+	int		in_grid_count;
+	value_index_t	*in_grid;
+	float	min_value, max_value;
+	double	average;
+	double	variance;
 } harddata_t;
 
 typedef struct general_vars_type {
     float  close[7000]; // same size as harddata??? 
 
-	harddata_t	harddata;
-    /* used by "readdata" for harddata processing */
-    int    maxdat;  // harddata size... 
-    float  *x,      // same size as harddata 
-           *y,      // same size as harddata 
-           *z,      // same size as harddata 
-           *vr,     // hard_data, orig order
-           *vrtr,   // hard_data, sorted by value 
-           *vrgtr;  // weights of sorted, transformed to comulative probabilty. 
-
-    /* new wells hard data containers */
-    unsigned int wellsNPoints, *wellsDataPos; 
-    float *wellsDataVal;
-
     /* parameters from registry */
 #define NVARI	4
 #define LTAIL	1
 #define UTAIL	1
-    float  min_value;      /* HARDDATA:TMIN */
-    float  max_value;      /* HARDDATA:TMAX */
-
     int    nx,        /* GRID:XNUMBER */
            ny,        /* GRID:YNUMBER */
            nz;        /* GRID:ZNUMBER */
@@ -186,10 +172,8 @@ typedef struct dss_type {
     covariance_vars_t       *covariance;
     covtable_lookup_vars_t  *clookup;
     krige_vars_t            *krige;
+	harddata_t				*harddata;
 
-    /* harddata */
-    float *harddata;
-    unsigned int    harddata_size;
 } dss;
 
 struct dss_check {

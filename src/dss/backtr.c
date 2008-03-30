@@ -10,7 +10,7 @@
 
 float gcum(float );
 
-int locate(float *xx, int n, int is, int ie, float x);
+int locate(harddata_point_t *xx, int n, int is, int ie, float x);
 
 float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float power);
 
@@ -66,7 +66,7 @@ float gcum(float z)
  *
  * Bisection Concept From "Numerical Recipes", Press et. al. 1986  pp 90. 
  * ----------------------------------------------------------------------- */
-int locate(float *xx, int n, int is, int ie, float x)
+int locate(harddata_point_t *xx, int n, int is, int ie, float x)
 {
 	int jl, jm, ju;
 
@@ -83,7 +83,7 @@ int locate(float *xx, int n, int is, int ie, float x)
 	}
 	jl = i - 1;
 	ju = ie;
-	if (xx[n] <= x) {
+	if (xx[n].gauss_cprob <= x) {
 		/* out of range */
 		return ie;
 	}
@@ -93,7 +93,7 @@ int locate(float *xx, int n, int is, int ie, float x)
 		jm = (ju + jl) / 2;
 
 		/* Replace the lower or upper limit with the midpoint: */
-		if ((xx[ie] > xx[i]) == (x > xx[jm])) {
+		if ((xx[ie].gauss_cprob > xx[i].gauss_cprob) == (x > xx[jm].gauss_cprob)) {
 			jl = jm;
 		} else {
 			ju = jm;
@@ -152,7 +152,7 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
  *
  *
  * ----------------------------------------------------------------------- */
-float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float max_value)
+float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float max_value)
 {
 	int j;
 	float cpow, cdfhi, cdfbt, cdflo;
@@ -166,41 +166,40 @@ float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float m
 
 
 	/* Parameter adjustments */
-	--vrg;
-	--vr;
+	--point;
 
 	b = vrgs;
 	/* Function Body */
-	if (vrgs <= vrg[1]) {
-		ret_val = vr[1];
-		a = vrg[1];
+	if (vrgs <= point[1].gauss_cprob) {
+		ret_val = point[1].val;
+		a = point[1].gauss_cprob;
 		cdflo = (float) gcum(a);
 		cdfbt = (float) gcum(b);
 		/* 
 		if (LTAIL == 1) {
-			ret_val = powint(0, cdflo, min_value, vr[1], cdfbt, 1);
+			ret_val = powint(0, cdflo, min_value, point[1].val, cdfbt, 1);
 		} else if (LTAIL == 2) {
 			cpow = 1 / min_value;
-			ret_val = powint(0, cdflo, min_value, vr[1], cdfbt, cpow);
+			ret_val = powint(0, cdflo, min_value, point[1].val, cdfbt, cpow);
 		}
 		*/
-		ret_val = powint(0, cdflo, min_value, vr[1], cdfbt, 1);
+		ret_val = powint(0, cdflo, min_value, point[1].val, cdfbt, 1);
 
 		/* Value in the upper tail?     1=linear, 2=power, 4=hyperbolic: */
 
-	} else if (vrgs >= vrg[nt]) {
-		ret_val = vr[nt];
-		a = vrg[nt];
+	} else if (vrgs >= point[nt].gauss_cprob) {
+		ret_val = point[nt].val;
+		a = point[nt].gauss_cprob;
 		cdfhi = (float) gcum(a);
 		cdfbt = (float) gcum(b);
 		/*
 		if (UTAIL == 1) {
-			ret_val = powint(cdfhi, 1, vr[nt], max_value, cdfbt, 1);
+			ret_val = powint(cdfhi, 1, point[nt].val, max_value, cdfbt, 1);
 		} else if (UTAIL == 2) {
 			cpow = 1.f / max_value;
-			ret_val = powint(cdfhi, 1, vr[nt], max_value, cdfbt, cpow);
+			ret_val = powint(cdfhi, 1, point[nt].val, max_value, cdfbt, cpow);
 		} else if (UTAIL == 4) {
-			d__1 = (double) vr[nt];
+			d__1 = (double) point[nt].val;
 			d__2 = (double) (max_value);
 			lambda =  pow(d__1, d__2) * (1 - gcum(a));
 			d__1 = (double) (lambda / (1 - gcum(b)));
@@ -208,17 +207,21 @@ float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float m
 			ret_val = (float) pow(d__1, d__2);
 		} 
 		*/
-		ret_val = powint(cdfhi, 1, vr[nt], max_value, cdfbt, 1);
+		ret_val = powint(cdfhi, 1, point[nt].val, max_value, cdfbt, 1);
 	} else {
 
 		/* Value within the transformation table: */
 		int i,t;
 
-		j = locate(&vrg[1], nt, 1, nt, vrgs);
+		j = locate(&point[1], nt, 1, nt, vrgs);
 		i = nt - 1;
-		t = MIN(i,j); /* min(i__2,j) */
-		j = MAX( t, 1); /* max(i__1,1); */
-		ret_val = powint( vrg[j], vrg[j + 1], vr[j], vr[j + 1], vrgs, 1);
+		t = MIN(i,j);
+		j = MAX( t, 1);
+		ret_val = powint( point[j].gauss_cprob, 
+						point[j + 1].gauss_cprob, 
+						point[j].val,
+					   	point[j + 1].val,
+					   	vrgs, 1);
 	}
 	return ret_val;
 } /* backtr_ */

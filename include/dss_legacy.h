@@ -10,17 +10,22 @@
 #define ZERO(f) (f < ZERO_THRESHOLD ? f > (-ZERO_THRESHOLD) : 0)
 
 
-/* DSS legacy functions */
+/* readdata */
+extern int load_harddata_file(log_t *l, char *filename, harddata_t *);
 
+extern int readdata(log_t *l, harddata_t *, general_vars_t *);
 /* dss */
-extern int readWellsData(general_vars_t *, float *, unsigned int);
-
 
 
 /* dss_sim */
-extern int dssim(float *, float *, float *, int *, int ktype, general_vars_t *,
-                 search_vars_t *, simulation_vars_t *, covariance_vars_t *,
-                 covtable_lookup_vars_t *, krige_vars_t *);
+extern int dssim(float *, float *, float *, int *, int ktype,
+	   general_vars_t 	*,
+	   harddata_t		*, 
+	   search_vars_t 	*,
+	   simulation_vars_t *,
+	   covariance_vars_t *, 
+	   covtable_lookup_vars_t *, 
+	   krige_vars_t 	*);
 
 extern int setrot(float, float, float , float , float,  int, double rotmat[5][3][3]);
 
@@ -29,19 +34,25 @@ extern int srchnod(int, int, int, float *, general_vars_t *, search_vars_t *,
 
 extern int gauinv(double, float *result);
 
-extern int readdata(log_t *l, float *, unsigned int, general_vars_t *, search_vars_t *,
-                    simulation_vars_t *);
 
+/* this is in dss-utils.c */
 extern int getPos(int, int, int, int, int);
+
 extern void get3Dcoords(int, int, int, int*, int*, int*);
 
 extern int getIndex(float min, float siz, float loc);
 
-/* this is in dss-utils.c */
-extern float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, float *vrgtr);
+extern float getAbsolutePos(float base, float siz, int index);
+
+extern float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point);
 
 extern int cmpfloat(const void *a1, const void *b1);
 
+extern int cmpharddata_point_val(const void *a, const void *b);
+
+extern int cmpharddata_point_gauss_cprob(const void *a, const void *b);
+
+int cmpvalue_index(const void *a, const void *b);
 /* dss_supr */
 extern int setsupr(int *, float *, float *, int *, float *, float *, int *, float *,
                    float *, int *, float *, float *, float *, float *, float *, int *,
@@ -70,6 +81,7 @@ extern int sort_permute_float(int , int , float *, float *);
 extern int krige(int , int , int , float , float , float ,
 		int , float , float *, float *, float *, float ,
 		general_vars_t *,
+		harddata_t	*,
 		search_vars_t *,
 		simulation_vars_t *,
 		covariance_vars_t *,
@@ -111,7 +123,7 @@ extern int sort_permute_int(int , int , float *, int *);
 
 
 /* dss_backtr */
-extern float backtr(float vrgs, int nt, float *vr, float *vrg, float min_value, float max_value);
+extern float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float max_value);
 
 /*extern int sortemi(int *, int *,
            float *,
