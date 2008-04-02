@@ -18,6 +18,8 @@
 
 /*   nright,nsb       number of columns in right hand side matrix. */
 /*                      for KB2D: nright=1, nsb=1 */
+#define	NRIGHT	1
+#define	NSB		1
 /*   neq              number of equations */
 /*   a()              upper triangular left hand side matrix (stored */
 /*                      columnwise) */
@@ -45,20 +47,14 @@ int ksol(int neq, double *a, double *r, double *s)
 	int i1;
 	double d1;
 
-	int nright, nsb;
-
 	/* Local variables */
 	int i, j, k, m1, ising;
 	double ak, ap;
 	int ii, ij, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, ijm;
 	double tol, piv;
 
-	nright = 1;
-	nsb = 1;
-
 	/* If there is only one equation then set ising and return: */
 
-	/* Function Body */
 	if (neq <= 1) {
 		ising = -1;
 		return ising;
@@ -70,7 +66,7 @@ int ksol(int neq, double *a, double *r, double *s)
 	tol = 1e-7f;
 	ising = 0;
 	nn = neq * (neq + 1) / 2;
-	nm = nsb * neq;
+	nm = NSB * neq;
 	m1 = neq - 1;
 	kk = 0;
 
@@ -84,7 +80,7 @@ int ksol(int neq, double *a, double *r, double *s)
 			return ising;
 		}
 		km1 = k - 1;
-		for (iv = 0; iv < nright; ++iv) {
+		for (iv = 0; iv < NRIGHT; ++iv) {
 			nm1 = nm * iv;
 			ii = kk + nn * iv;
 			piv = 1.f / a[ii];
@@ -114,7 +110,7 @@ int ksol(int neq, double *a, double *r, double *s)
 
 	/* Error checking - singular matrix: */
 
-	ijm = ij - nn * (nright - 1);
+	ijm = ij - nn * (NRIGHT - 1);
 	if ((d1 = a[ijm], fabs(d1)) < tol) {
 		ising = neq;
 		return ising;
@@ -122,7 +118,7 @@ int ksol(int neq, double *a, double *r, double *s)
 
 	/* Finished triangulation, start solving back: */
 
-	for (iv = 0; iv < nright; ++iv) {
+	for (iv = 0; iv < NRIGHT; ++iv) {
 		nm1 = nm * iv;
 		ij = ijm + nn * iv;
 		piv = 1.f / a[ij];
