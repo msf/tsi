@@ -359,34 +359,11 @@ tsi *new_tsi(registry *reg) {
 		if (!strcmp(get_string(k), "gslib")) t->seismic_file = TSI_ASCII_FILE;
 		else if (!strcmp(get_string(k), "tsi-bin")) t->seismic_file = TSI_BIN_FILE;
 	}
-
-	/* load seismic grid */
-	if ((t->seismic_idx = new_grid(t->heap)) < 0) {
-		printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
-		delete_tsi(t);
-		return NULL;
-	}
-	t->seismic = load_grid(t->heap, t->seismic_idx);
-
-
 	if ((k = get_key(reg, "SEISMIC", "FILENAME")) == NULL) {
-		printf_dbg("new_tsi(%d): failed to allocate seismic grid\n", t->proc_id);
+		ERROR(t->l, "new_tsi", "[SEISMIC] FILENAME parameter missing");
 		delete_tsi(t);
 		return NULL;
 	}
-	sprintf(buf, "%s%s", t->seismic_path, get_string(k));
-	if ((fp = fopen(buf, "r")) == NULL) {
-		printf("ERROR: Failed to open the seismic grid file!\n");
-		delete_tsi(t);
-		return NULL;
-	}
-	if (!tsi_read_grid(t, fp, t->seismic, t->seismic_file)) {
-		printf("ERROR: Failed to load seismic file: %s\n", buf);
-		delete_tsi(t);
-		return NULL;
-	}
-	printf_dbg("new_tsi(): Seismic Data loaded\n");
-	dirty_grid(t->heap, t->seismic_idx);
 
 	/* reset time counters */
 	t->mm_time = 0;
@@ -657,23 +634,53 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 	getCurrTime(&t1);
 	/* allocate new grids for CM and SY */
 	if ((t->cm_idx = new_grid(t->heap)) < 0) {
-		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATE CM grid");
+		ERROR(t->l, "tsi_seismic_inversion", "FAILED TO ALLOCATE CM grid");
 		delete_tsi(t);
 		return 0;
 	}
 	if ((t->sy_idx = new_grid(t->heap)) < 0) {
-		log_message(t->l, 0, "ERROR tsi_seismic_inversion() FAILED TO ALLOCATE SY grid");
+		ERROR(t->l, "tsi_seismic_inversion", "FAILED TO ALLOCATE SY grid");
 		delete_tsi(t);
 		return 0;
 	}
 
 	/* load all grids needed for seismic inversion */
+	
+	if( iteration == 0 && simulation == 0) {
+		char buf[1024];
+		FILE *fp;
+		/* load seismic grid */
+		if ((t->seismic_idx = new_grid(t->heap)) < 0) {
+			ERROR(t->l, "tsi_seismic_inversion","FAILED TO ALLOCATE SEISMIC GRID");
+			delete_tsi(t);
+			return 0;
+		}
+		t->seismic = load_grid(t->heap, t->seismic_idx);
+
+		sprintf(buf, "%s%s", t->seismic_path, 
+				get_string( get_key(t->reg, "SEISMIC", "FILENAME") ) );
+		if ((fp = fopen(buf, "r")) == NULL) {
+			ERROR(t->l, "open seismic grid file", buf);
+			delete_tsi(t);
+			return 0;
+		}
+		if (!tsi_read_grid(t, fp, t->seismic, t->seismic_file)) {
+			ERROR(t->l, "tsi_read_grid", buf);
+			delete_tsi(t);
+			return 0;
+		}
+		fclose(fp);
+		printf_dbg("tsi_seismic_inversion(): Seismic Data loaded\n");
+		dirty_grid(t->heap, t->seismic_idx);
+	}
+
+
+	printf_dbg2("tsi_seismic_inversion(%d,%d,%d): loading seismic\n", t->proc_id, iteration, simulation);
+	t->seismic = load_grid(t->heap, t->seismic_idx);
 	printf_dbg2("tsi_seismic_inversion(%d,%d,%d): loading CM\n", t->proc_id, iteration, simulation);
 	t->cm = load_grid(t->heap, t->cm_idx);
 	printf_dbg2("tsi_seismic_inversion(%d,%d,%d): loading SY\n", t->proc_id, iteration, simulation);
 	t->sy = load_grid(t->heap, t->sy_idx);
-	printf_dbg2("tsi_seismic_inversion(%d,%d,%d): loading seismic\n", t->proc_id, iteration, simulation);
-	t->seismic = load_grid(t->heap, t->seismic_idx);
 	printf_dbg2("tsi_seismic_inversion(%d,%d,%d): loading AI\n", t->proc_id, iteration, simulation);
 	t->ai = load_grid(t->heap, t->ai_idx);
 
