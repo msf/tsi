@@ -82,7 +82,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
 	
 	/* Function Body */
-	na = search->nclose + covtable_lookup->ncnode;
+	na = covtable_lookup->ncnode;
 
     if (na > krige_vars->last_na) {
         krige_vars->last_na = na;
@@ -116,36 +116,26 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	in = 0;
 	i1 = na;
 	for (j = 1; j <= na; ++j) {
-		/* Sort out the actual location of point "j" */
-		if ((float) j <= search->nclose) {
-			index = (int) general->close[j - 1];
-			x1 = general->x[index - 1];
-			y1 = general->y[index - 1];
-			z1 = general->z[index - 1];
-			krige_vars->vra[j - 1] = general->vr[index - 1];
-			krige_vars->vrea[j - 1] = general->nosim_value;
-		} else {
-			/* It is a previously simulated node (keep index for table look-up): */
-			index = j - 1;
-			ind = search_node[index].index;
-			x1 = search_node[index].x;
-			y1 = search_node[index].y;
-			z1 = search_node[index].z;
-			krige_vars->vra[j - 1] = search_node[index].value;
+		/* It is a previously simulated node (keep index for table look-up): */
+		index = j - 1;
+		ind = search_node[index].index;
+		x1 = search_node[index].x;
+		y1 = search_node[index].y;
+		z1 = search_node[index].z;
+		krige_vars->vra[j - 1] = search_node[index].value;
 
 
-			ix1 = covtable_lookup->ixnode[ind];
-			iy1 = covtable_lookup->iynode[ind];
-			iz1 = covtable_lookup->iznode[ind];
+		ix1 = covtable_lookup->ixnode[ind];
+		iy1 = covtable_lookup->iynode[ind];
+		iz1 = covtable_lookup->iznode[ind];
 
-			ix1 += ix - covtable_lookup->nctx -1;
-			iy1 += iy - covtable_lookup->ncty -1;
-			iz1 += iz - covtable_lookup->nctz -1;
+		ix1 += ix - covtable_lookup->nctx -1;
+		iy1 += iy - covtable_lookup->ncty -1;
+		iz1 += iz - covtable_lookup->nctz -1;
 
-			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
-			if(lktype == 5)
-				krige_vars->vrea[j - 1] = bestAICube[index];
-		}
+		index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
+		if(lktype == 5)
+			krige_vars->vrea[j - 1] = bestAICube[index];
 		if (lktype == 0) {
 			krige_vars->vra[j - 1] -= global_mean;
 		}
@@ -158,84 +148,61 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		i2 = j;
 		for (i = 1; i <= i2; ++i) {
 			/* Sort out the actual location of point "i" */
-			if ((float) i <= search->nclose) {
-				index = (int) general->close[i - 1];
-				x2 = general->x[index - 1];
-				y2 = general->y[index - 1];
-				z2 = general->z[index - 1];
-			} else {
-				/* It is a previously simulated node (keep index for table
-				   look-up): */
-				index = i - 1;
-				ind = search_node[index].index;
-				x2 = search_node[index].x;
-				y2 = search_node[index].y;
-				z2 = search_node[index].z;
+			/* It is a previously simulated node (keep index for table
+			   look-up): */
+			index = i - 1;
+			ind = search_node[index].index;
+			x2 = search_node[index].x;
+			y2 = search_node[index].y;
+			z2 = search_node[index].z;
 
-				ix2 = covtable_lookup->ixnode[ind];
-				iy2 = covtable_lookup->iynode[ind];
-				iz2 = covtable_lookup->iznode[ind];
+			ix2 = covtable_lookup->ixnode[ind];
+			iy2 = covtable_lookup->iynode[ind];
+			iz2 = covtable_lookup->iznode[ind];
 
-				ix2 += ix - covtable_lookup->nctx -1;
-				iy2 += iy - covtable_lookup->ncty -1;
-				iz2 += iz - covtable_lookup->nctz -1;
+			ix2 += ix - covtable_lookup->nctx -1;
+			iy2 += iy - covtable_lookup->ncty -1;
+			iz2 += iz - covtable_lookup->nctz -1;
 
-			}
+		
 			/* Now, get the covariance value: */
 			++in;
-			/* Decide whether or not to use the covariance look-up table: */
-			if ((float) j <= search->nclose || (float) i <= search->nclose) 
-			{
-				double cmax;
-				krige_vars->a[in - 1] = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
-						covariance->nugget, covariance->variogram, 
-						krige_vars->rotmat, &cmax);
-				
-				covariance->cmax = (float) cmax;
-			} else {
-				/* Try to use the covariance look-up (if the distance is in range): */
-				ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
-				jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
-				kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
-				if (ii < 1 || ii > general->nx ||
-					jj < 1 || jj > general->ny ||
-					kk < 1 || kk > general->nz) {
-					double cmax, c;
-					c = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
-							covariance->nugget, covariance->variogram,
-							krige_vars->rotmat, &cmax);
-					cov = (float) c;
-					covariance->cmax = (float) cmax;
-				} else {
-					cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
-				}
-				krige_vars->a[in - 1] = (double) cov;
-			}
-		}
-		/* Get the RHS value (possibly with covariance look-up table): */
-		if ((float) j <= search->nclose) {
-			double cmax;
-			krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
-					covariance->nugget, covariance->variogram,
-					krige_vars->rotmat, &cmax);
-			covariance->cmax = (float) cmax;
-		} else {
+
 			/* Try to use the covariance look-up (if the distance is in range): */
-			ii = covtable_lookup->nctx + 1 + (ix - ix1);
-			jj = covtable_lookup->ncty + 1 + (iy - iy1);
-			kk = covtable_lookup->nctz + 1 + (iz - iz1);
+			ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
+			jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
+			kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
 			if (ii < 1 || ii > general->nx ||
 				jj < 1 || jj > general->ny ||
 				kk < 1 || kk > general->nz) {
-				double cmax;
-				krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
-						covariance->nugget, covariance->variogram, 
+				double cmax, c;
+				c = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
+						covariance->nugget, covariance->variogram,
 						krige_vars->rotmat, &cmax);
+				cov = (float) c;
 				covariance->cmax = (float) cmax;
 			} else {
-				krige_vars->r[j - 1] = (double) covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+				cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
 			}
+			krige_vars->a[in - 1] = (double) cov;
 		}
+		/* Get the RHS value (possibly with covariance look-up table): */
+		/* Try to use the covariance look-up (if the distance is in range): */
+		ii = covtable_lookup->nctx + 1 + (ix - ix1);
+		jj = covtable_lookup->ncty + 1 + (iy - iy1);
+		kk = covtable_lookup->nctz + 1 + (iz - iz1);
+		if (ii < 1 || ii > general->nx ||
+			jj < 1 || jj > general->ny ||
+			kk < 1 || kk > general->nz) {
+			double cmax;
+			krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
+					covariance->nugget, covariance->variogram, 
+					krige_vars->rotmat, &cmax);
+			covariance->cmax = (float) cmax;
+		} else {
+			krige_vars->r[j - 1] = (double) covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+		}
+		
 		krige_vars->rr[j - 1] = krige_vars->r[j - 1];
 	}
 	/* Addition of OK constraint: */

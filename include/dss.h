@@ -80,9 +80,6 @@ typedef struct general_vars_type {
 
 
 typedef struct search_vars_type {
-    int    nclose;   /* LPL SHOULD BE INT!!!!! */
-
-    /* parameters from registry */
     int    ndmin,    /* SEARCH:NDMIN */
            ndmax;    /* SEARCH:NDMAX */
     float  radius,   /* SEARCH:RADIUS */

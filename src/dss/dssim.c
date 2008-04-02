@@ -227,11 +227,11 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 	while( toSim > 0 ) {
 
 #ifdef TSI_DEBUG
-		if(toSim < (general->nxyz * 0.75)) {
+		if(toSim == (general->nxyz * 0.75)) {
 			printf_dbg("\tdsssim(): 1/4 completed.\n");
-		} else if(toSim < (general->nxyz / 2)) {
+		} else if(toSim == (general->nxyz / 2)) {
 			printf_dbg("\tdsssim(): 1/2 completed.\n");
-		} else if(toSim < (general->nxyz / 4)) {
+		} else if(toSim == (general->nxyz / 4)) {
 			printf_dbg("\tdsssim(): 3/4 completed.\n");
  		}
 #endif
@@ -290,7 +290,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		} else {
 			global_mean = simulation->vmedexp;
 		}
-		if (search->nclose + covtable_lookup->ncnode < 1) {
+		if (covtable_lookup->ncnode < 1) {
 			cmean = simulation->vmedexp;
 			std_deviation = sqrt(simulation->vvarexp);
 		} else {
@@ -298,7 +298,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			/* !then simple kriging is prefered so that the variance of the */
 			/* !realization does not become artificially inflated: */
 			lktype = ktype;
-			if ( ktype == 1 && search->nclose + covtable_lookup->ncnode < 4) {
+			if ( ktype == 1 && covtable_lookup->ncnode < 4) {
 				lktype = 0;
 			}
 			/* !Estimacao em xo (SDSIM) */
