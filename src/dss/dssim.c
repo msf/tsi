@@ -279,13 +279,13 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 				covtable_lookup->node);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = ktype;
-		if (ktype == 5 && bestAICube[index] == general->nosim_value) {
-			ktype = 1;
+		if (ktype == CO_KRIG && bestAICube[index] == general->nosim_value) {
+			ktype = SIMPLE_KRIG;
 		}
 		/* !Calculate the conditional mean and standard deviation.  This will be */
 		/* !done with kriging if there are data, otherwise, the global mean and */
 		/* !standard deviation will be used: */
-		if (ktype == 2 || ktype >= 4) {
+		if ( ktype == CO_KRIG) {
 			global_mean = bestAICube[index];
 		} else {
 			global_mean = simulation->vmedexp;
@@ -298,12 +298,12 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			/* !then simple kriging is prefered so that the variance of the */
 			/* !realization does not become artificially inflated: */
 			lktype = ktype;
-			if ( ktype == 1 && covtable_lookup->ncnode < 4) {
-				lktype = 0;
+			if ( ktype == ORDINARY_KRIG && covtable_lookup->ncnode < 4) {
+				lktype = SIMPLE_KRIG;
 			}
 			/* !Estimacao em xo (SDSIM) */
 			/* aceder ao bestCorrCube, apenas se ktype >= 4 */
-			if(ktype == 5) {
+			if(ktype == CO_KRIG) {
 				clcorr = bestCorrCube[index];
 			}
 				

@@ -1,6 +1,10 @@
 #ifndef _DSS_H
 #define _DSS_H
 
+#define SIMPLE_KRIG	0
+#define ORDINARY_KRIG 1
+#define CO_KRIG	5
+
 #include "debug.h"
 #include "grid_heap.h"
 #include "log.h"

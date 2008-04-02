@@ -46,6 +46,7 @@ extern float compute_gaussian_equiv(float cmean, unsigned size, float *vrtr, flo
 extern int cmpfloat(const void *a1, const void *b1);
 
 /* dss_supr */
+/*
 extern int setsupr(int *, float *, float *, int *, float *, float *, int *, float *,
                    float *, int *, float *, float *, float *, float *, float *, int *,
                    float *, float *, float *, int *, int *, int *, int *, int *, float *, 
@@ -61,7 +62,7 @@ extern int srchsupr(float xloc, float yloc, float zloc, float radsqd, int irot,
 extern int picksup(int nxsup, float xsizsup, int nysup, float ysizsup, int nzsup,
                    float zsizsup, int irot, double rotmat[5][3][3], float radsqd,
                    int *nsbtosr, int * ixsbtosr, int *iysbtosr, int *izsbtosr);
-
+*/
 extern int sortem(int *, int *, float *, int *, float *, float *, float *, float *,
                   float *, float *, float *);
 
@@ -80,7 +81,7 @@ extern int krige(int , int , int , float , float , float ,
 		krige_vars_t *,
 		search_node_t *);
 
-extern int ksol(int nright, int neq, int nsb, double *a, double *r, double *s);
+extern int ksol(int neq, double *a, double *r, double *s);
 
 extern double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 					int varnum, float nugget, variogram_t *variogram,
