@@ -56,7 +56,8 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		simulation_vars_t * simulation,
 		covariance_vars_t * covariance,
 		covtable_lookup_vars_t * covtable_lookup,
-		krige_vars_t * krige_vars)
+		krige_vars_t * krige_vars,
+		search_node_t	*search_node)
 {
 	/* System generated locals */
 	int i1, i2;
@@ -125,17 +126,17 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			krige_vars->vrea[j - 1] = general->nosim_value;
 		} else {
 			/* It is a previously simulated node (keep index for table look-up): */
-			index = j - search->nclose;
-			x1 = covtable_lookup->cnodex[index - 1];
-			y1 = covtable_lookup->cnodey[index - 1];
-			z1 = covtable_lookup->cnodez[index - 1];
-			krige_vars->vra[j - 1] = covtable_lookup->cnodev[index - 1];
-			
-            ind = covtable_lookup->icnode[index - 1];
+			index = j - 1;
+			ind = search_node[index].index;
+			x1 = search_node[index].x;
+			y1 = search_node[index].y;
+			z1 = search_node[index].z;
+			krige_vars->vra[j - 1] = search_node[index].value;
 
-			ix1 = covtable_lookup->ixnode[ind - 1];
-			iy1 = covtable_lookup->iynode[ind - 1];
-			iz1 = covtable_lookup->iznode[ind - 1];
+
+			ix1 = covtable_lookup->ixnode[ind];
+			iy1 = covtable_lookup->iynode[ind];
+			iz1 = covtable_lookup->iznode[ind];
 
 			ix1 += ix - covtable_lookup->nctx -1;
 			iy1 += iy - covtable_lookup->ncty -1;
@@ -165,19 +166,20 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			} else {
 				/* It is a previously simulated node (keep index for table
 				   look-up): */
-				index = i - search->nclose;
-				x2 = covtable_lookup->cnodex[index - 1];
-				y2 = covtable_lookup->cnodey[index - 1];
-				z2 = covtable_lookup->cnodez[index - 1];
-				ind = covtable_lookup->icnode[index - 1];
+				index = i - 1;
+				ind = search_node[index].index;
+				x2 = search_node[index].x;
+				y2 = search_node[index].y;
+				z2 = search_node[index].z;
 
-				ix2 = covtable_lookup->ixnode[ind - 1];
-				iy2 = covtable_lookup->iynode[ind - 1];
-				iz2 = covtable_lookup->iznode[ind - 1];
+				ix2 = covtable_lookup->ixnode[ind];
+				iy2 = covtable_lookup->iynode[ind];
+				iz2 = covtable_lookup->iznode[ind];
 
 				ix2 += ix - covtable_lookup->nctx -1;
 				iy2 += iy - covtable_lookup->ncty -1;
 				iz2 += iz - covtable_lookup->nctz -1;
+
 			}
 			/* Now, get the covariance value: */
 			++in;

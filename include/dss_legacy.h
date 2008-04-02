@@ -24,8 +24,10 @@ extern int dssim(float *, float *, float *, int *, int ktype, general_vars_t *,
 
 extern int setrot(float, float, float , float , float,  int, double rotmat[5][3][3]);
 
-extern int srchnod(int, int, int, float *, general_vars_t *, search_vars_t *, 
-                   covtable_lookup_vars_t *);
+extern int srchnod(int, int, int, float *, 
+		general_vars_t *,
+		covtable_lookup_vars_t *,
+		search_node_t *);
 
 extern int gauinv(double, float *result);
 
@@ -74,28 +76,10 @@ extern int krige(int , int , int , float , float , float ,
 		simulation_vars_t *,
 		covariance_vars_t *,
 		covtable_lookup_vars_t *,
-		krige_vars_t *);
-
-extern int krige1(int *, int *, int *, float * , float *, float *,
-		float *, float *, float *, float *, float *,
-		general_vars_t *,
-		search_vars_t *,
-		simulation_vars_t *,
-		covariance_vars_t *,
-		covtable_lookup_vars_t *,
-		krige_vars_t *);
-
-extern int krige5(int *, int *, int *, float * , float *, float *,
-		float *, float *, float *, float *, float *,
-		general_vars_t *,
-		search_vars_t *,
-		simulation_vars_t *,
-		covariance_vars_t *,
-		covtable_lookup_vars_t *,
-		krige_vars_t *);
+		krige_vars_t *,
+		search_node_t *);
 
 extern int ksol(int nright, int neq, int nsb, double *a, double *r, double *s);
-extern int ksol_opt(int neq, double *a, double *r, double *s);
 
 extern double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 					int varnum, float nugget, variogram_t *variogram,

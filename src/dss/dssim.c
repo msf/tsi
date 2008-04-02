@@ -273,7 +273,10 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		/* !we'll only keep the closest "ndmax" data, and look for previously */
 		/* !simulated grid nodes: */
 
-		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
+		covtable_lookup->ncnode = srchnod(ix, iy, iz, &sim[1], 
+				general, 
+				covtable_lookup, 
+				covtable_lookup->node);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = ktype;
 		if (ktype == 5 && bestAICube[index] == general->nosim_value) {
@@ -308,7 +311,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 					&cmean, &std_deviation, // these are the output vars of krige
 					&bestAICube[1], clcorr,
 					general, search, simulation,
-					covariance, covtable_lookup, krige_vars);
+					covariance, covtable_lookup, krige_vars, covtable_lookup->node);
 
 		}
 		general->ktype = kinicial;

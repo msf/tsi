@@ -19,6 +19,12 @@ typedef struct {
 	float value;
 } value_point_t;
 
+typedef struct {
+	unsigned int index;
+	float   x, y, z;
+	float	value;
+} search_node_t;
+
 typedef struct harddata_type {
 	int		numdata, numraw;
 	harddata_point_t *points;
@@ -130,12 +136,8 @@ typedef struct covtable_lookup_vars_type {
            ncty,
            nctz;
     int    nlooku,
-           ncnode,
-           icnode[64]; // max size = NODMAX
-    float  cnodex[64], // max size = NODMAX
-           cnodey[64], // max size = NODMAX
-           cnodez[64], // max size = NODMAX
-           cnodev[64]; // max size = NODMAX
+           ncnode;
+	search_node_t	node[64]; // max size = NODMAX
 
     /* auxiliar grids allocated in run_dss */
     float  *covtab;

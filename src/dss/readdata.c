@@ -137,7 +137,7 @@ int readdata(log_t *l, float *hard_data,
 		oldcp = cp;
 		/* !Now, reset the weight to the normal scores value: */
 		general->vrgtr[j] = vrg;
-		printf("readdata(): vrtr[%u] = %f,\tvrgtr[%u] = %f\n",
+		printf_dbg2("readdata(): vrtr[%u] = %f,\tvrgtr[%u] = %f\n",
 				j, general->vrtr[j], j, general->vrgtr[j]);
 	}
 
