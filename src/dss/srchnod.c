@@ -98,7 +98,7 @@ int srchnod(int ix, int iy, int iz, float *sim,
 		ind = getPos(i, j, k, general->nx, general->nxy);
 		if (sim[ind] > general->nosim_value) {
 
-			nodes[count].index = il +1;
+			nodes[count].index = il;
 			nodes[count].x = getAbsolutePos(general->xmn, general->xsiz, i);
 			nodes[count].y = getAbsolutePos(general->ymn, general->ysiz, j);
 			nodes[count].z = getAbsolutePos(general->zmn, general->zsiz, k);
