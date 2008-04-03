@@ -1,24 +1,3 @@
-/* ----------------------------------------------------------------------- */
-/*            Builds and Solves the SK or OK Kriging System */
-/* INPUT VARIABLES: */
-/*   ix,iy,iz        index of the point currently being simulated */
-/*   xx,yy,zz        location of the point currently being simulated */
-/* OUTPUT VARIABLES: */
-/*   cmean           kriged estimate */
-/*   std_deviation          kriged standard deviation */
-/* EXTERNAL REFERENCES: ksol   Gaussian elimination system solution */
-/* ----------------------------------------------------------------------- */
-
-
-/** Funcoes utilizadas
- * ksol
- * cova3
- */
-
-/** CUBOS utilizados
- * bestAICube quando ktype == 5
- */ 
-
 #include <math.h>
 #include "dss.h"
 #include "dss_legacy.h"
@@ -29,34 +8,40 @@
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 #define FALSE (0)
 
-/* Table of constant values */
 
 
+/* ----------------------------------------------------------------------- */
+/*            Builds and Solves the SK or OK Kriging System */
+/* INPUT VARIABLES: */
+/*   ix,iy,iz        index of the point currently being simulated */
+/*   xx,yy,zz        location of the point currently being simulated */
+/* OUTPUT VARIABLES: */
+/*   cmean           kriged estimate */
+/*   std_deviation          kriged standard deviation */
+/* EXTERNAL REFERENCES: ksol   Gaussian elimination system solution */
+/* ----------------------------------------------------------------------- */
 int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		int lktype, float global_mean, float *cmean, float * std_deviation, 
 		float *bestAICube, float clcorr,
-		general_vars_t * general,
-		harddata_t *	harddata,
-		search_vars_t * search,
-		simulation_vars_t * simulation,
+		general_vars_t 	* general,
+		harddata_t		* harddata,
 		covariance_vars_t * covariance,
 		covtable_lookup_vars_t * covtable_lookup,
-		krige_vars_t * krige_vars)
+		krige_vars_t 	* krige_vars,
+		search_node_t	*search_node)
 {
 	/* System generated locals */
-	int i1, i2;
+	int i1;
 
 	/* Local variables */
 	int i, j;
 	float x1, y1, z1, x2, y2, z2;
 	int na, ii, jj, kk, in, ix1, iy1, iz1, ix2, iy2, iz2, ind, neq;
 	float cov;
-	float edmin, edmax;
 	int index;
 	float sfmin, sfmax;
 	float sumwts;
 
-	double *rp, *ap, *sp;   //LPL test...
 
 
 	/* Parameter adjustments */
@@ -66,7 +51,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
 	
 	/* Function Body */
-	na = search->nclose + covtable_lookup->ncnode;
+	na = covtable_lookup->ncnode;
 
     if (na > krige_vars->last_na) {
         krige_vars->last_na = na;
@@ -87,142 +72,98 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 
 
 	neq = na;
-	if (lktype == 1) {
+	if (lktype == ORDINARY_KRIG || lktype == CO_KRIG) {
 		neq += 1;
 	}
-	else if (lktype == 3) {
-		neq += 2;
-	}
-	else if (lktype >= 4) {
-		neq += 1;
-	}
+
 	/* Set up kriging matrices: */
 	in = 0;
-	i1 = na;
 	for (j = 1; j <= na; ++j) {
-		/* Sort out the actual location of point "j" */
-		if ((float) j <= search->nclose) {
-			index = (int) general->close[j - 1];
-			x1 = harddata->point[index -1].x;
-			y1 = harddata->point[index -1].y;
-			z1 = harddata->point[index -1].z;
-			krige_vars->vra[j - 1] = harddata->point[index -1].val;
-			krige_vars->vrea[j - 1] = general->nosim_value;
-		} else {
-			/* It is a previously simulated node (keep index for table look-up): */
-			index = j - search->nclose;
-			x1 = covtable_lookup->cnodex[index - 1];
-			y1 = covtable_lookup->cnodey[index - 1];
-			z1 = covtable_lookup->cnodez[index - 1];
-			krige_vars->vra[j - 1] = covtable_lookup->cnodev[index - 1];
-			
-            ind = covtable_lookup->icnode[index - 1];
+		/* It is a previously simulated node (keep index for table look-up): */
+		index = j - 1;
+		ind = search_node[index].index;
+		x1 = search_node[index].x;
+		y1 = search_node[index].y;
+		z1 = search_node[index].z;
+		krige_vars->vra[j - 1] = search_node[index].value;
 
-			ix1 = covtable_lookup->ixnode[ind - 1];
-			iy1 = covtable_lookup->iynode[ind - 1];
-			iz1 = covtable_lookup->iznode[ind - 1];
+		ix1 = covtable_lookup->ixnode[ind];
+		iy1 = covtable_lookup->iynode[ind];
+		iz1 = covtable_lookup->iznode[ind];
 
-			ix1 += ix - covtable_lookup->nctx -1;
-			iy1 += iy - covtable_lookup->ncty -1;
-			iz1 += iz - covtable_lookup->nctz -1;
+		ix1 += ix - covtable_lookup->nctx -1;
+		iy1 += iy - covtable_lookup->ncty -1;
+		iz1 += iz - covtable_lookup->nctz -1;
 
-			index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
-			if(lktype == 5)
-				krige_vars->vrea[j - 1] = bestAICube[index];
+		index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
+		if(lktype == CO_KRIG) {
+			krige_vars->vrea[j] = bestAICube[index];
+			krige_vars->vra[j] -= harddata->average;
 		}
-		if (lktype == 0) {
+		if (lktype == SIMPLE_KRIG) {
 			krige_vars->vra[j - 1] -= global_mean;
 		}
-		if (lktype == 2) {
-			krige_vars->vra[j - 1] -= krige_vars->vrea[j - 1];
-		}
-		if (lktype >= 4) {
-			krige_vars->vra[j - 1] -= harddata->average;
-		}
-		i2 = j;
-		for (i = 1; i <= i2; ++i) {
+		for (i = 1; i <= j; ++i) {
 			/* Sort out the actual location of point "i" */
-			if ((float) i <= search->nclose) {
-				index = (int) general->close[i - 1];
-				x2 = harddata->point[index -1].x;
-				y2 = harddata->point[index -1].y;
-				z2 = harddata->point[index -1].z;
-			} else {
-				/* It is a previously simulated node (keep index for table
-				   look-up): */
-				index = i - search->nclose;
-				x2 = covtable_lookup->cnodex[index - 1];
-				y2 = covtable_lookup->cnodey[index - 1];
-				z2 = covtable_lookup->cnodez[index - 1];
-				ind = covtable_lookup->icnode[index - 1];
+			/* It is a previously simulated node (keep index for table
+			   look-up */
+			index = i - 1;
+			ind = search_node[index].index;
+			x2 = search_node[index].x;
+			y2 = search_node[index].y;
+			z2 = search_node[index].z;
 
-				ix2 = covtable_lookup->ixnode[ind - 1];
-				iy2 = covtable_lookup->iynode[ind - 1];
-				iz2 = covtable_lookup->iznode[ind - 1];
+			ix2 = covtable_lookup->ixnode[ind];
+			iy2 = covtable_lookup->iynode[ind];
+			iz2 = covtable_lookup->iznode[ind];
 
-				ix2 += ix - covtable_lookup->nctx -1;
-				iy2 += iy - covtable_lookup->ncty -1;
-				iz2 += iz - covtable_lookup->nctz -1;
-			}
+			ix2 += ix - covtable_lookup->nctx -1;
+			iy2 += iy - covtable_lookup->ncty -1;
+			iz2 += iz - covtable_lookup->nctz -1;
+
+		
 			/* Now, get the covariance value: */
 			++in;
-			/* Decide whether or not to use the covariance look-up table: */
-			if ((float) j <= search->nclose || (float) i <= search->nclose) 
-			{
-				double cmax;
-				krige_vars->a[in - 1] = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
-						covariance->nugget, covariance->variogram, 
-						krige_vars->rotmat, &cmax);
-				
-				covariance->cmax = (float) cmax;
-			} else {
-				/* Try to use the covariance look-up (if the distance is in range): */
-				ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
-				jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
-				kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
-				if (ii < 1 || ii > general->nx ||
-					jj < 1 || jj > general->ny ||
-					kk < 1 || kk > general->nz) {
-					double cmax, c;
-					c = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
-							covariance->nugget, covariance->variogram,
-							krige_vars->rotmat, &cmax);
-					cov = (float) c;
-					covariance->cmax = (float) cmax;
-				} else {
-					cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
-				}
-				krige_vars->a[in - 1] = (double) cov;
-			}
-		}
-		/* Get the RHS value (possibly with covariance look-up table): */
-		if ((float) j <= search->nclose) {
-			double cmax;
-			krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
-					covariance->nugget, covariance->variogram,
-					krige_vars->rotmat, &cmax);
-			covariance->cmax = (float) cmax;
-		} else {
+
 			/* Try to use the covariance look-up (if the distance is in range): */
-			ii = covtable_lookup->nctx + 1 + (ix - ix1);
-			jj = covtable_lookup->ncty + 1 + (iy - iy1);
-			kk = covtable_lookup->nctz + 1 + (iz - iz1);
+			ii = covtable_lookup->nctx + 1 + (ix1 - ix2);
+			jj = covtable_lookup->ncty + 1 + (iy1 - iy2);
+			kk = covtable_lookup->nctz + 1 + (iz1 - iz2);
 			if (ii < 1 || ii > general->nx ||
 				jj < 1 || jj > general->ny ||
 				kk < 1 || kk > general->nz) {
-				double cmax;
-				krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
-						covariance->nugget, covariance->variogram, 
+				double cmax, c;
+				c = cova3(x1, y1, z1, x2, y2, z2, covariance->varnum,
+						covariance->nugget, covariance->variogram,
 						krige_vars->rotmat, &cmax);
+				cov = (float) c;
 				covariance->cmax = (float) cmax;
 			} else {
-				krige_vars->r[j - 1] = (double) covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+				cov = covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
 			}
+			krige_vars->a[in - 1] = (double) cov;
 		}
+		/* Get the RHS value (possibly with covariance look-up table): */
+		/* Try to use the covariance look-up (if the distance is in range): */
+		ii = covtable_lookup->nctx + 1 + (ix - ix1);
+		jj = covtable_lookup->ncty + 1 + (iy - iy1);
+		kk = covtable_lookup->nctz + 1 + (iz - iz1);
+		if (ii < 1 || ii > general->nx ||
+			jj < 1 || jj > general->ny ||
+			kk < 1 || kk > general->nz) {
+			double cmax;
+			krige_vars->r[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
+					covariance->nugget, covariance->variogram, 
+					krige_vars->rotmat, &cmax);
+			covariance->cmax = (float) cmax;
+		} else {
+			krige_vars->r[j - 1] = (double) covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
+		}
+		
 		krige_vars->rr[j - 1] = krige_vars->r[j - 1];
 	}
 	/* Addition of OK constraint: */
-	if (lktype == 1 || lktype == 3) {
+	if (lktype == ORDINARY_KRIG ) {
 		i1 = na;
 		for (i = 1; i <= i1; ++i) {
 			++in;
@@ -233,34 +174,8 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		krige_vars->r[na] = 1.f;
 		krige_vars->rr[na] = 1.f;
 	}
-	/* Addition of the External Drift Constraint: */
-	if (lktype == 3) {
-		edmin = 999999.f;
-		edmax = -999999.f;
-		i1 = na;
-		for (i = 1; i <= i1; ++i) {
-			++in;
-			krige_vars->a[in - 1] = krige_vars->vrea[i - 1];
-			if (krige_vars->a[in - 1] < edmin) {
-				edmin = (float) krige_vars->a[in - 1];
-			}
-			else if (krige_vars->a[in - 1] > edmax) {
-				edmax = (float) krige_vars->a[in - 1];
-			}
-		}
-		++in;
-		krige_vars->a[in - 1] = 0.f;
-		++in;
-		krige_vars->a[in - 1] = 0.f;
-		ind = getPos(ix, iy, iz, general->nx, general->nxy);
-		krige_vars->r[na + 1] = (double) bestAICube[ind];
-		krige_vars->rr[na + 1] = krige_vars->r[na + 1];
-		if (edmax - edmin < 1e-20f) {
-			--neq;
-		}
-	}
 	/* Addition of Collocated Cosimulation Constraint: */
-	else if (lktype >= 4) {
+	else if (lktype == CO_KRIG ) {
 		sfmin = 1e21f;
 		sfmax = -1e21f;
 		i1 = na;
@@ -279,15 +194,14 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		ii = na + 1;
 		krige_vars->r[ii - 1] = (double) clcorr;
 		krige_vars->rr[ii - 1] = krige_vars->r[ii - 1];
-		/* apagar */
-		/*           if((sfmax-sfmin).lt.EPSLON) neq = neq - 1 */
 	}
 	/* 		Write out the kriging Matrix if Seriously Debugging: */
 	/* 		Solve the Kriging System: */
-	if (neq == 1 && lktype != 3) {
+	if (neq == 1) {
 		krige_vars->s[0] = krige_vars->r[0] / krige_vars->a[0];
     } else {
-        int ising;
+		int ising;
+		double *rp, *ap, *sp;   //LPL test...
         //ksol(&one, &neq, &one, krige_vars->a, krige_vars->r, krige_vars->s, & ising);
         ap = krige_vars->a;
         rp = krige_vars->r;
@@ -295,7 +209,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
         ap--;
         rp--;
         sp--;
-        ising = ksol(1, neq, 1, ap, rp, sp);
+        ising = ksol(neq, ap, rp, sp);
         /* 		Write a warning if the matrix is singular: */
         if (ising != 0) {
             printf("krige() ERROR: singular matrix for node (%d,%d,%d)\n",
@@ -324,13 +238,10 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	if (lktype == 0) {
 		*cmean += global_mean;
 	}
-	else if (lktype == 1) {
+	else if (lktype == ORDINARY_KRIG) {
 		*std_deviation -= (float) krige_vars->s[na];
 	}
-	else if (lktype == 2) {
-		*cmean += global_mean;
-	}
-	else if (lktype >= 4) {
+	else if (lktype == CO_KRIG) {
 		ind = getPos(ix, iy, iz, general->nx, general->nxy);
 		*cmean += (float) krige_vars->s[na] * (bestAICube[ind] - harddata->average);
 		*std_deviation -= (float) (krige_vars->s[na] * krige_vars->rr[na]);

@@ -155,8 +155,7 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
 float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float max_value)
 {
 	int j;
-	float cpow, cdfhi, cdfbt, cdflo;
-	double lambda;
+	float cdfhi, cdfbt, cdflo;
 	float ret_val;
 
 	float a, b;
@@ -196,10 +195,12 @@ float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float
 		if (UTAIL == 1) {
 			ret_val = powint(cdfhi, 1, point[nt].val, max_value, cdfbt, 1);
 		} else if (UTAIL == 2) {
+			float cpow;
 			cpow = 1.f / max_value;
 			ret_val = powint(cdfhi, 1, point[nt].val, max_value, cdfbt, cpow);
 		} else if (UTAIL == 4) {
-			d__1 = (double) point[nt].val;
+			double lambda;
+			d__1 = (double) vr[nt];
 			d__2 = (double) (max_value);
 			lambda =  pow(d__1, d__2) * (1 - gcum(a));
 			d__1 = (double) (lambda / (1 - gcum(b)));

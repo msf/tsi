@@ -6,6 +6,11 @@
 #include "log.h"
 #include "registry.h"
 
+
+#define SIMPLE_KRIG		0
+#define ORDINARY_KRIG	1
+#define CO_KRIG			2
+
 typedef struct harddata_point_type {
 	float x,y,z;
 	float val;				// value of point
@@ -18,6 +23,12 @@ typedef struct {
 	short z;
 	float value;
 } value_point_t;
+
+typedef struct {
+	unsigned int index;
+	float   x, y, z;
+	float	value;
+} search_node_t;
 
 typedef struct {
 	unsigned int index;
@@ -74,16 +85,6 @@ typedef struct search_vars_type {
            sanis2;   /* (SEARCH:RADIUS2) / radius */
 } search_vars_t;
 
-
-typedef struct simulation_vars_type {
-    float  vmedexp,    /* average experimental (wells) */
-           vvarexp,    /* variance... */
-           vmedsec,    /* secondary (AI data) */
-           vvarsec;    /* secondary...*/
-
-} simulation_vars_t;
-
-
 typedef struct covariance_vars_type {
     int    isrot;
     float  cmax;
@@ -116,12 +117,8 @@ typedef struct covtable_lookup_vars_type {
            ncty,
            nctz;
     int    nlooku,
-           ncnode,
-           icnode[64]; // max size = NODMAX
-    float  cnodex[64], // max size = NODMAX
-           cnodey[64], // max size = NODMAX
-           cnodez[64], // max size = NODMAX
-           cnodev[64]; // max size = NODMAX
+           ncnode;
+	search_node_t	node[64]; // max size = NODMAX
 
     /* auxiliar grids allocated in run_dss */
     float  *covtab;
@@ -168,7 +165,6 @@ typedef struct dss_type {
     /* DSS legacy types */
     general_vars_t          *general;
     search_vars_t           *search;
-    simulation_vars_t       *simulation;
     covariance_vars_t       *covariance;
     covtable_lookup_vars_t  *clookup;
     krige_vars_t            *krige;

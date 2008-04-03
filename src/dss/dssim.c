@@ -111,7 +111,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		general_vars_t			*	general,
 		harddata_t				*	harddata,
 		search_vars_t			*	search,
-		simulation_vars_t		*	simulation,
 		covariance_vars_t		*	covariance,
 		covtable_lookup_vars_t	*	covtable_lookup,
 		krige_vars_t			*	krige_vars)
@@ -197,11 +196,11 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 	while( toSim > 0 ) {
 
 #ifdef TSI_DEBUG
-		if(toSim < (general->nxyz * 0.75)) {
+		if(toSim == (general->nxyz * 0.75)) {
 			printf_dbg("\tdsssim(): 1/4 completed.\n");
-		} else if(toSim < (general->nxyz / 2)) {
+		} else if(toSim == (general->nxyz / 2)) {
 			printf_dbg("\tdsssim(): 1/2 completed.\n");
-		} else if(toSim < (general->nxyz / 4)) {
+		} else if(toSim == (general->nxyz / 4)) {
 			printf_dbg("\tdsssim(): 3/4 completed.\n");
  		}
 #endif
@@ -243,21 +242,24 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		/* !we'll only keep the closest "ndmax" data, and look for previously */
 		/* !simulated grid nodes: */
 
-		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
+		covtable_lookup->ncnode = srchnod(ix, iy, iz, &sim[1], 
+				general, 
+				covtable_lookup, 
+				covtable_lookup->node);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
 		kinicial = ktype;
-		if (ktype == 5 && bestAICube[index] == general->nosim_value) {
-			ktype = 1;
+		if (ktype == CO_KRIG && bestAICube[index] == general->nosim_value) {
+			ktype = SIMPLE_KRIG;
 		}
 		/* !Calculate the conditional mean and standard deviation.  This will be */
 		/* !done with kriging if there are data, otherwise, the global mean and */
 		/* !standard deviation will be used: */
-		if (ktype == 2 || ktype >= 4) {
+		if ( ktype == CO_KRIG) {
 			global_mean = bestAICube[index];
 		} else {
 			global_mean = harddata->average;
 		}
-		if (search->nclose + covtable_lookup->ncnode < 1) {
+		if (covtable_lookup->ncnode < 1) {
 			cmean = harddata->average;
 			std_deviation = sqrt(harddata->variance);
 		} else {
@@ -265,20 +267,20 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			/* !then simple kriging is prefered so that the variance of the */
 			/* !realization does not become artificially inflated: */
 			lktype = ktype;
-			if ( ktype == 1 && search->nclose + covtable_lookup->ncnode < 4) {
-				lktype = 0;
+			if ( ktype == ORDINARY_KRIG && covtable_lookup->ncnode < 4) {
+				lktype = SIMPLE_KRIG;
 			}
 			/* !Estimacao em xo (SDSIM) */
 			/* aceder ao bestCorrCube, apenas se ktype >= 4 */
-			if(ktype == 5) {
+			if(ktype == CO_KRIG) {
 				clcorr = bestCorrCube[index];
 			}
 				
 			krige(ix, iy, iz, xx, yy, zz, lktype, global_mean, 
 					&cmean, &std_deviation, // these are the output vars of krige
 					&bestAICube[1], clcorr,
-					general, harddata, search, simulation,
-					covariance, covtable_lookup, krige_vars);
+					general, harddata, 
+					covariance, covtable_lookup, krige_vars, covtable_lookup->node);
 
 		}
 		general->ktype = kinicial;

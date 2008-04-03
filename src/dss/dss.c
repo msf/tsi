@@ -22,7 +22,6 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d = (dss *) tsi_malloc(sizeof(dss));
     d->general    = (general_vars_t *) tsi_malloc(sizeof(general_vars_t));
     d->search     = (search_vars_t *) tsi_malloc(sizeof(search_vars_t));
-    d->simulation = (simulation_vars_t *) tsi_malloc(sizeof(simulation_vars_t));
     d->covariance = (covariance_vars_t *) tsi_malloc(sizeof(covariance_vars_t));
     d->clookup    = (covtable_lookup_vars_t *) tsi_malloc(sizeof(covtable_lookup_vars_t));
     d->krige      = (krige_vars_t *) tsi_malloc(sizeof(krige_vars_t));
@@ -30,7 +29,6 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     if (!d ||
         !d->general ||
         !d->search ||
-        !d->simulation ||
         !d->covariance ||
         !d->clookup ||
         !d->krige ||
@@ -67,9 +65,8 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     if (kpath)
         sprintf(filename, "%s%s", get_string(kpath), get_string(k));
     else
-		sprintf(filename, "%s", get_string(k));
+        sprintf(filename, "%s", get_string(k));
 
-	
     if ( load_harddata_file(l, filename, d->harddata) ) {
         printf("new_dss(): ERROR - failed to load harddata file!\n");
         return NULL;
@@ -118,7 +115,6 @@ int run_dss(dss *d, float *AI) {
           d->general,
 		  d->harddata,
           d->search,
-          d->simulation,
           d->covariance,
           d->clookup,
           d->krige);                                                                        
@@ -155,7 +151,6 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
           d->general,
 		  d->harddata,
           d->search,
-          d->simulation,
           d->covariance,
           d->clookup,
           d->krige);
@@ -180,7 +175,6 @@ void delete_dss(dss *d) {
             tsi_free(d->general);
         }
         if (d->search) tsi_free(d->search);
-        if (d->simulation) tsi_free(d->simulation);
         if (d->covariance) {
             if (d->covariance->variogram) tsi_free(d->covariance->variogram);
         	tsi_free(d->covariance);
