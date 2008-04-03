@@ -97,8 +97,8 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 
 		index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
 		if(lktype == CO_KRIG) {
-			krige_vars->vrea[j] = bestAICube[index];
-			krige_vars->vra[j] -= harddata->average;
+			krige_vars->vrea[j - 1] = bestAICube[index];
+			krige_vars->vra[j - 1] -= harddata->average;
 		}
 		if (lktype == SIMPLE_KRIG) {
 			krige_vars->vra[j - 1] -= global_mean;
@@ -178,8 +178,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	else if (lktype == CO_KRIG ) {
 		sfmin = 1e21f;
 		sfmax = -1e21f;
-		i1 = na;
-		for (i = 1; i <= i1; ++i) {
+		for (i = 1; i <= na; ++i) {
 			++in;
 			krige_vars->a[in - 1] = (double) clcorr * krige_vars->r[i - 1];
 			if (krige_vars->a[in - 1] < sfmin) {
@@ -235,7 +234,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		*std_deviation -= (float) (krige_vars->s[i - 1] * krige_vars->rr[i - 1]);
 		sumwts += (float) krige_vars->s[i - 1];
 	}
-	if (lktype == 0) {
+	if (lktype == SIMPLE_KRIG) {
 		*cmean += global_mean;
 	}
 	else if (lktype == ORDINARY_KRIG) {

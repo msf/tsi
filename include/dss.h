@@ -46,9 +46,6 @@ typedef struct harddata_type {
 } harddata_t;
 
 typedef struct general_vars_type {
-    float  close[7000]; // same size as harddata??? 
-
-    /* parameters from registry */
 #define NVARI	4
 #define LTAIL	1
 #define UTAIL	1
@@ -71,9 +68,6 @@ typedef struct general_vars_type {
 
 
 typedef struct search_vars_type {
-    int    nclose;   /* LPL SHOULD BE INT!!!!! */
-
-    /* parameters from registry */
     int    ndmin,    /* SEARCH:NDMIN */
            ndmax;    /* SEARCH:NDMAX */
     float  radius,   /* SEARCH:RADIUS */

@@ -80,18 +80,6 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
 } /* new_dss */
 
 
-
-int setup_dss(dss *d, int ktype) {
-    printf_dbg2("setup_dss(): called\n");
-
-    /* restore initial values */
-    d->search->nclose =   0;
-
-    return  0;
-} /* setup_dss */
-
-
-
 int run_dss(dss *d, float *AI) {
     int *order;
     int ktype = 1;
@@ -105,8 +93,6 @@ int run_dss(dss *d, float *AI) {
 	d->clookup->ixnode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
 	d->clookup->iynode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
 	d->clookup->iznode = (short *) tsi_malloc( sizeof(short) * d->general->nxyz);
-    /* restore initial values */
-    d->search->nclose =   0;
 
 
     /* SIMULATION */
