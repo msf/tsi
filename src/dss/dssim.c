@@ -255,11 +255,11 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		if (ktype == 2 || ktype >= 4) {
 			global_mean = bestAICube[index];
 		} else {
-			global_mean = simulation->vmedexp;
+			global_mean = harddata->average;
 		}
 		if (search->nclose + covtable_lookup->ncnode < 1) {
-			cmean = simulation->vmedexp;
-			std_deviation = sqrt(simulation->vvarexp);
+			cmean = harddata->average;
+			std_deviation = sqrt(harddata->variance);
 		} else {
 			/* !Perform the kriging.  Note that if there are fewer than four data */
 			/* !then simple kriging is prefered so that the variance of the */

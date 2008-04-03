@@ -160,13 +160,11 @@ int readdata(log_t *l,
 			harddata->point[j].gauss_cprob = general->nosim_value;
 		else
 			harddata->point[j].gauss_cprob = vrg;
-		if(j < 100)
-			printf_dbg2("harddata->point[%u] (%f, %f, %f) value = %f,\t gauss_cprob = %f\n",
+		if(j < 100 || harddata->point_count - j < 100)
+			printf_dbg2("readdata(): vrtr[%u] = %f,\tvrgtr[%u] = %f\n",
 				j, 
-				harddata->point[j].x,
-				harddata->point[j].y,
-				harddata->point[j].z,
 				harddata->point[j].val,
+				j,
 				harddata->point[j].gauss_cprob);
 	}
 	harddata->average /= harddata->point_count;
@@ -174,7 +172,6 @@ int readdata(log_t *l,
 	/* sort by grid index, so that candidates to the same cell become adjacent */
 	qsort(temp, ig, sizeof(value_index_t), cmpvalue_index);
 
-	j = 0;
 	harddata->in_grid = (value_index_t *) tsi_malloc(sizeof(value_index_t) * ig);
 	if(harddata->in_grid == NULL) {
 		ERROR(l, "readdata", "NOT ENOUGH MEMORY");
@@ -185,12 +182,17 @@ int readdata(log_t *l,
 	 * (when harddata has more resolution that our grid cells this is very common)
 	 * make shure in_grid has only one value (the 1st seen ) for each different index
 	 */
-	harddata->in_grid[0].index = -1;
-	for(i = 0; i < ig; i++) {
-		if(temp[i].index == harddata->in_grid[j-1].index)
+	 
+	j = 0;
+	i = 0;
+	int last= -1;
+	do {
+		
+		if(last == temp[i++].index)
 			continue;
-
-		harddata->in_grid[j].index = temp[i].index;
+	
+		last = temp[i-1].index;
+		harddata->in_grid[j].index = last;
 		harddata->in_grid[j].value = temp[i].value;
 		if(j < 100)
 			printf_dbg2("in_grid[%u] idx = %u, value = %f\n", 
@@ -198,7 +200,7 @@ int readdata(log_t *l,
 				harddata->in_grid[j].index,
 				harddata->in_grid[j].value);
 		j++;
-	}
+	} while( i < ig) ;
 	harddata->in_grid_count = j;
 
 	tsi_free(temp);
@@ -228,7 +230,7 @@ int readdata(log_t *l,
 	}
 	harddata->variance /= harddata->point_count;
 
-	printf_dbg2("readdata(): average: %f, variance: %f\n",
+	printf_dbg("readdata(): average: %f, variance: %f\n",
 			harddata->average, harddata->variance);
 
 	return 0;

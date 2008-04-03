@@ -137,7 +137,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			krige_vars->vra[j - 1] -= krige_vars->vrea[j - 1];
 		}
 		if (lktype >= 4) {
-			krige_vars->vra[j - 1] -= simulation->vmedexp;
+			krige_vars->vra[j - 1] -= harddata->average;
 		}
 		i2 = j;
 		for (i = 1; i <= i2; ++i) {
@@ -332,9 +332,9 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	}
 	else if (lktype >= 4) {
 		ind = getPos(ix, iy, iz, general->nx, general->nxy);
-		*cmean += (float) krige_vars->s[na] * (bestAICube[ind] - simulation->vmedexp);
+		*cmean += (float) krige_vars->s[na] * (bestAICube[ind] - harddata->average);
 		*std_deviation -= (float) (krige_vars->s[na] * krige_vars->rr[na]);
-		*cmean += simulation->vmedexp;
+		*cmean += harddata->average;
 	}
 	/* Error message if negative variance: */
 	if (*std_deviation < -ZERO_THRESHOLD) {

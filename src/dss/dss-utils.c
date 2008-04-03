@@ -1,12 +1,11 @@
 #include <math.h>
 #include "dss.h"
 
-static 
-float my_roundf(const float val)
+static
+int my_roundf(const float val)
 {
-    return ((val - floorf(val)) < 0.5) ? floorf(val) : ceilf(val);
+    return (int) ((val - floorf(val)) < 0.5) ? floorf(val) : ceilf(val);
 }
-
 
 int getPos(int x, int y, int z, int xlen, int xylen)
 {	
@@ -43,7 +42,7 @@ void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 
 int getIndex(float min, float siz, float loc)
 {
-	return (int) my_roundf( 1 + (loc - min) / siz );
+	return my_roundf( 1 + (loc - min) / siz );
 }
 
 /* getting absolute coords from relative coords */
@@ -80,8 +79,7 @@ float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point
             break;
     } while( low + 2 < i);
 
-    vmy = point[i-1].gauss_cprob + 
-		(cmean - point[i-1].val) * 
+    vmy = point[i-1].gauss_cprob + (cmean - point[i-1].val) * 
         (point[i].gauss_cprob - point[i-1].gauss_cprob) / 
 		(point[i].val - point[i-1].val);
 
@@ -91,16 +89,25 @@ float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point
 int cmpfloat(const void *a, const void *b)
 {
 	float r = *(float *)a - *(float *)b ; 
-
-	return (int) my_roundf(r);
+	if( r < 0)
+		return -1;
+	else if(r > 0)
+		return 1;
+	else
+		return 0;
 }
 
 int cmpharddata_point_val(const void *a, const void *b)
 {
 	harddata_point_t *p1 = (harddata_point_t *) a;
 	harddata_point_t *p2 = (harddata_point_t *) b;
-
-	return (int) my_roundf( p1->val - p2->val );
+	float x = p1->val - p2->val;
+	if( x < 0)
+		return -1;
+	else if(x > 0)
+		return 1;
+	else
+		return 0;
 }
 
 int cmpharddata_point_gauss_cprob(const void *a, const void *b)
@@ -108,7 +115,12 @@ int cmpharddata_point_gauss_cprob(const void *a, const void *b)
 	harddata_point_t *p1 = (harddata_point_t *) a;
 	harddata_point_t *p2 = (harddata_point_t *) b;
 	float r = p1->gauss_cprob - p2->gauss_cprob;
-	return (int) my_roundf(r);
+	if( r < 0)
+		return -1;
+	else if(r > 0)
+		return 1;
+	else
+		return 0;
 }
 
 int cmpvalue_index(const void *a, const void *b)
