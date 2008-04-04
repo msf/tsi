@@ -161,17 +161,20 @@ void log_string(log_t *l, char* dump)
 
 void log_print(log_t *l, char *fmt, ...)
 {
+	char	buf[2048];
 	va_list	args;
+
 	va_start(args, fmt);
-	
-	vfprintf(l->logFile, fmt, args);
+	vsprintf(buf, fmt, args);
+	va_end(args); 
+
+	fprintf(l->logFile, buf); 
 	if(l->verbose) {
-		vprintf(fmt, args);
+		printf(buf);
 		fflush(stdout);
 	}
 	fflush(l->logFile);
 
-	va_end(args);
 }
 
 void log_separator(log_t *l)
