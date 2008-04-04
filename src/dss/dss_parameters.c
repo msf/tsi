@@ -6,8 +6,9 @@
 #include "dss.h"
 #include "dss_legacy.h"
 #include "tsi_io.h"
+#include "log.h"
 
-int  dss_parameters(dss *d, registry *r )
+int  dss_parameters(dss *d, log_t *l, registry *r )
 {
     int i, varnum;
     float aa1, aa2, aa, sill;
@@ -129,7 +130,7 @@ int  dss_parameters(dss *d, registry *r )
     if ((k = get_key(r, "SEARCH", "RADIUS")) == NULL) return 1;
     d->search->radius = get_float(k);
     if (d->search->radius < 1e-20) {
-        printf("load_dss_configs(): ERROR - radius (%f) must be greater than EPSLON (1E-20)\n", d->search->radius);
+		ERROR(l, "load_dss_configs", "radius must be greater than EPSLON (1E-20)");
         return 1;
     }
     d->search->radsqd = d->search->radius * d->search->radius;
@@ -179,7 +180,7 @@ int  dss_parameters(dss *d, registry *r )
 	variogram_t *variogram = (variogram_t *) tsi_malloc(varnum * sizeof(variogram_t));
 
     if (!variogram ) {
-        printf("load_dss_configs(): ERROR - Failed to allocate space for variograms!\n");
+		ERROR(l, "load_dss_configs", "allocate space for variograms!");
         return 1;
     }
 
@@ -192,7 +193,7 @@ int  dss_parameters(dss *d, registry *r )
         
 		printf_dbg2("%s - type: %d\t %d\n", varname, get_int(k), variogram[i].type);
         if (variogram[i].type == 4) {
-            printf("load_dss_configs(): ERROR - A power model is not allowed! Choose a different model and re-start.\n");
+			ERROR(l, "load_dss_configs", "A power model is not allowed! Choose a different model");
             return 1;
         }
 

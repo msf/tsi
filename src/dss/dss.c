@@ -50,7 +50,7 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->krige->last_na = 0;    
 
     printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
-	if(dss_parameters(d, r)){
+	if(dss_parameters(d, l, r)){
 		ERROR(l, "new_dss()", "dss_parameters()");
 		return NULL;
 	}
