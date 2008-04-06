@@ -53,9 +53,9 @@ log_t *new_log(registry *reg, int proc_id) {
             fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n using only stdout..\n", new_log->logBuf);
         } else {
             fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n enabling verbosive mode..\n", new_log->logBuf);
-            new_log->logFile = stdout;
-            new_log->verbose = 0;
         }   
+		new_log->logFile = stdout;
+		new_log->verbose = 0;
     }
 
     new_log->simulNum = 0;
