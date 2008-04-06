@@ -51,30 +51,6 @@ extern int cmpharddata_point_val(const void *a, const void *b);
 extern int cmpharddata_point_gauss_cprob(const void *a, const void *b);
 
 int cmpvalue_index(const void *a, const void *b);
-/* dss_supr */
-/*
-extern int setsupr(int *, float *, float *, int *, float *, float *, int *, float *,
-                   float *, int *, float *, float *, float *, float *, float *, int *,
-                   float *, float *, float *, int *, int *, int *, int *, int *, float *, 
-                   float *, int *, float *, float *, int *, float *, float *);
-
-extern int srchsupr(float xloc, float yloc, float zloc, float radsqd, int irot,
-                    double rotmat[5][3][3],int nsbtosr, int *ixsbtosr, int *iysbtosr,
-                    int *izsbtosr, int noct, float *x, float *y, float *z, float *tmp,
-                    int *nisb, int nxsup, float xmnsup, float xsizsup, int nysup,
-                    float ymnsup, float ysizsup, int nzsup, float zmnsup, float zsizsup,
-                    int *nclose, float *close);
-
-extern int picksup(int nxsup, float xsizsup, int nysup, float ysizsup, int nzsup,
-                   float zsizsup, int irot, double rotmat[5][3][3], float radsqd,
-                   int *nsbtosr, int * ixsbtosr, int *iysbtosr, int *izsbtosr);
-
-*/
-extern int sortem(int *, int *, float *, int *, float *, float *, float *, float *,
-                  float *, float *, float *);
-
-extern int sort_permute_float(int , int , float *, float *);
-
 
 
 /* dss_krige */
@@ -104,12 +80,6 @@ extern int sort_permute_int(int , int , float *, int *);
 
 /* dss_backtr */
 extern float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float max_value);
-
-/*extern int sortemi(int *, int *,
-           float *,
-           int *, int *,
-           float *, float *, float *, float *, float *, float *);
-*/
 
 
 #endif /* _DSS_LEGACY_H */

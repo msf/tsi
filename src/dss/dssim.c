@@ -153,9 +153,9 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 				covariance->variogram[i].ang3,
 				covariance->variogram[i].anis1,
 				covariance->variogram[i].anis2,
-				i+1, krige_vars->rotmat);
+				i, krige_vars->rotmat);
 	}
-	covariance->isrot = 5;
+	covariance->isrot = 4;
 	setrot(search->sang1, search->sang2, search->sang3,
 			search->sanis1, search->sanis2, covariance->isrot, 
 			krige_vars->rotmat);
