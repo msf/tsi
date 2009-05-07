@@ -19,8 +19,7 @@ void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 	int iy, iz;
 	int t;
 	
-	/* the same way that we subtract y & z in getPos, we increment here! */
-	ind++;
+	ind--;
 
 	iz = ind / xylen;
 	*z = iz +1;
@@ -29,7 +28,7 @@ void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 	iy = t / xlen;
 	*y = iy +1;
 
-	*x = ind % xlen;
+	*x = (ind % xlen) + 1;
 }
 
 
