@@ -24,9 +24,9 @@ CPP     := g++#-3.4
 CFLAGS  := -pipe  -DNEW_RAND 
 LDFLAGS := -lm -lgcc 
 OPTS    := -O3 -fomit-frame-pointer -ffast-math 
-#OPTS	+= -msse -msse2 -mfpmath=sse 
-#OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
-#OPTS	+= -march=k8
+OPTS	+= -msse -msse2 -mfpmath=sse 
+OPTS	+= -ftree-vectorize # use only with gcc-4 or above.
+OPTS	+= -march=native
 OPTS	+= -g 
 #OPTS	+= -DTSI_DEBUG
 DEBUG   := -g -ggdb -DTSI_DEBUG2
