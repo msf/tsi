@@ -89,7 +89,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 
     /* ignore gslib header */
 	if( !read_gslib_header(l, fp, 2) ) {
-		ERROR(l, "load_harddata_file()", "read_gslib_header()");
+		ERROR(s->l, "load_harddata_file()", "read_gslib_header()");
 		return NULL;
 	}
 
