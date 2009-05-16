@@ -8,7 +8,7 @@ int my_roundf(const float val)
 }
 
 int getPos(int x, int y, int z, int xlen, int xylen)
-{	
+{
 	return (x + (xlen * (y -1)) + (xylen * (z-1)));
 }
 
@@ -17,7 +17,7 @@ void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 {
 	int iy, iz;
 	int t;
-	
+
 	ind--;
 
 	iz = ind / xylen;
@@ -31,10 +31,10 @@ void get3Dcoords(int ind, int xlen, int xylen, int *x, int *y, int *z)
 }
 
 
-/*     Gets the coordinate index location of a point within a grid 
- min     origin at the center of the first cell 
- siz     size of the cells 
- loc     location of the point being considered 
+/*     Gets the coordinate index location of a point within a grid
+ min     origin at the center of the first cell
+ siz     size of the cells
+ loc     location of the point being considered
 
  coordinate index should be checked to see if its inside given grid by the caller.
  */
@@ -78,8 +78,8 @@ float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point
             break;
     } while( low + 2 < i);
 
-    vmy = point[i-1].gauss_cprob + (cmean - point[i-1].val) * 
-        (point[i].gauss_cprob - point[i-1].gauss_cprob) / 
+    vmy = point[i-1].gauss_cprob + (cmean - point[i-1].val) *
+        (point[i].gauss_cprob - point[i-1].gauss_cprob) /
 		(point[i].val - point[i-1].val);
 
     return vmy;
@@ -87,7 +87,7 @@ float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point
 
 int cmpfloat(const void *a, const void *b)
 {
-	float r = *(float *)a - *(float *)b ; 
+	float r = *(float *)a - *(float *)b ;
 	if( r < 0)
 		return -1;
 	else if(r > 0)
