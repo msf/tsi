@@ -78,6 +78,10 @@ float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point
             break;
     } while( low + 2 < i);
 
+    /* div by 0 bug fix */
+    while(point[i-1].val == point[i].val)
+        i++;
+
     vmy = point[i-1].gauss_cprob + (cmean - point[i-1].val) *
         (point[i].gauss_cprob - point[i-1].gauss_cprob) /
 		(point[i].val - point[i-1].val);
