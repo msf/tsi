@@ -129,17 +129,7 @@ typedef struct covtable_lookup_vars_type {
 
 typedef struct krige_vars_type {
     double rotmat[5][3][3];
-
-    double *rr,
-           *r,    /* used to set and solve a system of equations */
-           *s,      /* search->nclose * covtable_lookp->ncnode */
-           *a;
-
-    float  *vra,
-           *vrea,
-           cbb;
-           
-    int    last_na;
+    float  cbb;
 } krige_vars_t;
 
 

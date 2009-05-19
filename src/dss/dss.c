@@ -38,17 +38,6 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->heap = h;
 	d->l = l;
 	
-	/* 8 and 16 are what it need to work.. :-/
-	 * 12 is the precalculated maximum of: na = search->nclose + covtable_lookup->ncnode;
-	*/
-    d->krige->rr = NULL;
-    d->krige->r = NULL;
-    d->krige->s = NULL;
-    d->krige->a = NULL;
-    d->krige->vra = NULL;
-    d->krige->vrea = NULL;
-    d->krige->last_na = 0;    
-
     printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, l, r)){
 		ERROR(l, "new_dss()", "dss_parameters()");
@@ -167,12 +156,6 @@ void delete_dss(dss *d) {
         }
         if (d->clookup) tsi_free(d->clookup);
         if (d->krige) {
-            if (d->krige->rr) tsi_free(d->krige->rr);
-            if (d->krige->r) tsi_free(d->krige->r);
-            if (d->krige->s) tsi_free(d->krige->s);
-            if (d->krige->a) tsi_free(d->krige->a);
-            if (d->krige->vra) tsi_free(d->krige->vra);
-            if (d->krige->vrea) tsi_free(d->krige->vrea);            
             tsi_free(d->krige);
         }
 		if (d->harddata) {
