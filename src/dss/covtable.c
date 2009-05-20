@@ -168,9 +168,9 @@ int covtable(int *order, float * tmp,
 		covtable_lookup->iznode[il - 1] = iz;
 		covtable_lookup->iynode[il - 1] = iy;
 		covtable_lookup->ixnode[il - 1] = ix;
-		printf_dbg2("loop 2/3: %i %i %i\n", il, (int)covtable_lookup->nlooku, general->nxyz);
 
 	}
+	printf_dbg2("covtable finished\n");
 
 	if (covtable_lookup->nodmax > 64) {
 		fprintf(stderr, "covtable(): covtable_lookup->nodmax above limit of 64, setting to 64!");
