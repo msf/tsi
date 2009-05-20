@@ -13,6 +13,7 @@
 #include "si_math.h"
 #include "si_resume.h"
 
+static int read_wavelet_file(si *s, char *filename);
 
 si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     si *s;
@@ -54,19 +55,6 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 
     s->grid_size = (unsigned int)s->zsize * (unsigned int)s->ysize * (unsigned int)s->xsize;
 		
-    /* load wavelet */
-    if ((k = get_key(r, "WAVELET", "USED_VALUES")) == NULL) {
-        printf("\tnew_si(): failed to get WAVELET:USED_VALUES from registry!\n");
-        return NULL;
-    }
-
-    s->wavelet_used_values = get_int(k);
-    s->points = (int *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(int));
-    s->values = (float *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(float));
-    if (!s->points || !s->values) {
-        printf("\tnew_si(): failed to allocate space for wavelet!\n");
-        return NULL;
-    }
     
     if ((kpath = get_key(r, "WAVELET", "PATH")) == NULL)
         kpath = get_key(r, "GLOBAL", "INPUT_PATH");
@@ -78,32 +66,11 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         sprintf(filename, "%s%s", get_string(kpath), get_string(k));
     else
         sprintf(filename, "%s", get_string(k));
-    fp = fopen(filename, "r");
-    if (!fp) {
-		ERROR(s->l, "fopen()", filename);
-        return NULL;
-    }
 
-	/* read wavelet, put this in a separate function */
-    i = 0;
-
-    /* ignore gslib header */
-	if( !read_gslib_header(l, fp, 2) ) {
-		ERROR(s->l, "load_harddata_file()", "read_gslib_header()");
+	if( read_wavelet_file(s, filename) ) {
+		ERROR(s->l, "new_si()", "read_wavelet_file()");
 		return NULL;
 	}
-
-	/* read all the others in pairs */
-    while (fscanf(fp,"%d %f\n", &(s->points[i]), &(s->values[i])) != EOF) {
-        printf_dbg2("Wavelet[%d] = Pair(%d, %f)\n", i, s->points[i], s->values[i]);
-        i++;
-    }
-    fclose(fp);
-
-    if (i < s->wavelet_used_values) {
-        ERROR(s->l, "new_si()","not enough points found in wavelet file.");
-        return NULL;
-    }
     
 	/* layers data */
 	s->random = 1;
@@ -148,7 +115,52 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     return s;
 } /* new_si */
 
+static int read_wavelet_file(si *s, char *filename)
+{
+	FILE *fp;
+	int i;
+	char line[256];
 
+    fp = fopen(filename, "r");
+    if (!fp) {
+		ERROR(s->l, "fopen()", filename);
+        return -1;
+	}
+
+
+	i = 0;
+	while(fgets(line, 255, fp) != NULL)
+		i++;
+	printf_dbg("read_wavelet_file(): %d lines\n",i);
+
+    s->wavelet_used_values = i;
+    s->points = (int *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(int));
+    s->values = (float *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(float));
+    if (!s->points || !s->values) {
+        ERROR(s->l, "read_wavelet_file()", "failed to allocate space for wavelet!");
+        return -1;
+    }
+
+	fseek(fp, 0, SEEK_SET); // back to start of file
+
+    /* ignore gslib header, must have 2 values per line */
+	if( !read_gslib_header(s->l, fp, 2) ) {
+		ERROR(s->l, "read_wavelet_file()", "read_gslib_header()");
+		return -1;
+	}
+
+	/* read all the others in pairs */
+    i = 0;
+    while (fscanf(fp,"%d %f\n", &(s->points[i]), &(s->values[i])) != EOF) {
+        printf_dbg2("Wavelet[%d] = Pair(%d, %f)\n", i, s->points[i], s->values[i]);
+        i++;
+    }
+    fclose(fp);
+
+	s->wavelet_used_values = i;
+	printf_dbg("read_wavelet_file(): going to use %d points\n", i);
+	return 0;
+}
 
 int run_si(si *s, float *AI, float *seismic, float *CM, float *SY, int it, int sim) {
     int result;
