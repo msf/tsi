@@ -200,8 +200,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		krige_vars->s[0] = krige_vars->r[0] / krige_vars->a[0];
     } else {
 		int ising;
-		double *rp, *ap, *sp;   //LPL test...
-        //ksol(&one, &neq, &one, krige_vars->a, krige_vars->r, krige_vars->s, & ising);
+		double *rp, *ap, *sp;
         ap = krige_vars->a;
         rp = krige_vars->r;
         sp = krige_vars->s;
