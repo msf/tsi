@@ -138,11 +138,11 @@ int covtable(int *order, float * tmp,
 
 				if ((float) hsqd <= search->radsqd) {
 					++covtable_lookup->nlooku;
-					/*		    printf("nlooku: %i\n", covtable_lookup->nlooku); 
-					 						We want to search by closest variogram distance (and use the 
-					 						anisotropic Euclidean distance to break ties: */
-					tmp[covtable_lookup->nlooku] = -(covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] - (float) hsqd * 1e-10f);
-					order[covtable_lookup->nlooku] = getPos(ic,jc,kc, general->nx, general->nxy);
+					/*	We want to search by closest variogram distance 
+						(and use the anisotropic Euclidean distance to break ties: */
+					loc = getPos(ic,jc,kc, general->nx, general->nxy);
+					tmp[covtable_lookup->nlooku] = -(covtable_lookup->covtab[loc] - (float) hsqd * 1e-10f);
+					order[covtable_lookup->nlooku] = loc;
 				}
 
 			}
@@ -156,6 +156,7 @@ int covtable(int *order, float * tmp,
 	/*    printf("calling sortem\n"); */
 
   /*	sortemi(&one, &covtable_lookup->nlooku, &tmp[1], &one, &order[1], &c__, &d__, &e, &f, &g, &h__); */
+	printf_dbg("covtable: covtable size: %d, sorting now...\n", covtable_lookup->nlooku);
 	sort_permute_int(1, covtable_lookup->nlooku, &tmp[1], &order[1]);
 
 	i1 = covtable_lookup->nlooku;  
@@ -167,7 +168,7 @@ int covtable(int *order, float * tmp,
 		covtable_lookup->iznode[il - 1] = iz;
 		covtable_lookup->iynode[il - 1] = iy;
 		covtable_lookup->ixnode[il - 1] = ix;
-		/*      printf("loop 2/3: %i %i %i\n", il, (int)covtable_lookup->nlooku, general->nxyz); */
+		printf_dbg2("loop 2/3: %i %i %i\n", il, (int)covtable_lookup->nlooku, general->nxyz);
 
 	}
 
