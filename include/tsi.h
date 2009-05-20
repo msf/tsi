@@ -7,7 +7,7 @@
 #include "si.h"
 #include "log.h"
 
-#define TSI_VERSION		"v6.1"
+#define TSI_VERSION		"v6.2"
 
 
 
