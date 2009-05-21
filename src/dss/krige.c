@@ -211,7 +211,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		vra_weight[0] = cov_vector[0] / cov_table[0];
     } else {
 		int ising;
-		double *rp, *ap, *sp;   //LPL test...
+		double *rp, *ap, *sp;
         ap = cov_table;
         rp = cov_vector;
         sp = vra_weight;
