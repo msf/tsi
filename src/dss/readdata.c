@@ -25,6 +25,9 @@
 #define ISVR    1
 #define ISWT    2
 
+// these are aproximate values
+#define FLOAT_MAX  3.40e38
+#define FLOAT_MIN  1.40e-45
 
 
 int load_harddata_file(log_t *l, char *filename, harddata_t *harddata) 
@@ -40,7 +43,7 @@ int load_harddata_file(log_t *l, char *filename, harddata_t *harddata)
         return 1;
     }
 	
-    /* ignore gslib header */
+    /* ignore gslib header, must have 4 points per line */
 	if( !read_gslib_header(l, fp, 4) ) {
 		ERROR(l, "load_harddata_file()", "read_gslib_header()");
 		return 1;
@@ -68,13 +71,16 @@ int load_harddata_file(log_t *l, char *filename, harddata_t *harddata)
 	
 	i = 0;
 	m = 0;
+	harddata->min_value = FLOAT_MAX; //ensure updates
+	harddata->max_value = FLOAT_MIN; //ensure updates
 	while( (m = fscanf(fp,"%f %f %f %f", &point.x, &point.y, &point.z, &point.val)) != EOF ) {
 		if(m != 4)
 			log_print(l,"load_harddata_file(): ERROR -  %d can't parse data values, line: %d\n",m, 6+(i/4));
 
-		/* skip points that aren't in the [min, max] interval */
-		if(point.val < harddata->min_value || point.val > harddata->max_value)
-			continue;
+		if(point.val < harddata->min_value)
+			harddata->min_value = point.val;
+		if(point.val > harddata->max_value)
+			harddata->max_value = point.val;
 
 		harddata->point[i++] = point;
 	}
@@ -230,8 +236,9 @@ int readdata(log_t *l,
 	}
 	harddata->variance /= harddata->point_count;
 
-	printf_dbg("readdata(): average: %f, variance: %f\n",
-			harddata->average, harddata->variance);
+	printf_dbg("readdata(): average: %f, variance: %f, min/max: %f/%f\n",
+			harddata->average, harddata->variance,
+			harddata->min_value, harddata->max_value);
 
 	return 0;
 } /* readdata */

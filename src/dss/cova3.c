@@ -129,6 +129,7 @@ double cova3(float x1, float y1, float z1, float x2, float y2, float z2,
 
 		/* Spherical Variogram Model? */
 
+		// FIXME: XXX BUG ON SPHERICAL TYPE
 		if (variogram[is].type == VARIOGRAM_TYPE_SPHERICAL) {
 			hr = h / variogram[is].aa;
 			if (hr < 1) {

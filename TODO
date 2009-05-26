@@ -2,16 +2,20 @@ TSI TODO LIST!
 
 
 DOING DSS CLEANUP.
-- REMOVAL OF unused variables from DSS.H STRUCTS.
-- detecting dead code from values of config values that never change.
-- removing unused parameters.
-- general cleanup.
-- change names to something more meaningfull.
-- list goes on forever...
+    - remove need for:
+        TMIN
+        TMAX
+        [WAVELET] USED_VALUES
+    - make thread save:
+        srchnod
+        krige
+        ksol
+
 
 
 ---------------------------------------------------------------
 TO BE DONE:
+- implement mask
 - convert lookup tables for x, y z to "index" table.
 - significantly reduce lookup table sizes, implies:
     - search radius must be significantly smaller than grid size.

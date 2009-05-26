@@ -42,13 +42,36 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	float sfmin, sfmax;
 	float sumwts;
 
-    /* matrices and temp data */
-    double *cov_table  = (double *) tsi_malloc(16 + na * na * sizeof(double));
-    double *cov_vector = (double *) tsi_malloc(8 + na * sizeof(double));
-    double *vra_weight = (double *) tsi_malloc(8 + na * sizeof(double));
-    double *rr =   (double *) tsi_malloc(8 + na * sizeof(double));
-    double *vra =  (float *)  tsi_malloc(na * sizeof(float));
+	int alloc = 0;
+    /* matrices and temp data (assume na = 16)*/
+	double stack_cov_table[2048]; // 16 + na * na * sizeof(double)
+	double stack_cov_vector[192];// 8 + na * sizeof(double)
+	double stack_vra_weight[192];// 8 + na * sizeof(double)
+	double stack_rr[192];// 8 + na * sizeof(double)
+	float stack_vra[64];// 8 + na * sizeof(float)
 
+	double *cov_table;
+	double *cov_vector;
+	double *vra_weight;
+	double *rr;
+	float *vra;
+
+
+	/* only alloc if needed */
+	if(na > 16) {
+		alloc = 1;
+		cov_table  = (double *) tsi_malloc(16 + na * na * sizeof(double));
+		cov_vector = (double *) tsi_malloc(8 + na * sizeof(double));
+		vra_weight = (double *) tsi_malloc(8 + na * sizeof(double));
+		rr =   (double *) tsi_malloc(8 + na * sizeof(double));
+		vra =  (float *)  tsi_malloc(na * sizeof(float));
+	} else {
+		cov_table = stack_cov_table;
+		cov_vector= stack_cov_vector;
+		vra_weight= stack_vra_weight;
+		rr		  = stack_rr;
+		vra		  = stack_vra;
+	}
 
 
 	/* Parameter adjustments */
@@ -188,7 +211,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		vra_weight[0] = cov_vector[0] / cov_table[0];
     } else {
 		int ising;
-		double *rp, *ap, *sp;   //LPL test...
+		double *rp, *ap, *sp;
         ap = cov_table;
         rp = cov_vector;
         sp = vra_weight;
@@ -203,11 +226,13 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 
             *cmean = global_mean;
             *std_deviation = 1.f;
-            tsi_free(rr);
-            tsi_free(cov_vector);
-            tsi_free(vra_weight);
-            tsi_free(cov_table);
-            tsi_free(vra);
+			if(alloc) {
+				tsi_free(rr);
+				tsi_free(cov_vector);
+				tsi_free(vra_weight);
+				tsi_free(cov_table);
+				tsi_free(vra);
+			}
             return 0;
         }
     }
@@ -263,10 +288,12 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	/*     +             ' std dev ',f8.4) */
 	/*      end if */
 	/* Finished Here: */
-    tsi_free(cov_table);
-    tsi_free(cov_vector);
-    tsi_free(vra_weight);
-    tsi_free(rr);
-    tsi_free(vra);
+	if(alloc) {
+		tsi_free(cov_table);
+		tsi_free(cov_vector);
+		tsi_free(vra_weight);
+		tsi_free(rr);
+		tsi_free(vra);
+	}
 	return 0;
 } /* krige_ */

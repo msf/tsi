@@ -15,11 +15,11 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
     reg_key *k;
 
     /* harddata parameters */
-    if ((k = get_key(r, "HARDDATA", "TMIN")) == NULL) return 1;
-    d->harddata->min_value = get_float(k);
+    if (get_key(r, "HARDDATA", "TMIN"))
+    	printf("[HARDDATA] TMIN is autodetected, value in file will be ignored\n");
 
-    if ((k = get_key(r, "HARDDATA", "TMAX")) == NULL) return 1;
-    d->harddata->max_value = get_float(k);
+    if (get_key(r, "HARDDATA", "TMAX"))
+    	printf("[HARDDATA] TMAX is autodetected, value in file will be ignored\n");
 
     if (get_key(r, "HARDDATA", "NVARI"))
     	printf("[HARDDATA] NVARI is NOT used\n");
