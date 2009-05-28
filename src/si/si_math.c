@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "si.h"
 #include "si_math.h"
+#include "si_utils.h"
 
 /* prototypes */
 float point_value(si *s, int point);
@@ -18,9 +19,8 @@ float index_value(si *s, int idx);
 
 unsigned int getPoint(si *s, int x, int y, int z)
 {
-	return (z * s->xsize * s->ysize + y * s->xsize + x);
+	return get_grid_point(s->xsize, s->ysize, x, y, z);
 }
-
 
 /**
  * make Reflection Coeficients grid
