@@ -130,6 +130,8 @@ int main(int argc, char *argv[])
         test_static_real( a[i] );
         test_mt_long( a[i] );
         test_mt_real( a[i] );
+        test_many_long( a[i], 100 );
+        test_many_long( a[i], 100 );
         test_noneq_long( a[i] );
         test_noneq_real( a[i] );
     }
