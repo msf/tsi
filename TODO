@@ -2,10 +2,6 @@ TSI TODO LIST!
 
 
 DOING DSS CLEANUP.
-    - remove need for:
-        TMIN
-        TMAX
-        [WAVELET] USED_VALUES
     - make thread save:
         srchnod
         krige
@@ -16,6 +12,14 @@ DOING DSS CLEANUP.
 ---------------------------------------------------------------
 TO BE DONE:
 - implement mask
+    -DSS
+        - srchnod()
+        - krige() ?
+        - main loop()
+    -TSI
+        Normalizar sistema de coordenadas 3d <-> index para DSS e TSI.
+        .. problemas com sistema de coordenadas 3d -> index
+        ..todo o lado
 - convert lookup tables for x, y z to "index" table.
 - significantly reduce lookup table sizes, implies:
     - search radius must be significantly smaller than grid size.
