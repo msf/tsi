@@ -43,9 +43,11 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
+#include <stdlib.h>
+
+#include "math_random.h"
 
 /* Period parameters */  
-#define N 624
 #define M 397
 #define MATRIX_A 0x9908b0dfUL   /* constant vector a */
 #define UMASK 0x80000000UL /* most significant w-r bits */
@@ -53,14 +55,12 @@
 #define MIXBITS(u,v) ( ((u) & UMASK) | ((v) & LMASK) )
 #define TWIST(u,v) ((MIXBITS(u,v) >> 1) ^ ((v)&1UL ? MATRIX_A : 0UL))
 
-static unsigned long state[N]; /* the array for the state vector  */
-static int left = 1;
-static int initf = 0;
-static unsigned long *next;
+static mtrand_t mt_state;
 
 /* initializes state[N] with a seed */
-void init_genrand(unsigned long s)
+static void mtrand_init(mtrand_t *mt, unsigned long s)
 {
+    unsigned long *state = mt->state;
     int j;
     state[0]= s & 0xffffffffUL;
     for (j=1; j<N; j++) {
@@ -71,17 +71,20 @@ void init_genrand(unsigned long s)
         /* 2002/01/09 modified by Makoto Matsumoto             */
         state[j] &= 0xffffffffUL;  /* for >32 bit machines */
     }
-    left = 1; initf = 1;
+    mt->left = 1;
+    mt->initf = 1;
 }
 
 /* initialize by an array with array-length */
 /* init_key is the array for initializing keys */
 /* key_length is its length */
 /* slight change for C++, 2004/2/26 */
-void init_by_array(unsigned long init_key[], int key_length)
+static void init_by_array(mtrand_t *mt, unsigned long init_key[], int key_length)
 {
+    unsigned long *state = mt->state;
     int i, j, k;
-    init_genrand(19650218UL);
+
+    mtrand_init(mt, 19650218UL);
     i=1; j=0;
     k = (N>key_length ? N : key_length);
     for (; k; k--) {
@@ -108,39 +111,40 @@ void init_by_array(unsigned long init_key[], int key_length)
     }
 
     state[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */ 
-    left = 1; initf = 1;
+    mt->left = 1;
+    mt->initf = 1;
 }
 
-static void next_state(void)
+static void mtrand_next_state(mtrand_t *mt)
 {
-    unsigned long *p=state;
+    unsigned long *p=mt->state;
     int j;
 
     /* if init_genrand() has not been called, */
     /* a default initial seed is used         */
-    if (initf==0) 
-		init_genrand(5489UL);
+    if (mt->initf==0)
+		mtrand_init(mt, 5489UL);
 
-    left = N;
-    next = state;
-    
-    for (j=N-M+1; --j; p++) 
+    mt->left = N;
+    mt->next = mt->state;
+
+    for (j=N-M+1; --j; p++)
         *p = p[M] ^ TWIST(p[0], p[1]);
 
-    for (j=M; --j; p++) 
+    for (j=M; --j; p++)
         *p = p[M-N] ^ TWIST(p[0], p[1]);
 
-    *p = p[M-N] ^ TWIST(p[0], state[0]);
+    *p = p[M-N] ^ TWIST(p[0], mt->state[0]);
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
-unsigned long genrand_int32(void)
+static unsigned long mtrand_int32(mtrand_t *mt)
 {
     unsigned long y;
 
-    if (--left == 0) 
-		next_state();
-    y = *next++;
+    if (--mt->left == 0)
+		mtrand_next_state( mt );
+    y = (*mt->next)++;
 
     /* Tempering */
     y ^= (y >> 11);
@@ -152,37 +156,31 @@ unsigned long genrand_int32(void)
 }
 
 /* generates a random number on [0,0x7fffffff]-interval */
-long genrand_int31(void)
+static long mtrand_int31(mtrand_t *mt)
 {
-    return (long)(genrand_int32()>>1);
-}
-
-// need a 28bit RNG.
-long genrand_int28(void)
-{
-	return (long)(genrand_int32()>>4);
+    return (long)(mtrand_int32(mt)>>1);
 }
 
 /* generates a random number on [0,1)-real-interval */
-double genrand_real2(void)
+static double mtrand_real2(mtrand_t *mt)
 {
-    return ((double)genrand_int32()) * (1.0 / 4294967296.0); 
+    return ((double)mtrand_int32(mt)) * (1.0 / 4294967296.0);
     /* divided by 2^32 */
 }
 
 /* generates a random number on (0,1)-real-interval */
-double genrand_real3(void)
+static double mtrand_real3(mtrand_t *mt)
 {
-    return ((double)genrand_int32() + 0.5) * (1.0/4294967296.0); 
+    return ((double)mtrand_int32(mt) + 0.5) * (1.0/4294967296.0);
     /* divided by 2^32 */
 }
 
 /* generates a random number on [0,1) with 53-bit resolution*/
-double genrand_res53(void) 
-{ 
-    unsigned long a=genrand_int32()>>5, b=genrand_int32()>>6; 
-    return(a*67108864.0+b)*(1.0/9007199254740992.0); 
-} 
+static double mtrand_res53(mtrand_t *mt)
+{
+    unsigned long a=mtrand_int32(mt)>>5, b=mtrand_int32(mt)>>6;
+    return(a*67108864.0+b)*(1.0/9007199254740992.0);
+}
 /* These real versions are due to Isaku Wada, 2002/01/09 added */
 
 
@@ -200,7 +198,9 @@ void tsi_seed_random(long seed)
 #ifdef OLD_RAND
     srandom(seed);
 #else
-	init_genrand(seed);
+    mt_state.initf = 0;
+    mt_state.left = 1;
+	mtrand_init( &mt_state, seed);
 #endif
 }
 
@@ -210,7 +210,7 @@ unsigned long tsi_random(void)
     return (unsigned long)random();
 #else
 	//TODO: try int28()
-	return genrand_int31();
+	return mtrand_int31(&mt_state);
 #endif
 }
 
@@ -219,6 +219,39 @@ double tsi_random_real(void)
 #ifdef OLD_RAND
     return ((double)random()) / RAND_MAX;
 #else
-	return genrand_real2();
+	return mtrand_real2(&mt_state);
 #endif
 }
+
+
+
+mtrand_t *genrand_new(long seed) 
+{
+    genrand_t *state = malloc(sizeof(genrand_t));
+    if( ! state )
+        return NULL;
+
+    state->initf = 0;
+    state->left = 1;
+    mtrand_init(state, seed);
+    return state;
+}
+
+void genrand_free(genrand_t *state)
+{
+    if(state)
+        free(state);
+    state = NULL;
+}
+
+
+unsigned long genrand_ulong(genrand_t *state)
+{
+    return mtrand_int31(state);
+}
+
+double genrand_real(genrand_t *state)
+{
+    return mtrand_real2(state);
+}
+

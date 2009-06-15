@@ -1,40 +1,42 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0"?>
 <?fileVersion 3.1.0?>
-
 <ManagedProjectBuildInfo>
-<project id="TSI.cdt.managedbuild.target.gnu.exe.247929104" name="Executable (Gnu)" projectType="cdt.managedbuild.target.gnu.exe">
-<configuration artifactName="TSI" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.exe.debug.775698319" name="Debug" parent="cdt.managedbuild.config.gnu.exe.debug">
-<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.878561326" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.293671683" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug"/>
-<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1592415954" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
-<option id="gnu.c.compiler.option.include.paths.217807694" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TSI/include}&quot;"/>
-</option>
-<option id="gnu.c.compiler.option.preprocessor.def.symbols.353842643" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
-<listOptionValue builtIn="false" value="TSI_DEBUG"/>
-</option>
-<option id="gnu.c.compiler.option.misc.ansi.152028387" superClass="gnu.c.compiler.option.misc.ansi" value="false" valueType="boolean"/>
-</tool>
-<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1749634444" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
-<option id="gnu.c.link.option.libs.320922468" superClass="gnu.c.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="m"/>
-<listOptionValue builtIn="false" value="gcc"/>
-</option>
-</tool>
-<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1014996229" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug"/>
-<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.578654043" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug"/>
-<macros/>
-</toolChain>
-</configuration>
-<configuration artifactName="TSI" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.exe.release.1374782014" name="Release" parent="cdt.managedbuild.config.gnu.exe.release">
-<toolChain id="cdt.managedbuild.toolchain.gnu.exe.release.1263029014" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.exe.release">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.493868320" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release"/>
-<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.2060397146" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release"/>
-<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.release.1568718397" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release"/>
-<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.981306096" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release"/>
-<tool id="cdt.managedbuild.tool.gnu.assembler.exe.release.1945239750" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release"/>
-</toolChain>
-</configuration>
-<macros/>
-</project>
+  <project id="TSI.cdt.managedbuild.target.gnu.exe.247929104" name="Executable (Gnu)" projectType="cdt.managedbuild.target.gnu.exe">
+    <configuration id="cdt.managedbuild.config.gnu.exe.debug.775698319" name="Debug" description="" parent="cdt.managedbuild.config.gnu.exe.debug" artifactName="TSI" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" cleanCommand="rm -rf">
+      <toolChain superClass="cdt.managedbuild.toolchain.gnu.exe.debug" id="cdt.managedbuild.toolchain.gnu.exe.debug.878561326" name="GCC Tool Chain">
+        <tool superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.293671683" name="GCC C++ Compiler"/>
+        <tool superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug" id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1592415954" name="GCC C Compiler">
+          <option superClass="gnu.c.compiler.option.include.paths" id="gnu.c.compiler.option.include.paths.217807694" valueType="includePath">
+            <listOptionValue value="&quot;${workspace_loc:/TSI/include}&quot;" builtIn="false"/>
+          </option>
+          <option superClass="gnu.c.compiler.option.preprocessor.def.symbols" id="gnu.c.compiler.option.preprocessor.def.symbols.353842643" valueType="definedSymbols">
+            <listOptionValue value="TSI_DEBUG" builtIn="false"/>
+          </option>
+          <option superClass="gnu.c.compiler.option.misc.ansi" id="gnu.c.compiler.option.misc.ansi.152028387" value="false" valueType="boolean"/>
+        </tool>
+        <tool superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug" id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1749634444" name="GCC C Linker">
+          <option superClass="gnu.c.link.option.libs" id="gnu.c.link.option.libs.320922468" valueType="libs">
+            <listOptionValue value="m" builtIn="false"/>
+            <listOptionValue value="gcc" builtIn="false"/>
+          </option>
+        </tool>
+        <tool superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1014996229" name="GCC C++ Linker"/>
+        <tool superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug" id="cdt.managedbuild.tool.gnu.assembler.exe.debug.578654043" name="GCC Assembler"/>
+        <macros/>
+      </toolChain>
+      <resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.775698319./TSI/test/test_mask.c" name="test_mask.c" exclude="true" resourcePath="/TSI/test/test_mask.c" toolsToInvoke="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1592415954./TSI/test/test_mask.c" rcbsApplicability="disable">
+        <tool superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1592415954" id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1592415954./TSI/test/test_mask.c" name="GCC C Compiler"/>
+      </resourceConfiguration>
+    </configuration>
+    <configuration id="cdt.managedbuild.config.gnu.exe.release.1374782014" name="Release" description="" parent="cdt.managedbuild.config.gnu.exe.release" artifactName="TSI" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" cleanCommand="rm -rf">
+      <toolChain superClass="cdt.managedbuild.toolchain.gnu.exe.release" id="cdt.managedbuild.toolchain.gnu.exe.release.1263029014" name="GCC Tool Chain">
+        <tool superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.493868320" name="GCC C++ Compiler"/>
+        <tool superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release" id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.2060397146" name="GCC C Compiler"/>
+        <tool superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release" id="cdt.managedbuild.tool.gnu.c.linker.exe.release.1568718397" name="GCC C Linker"/>
+        <tool superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.981306096" name="GCC C++ Linker"/>
+        <tool superClass="cdt.managedbuild.tool.gnu.assembler.exe.release" id="cdt.managedbuild.tool.gnu.assembler.exe.release.1945239750" name="GCC Assembler"/>
+      </toolChain>
+    </configuration>
+    <macros/>
+  </project>
 </ManagedProjectBuildInfo>

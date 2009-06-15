@@ -2,6 +2,7 @@
 #define _DSS_LEGACY_H
 
 #include "dss.h"
+#include "dssutils.h"
 #include "log.h"
 
 /* Float functions */
@@ -35,22 +36,6 @@ extern int srchnod(int, int, int, float *,
 
 extern int gauinv(double, float *result);
 
-
-/* this is in dss-utils.c */
-extern int getPos(int, int, int, int, int);
-extern void get3Dcoords(int, int, int, int*, int*, int*);
-
-extern int getIndex(float min, float siz, float loc);
-extern float getAbsolutePos(float base, float siz, int index);
-
-extern float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point);
-
-extern int cmpfloat(const void *a1, const void *b1);
-
-extern int cmpharddata_point_val(const void *a, const void *b);
-extern int cmpharddata_point_gauss_cprob(const void *a, const void *b);
-
-int cmpvalue_index(const void *a, const void *b);
 
 
 /* dss_krige */
