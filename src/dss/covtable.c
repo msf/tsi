@@ -38,15 +38,15 @@
 /* ----------------------------------------------------------------------- */
 
 /** funcoes utilizadas
- * sortem 
+ * sortem
  * cova3
  * sqdist
  */
 
 /** CUBOS utilizados
- * tmp - allocado e dealocado na funcao 
+ * tmp - allocado e dealocado na funcao
  * order
- */ 
+ */
 
 /** CUBOS _nao_ utilizados
  * sim
@@ -56,7 +56,7 @@
  */
 
 /** structs globais utilizadas:
- * general 
+ * general
  * search
  * covariance (passado ao cova3 e sqdist)
  * covtable_lookup
@@ -66,11 +66,11 @@
 
 
 
-int covtable(int *order, float * tmp,
-		general_vars_t * general, 
-		search_vars_t * search, 
-		covariance_vars_t * covariance, 
-		covtable_lookup_vars_t * covtable_lookup, 
+int covtable(
+		general_vars_t * general,
+		search_vars_t * search,
+		covariance_vars_t * covariance,
+		covtable_lookup_vars_t * covtable_lookup,
 		krige_vars_t * krige_vars)
 {
         /* Table of constant values */
@@ -85,10 +85,6 @@ int covtable(int *order, float * tmp,
 	double hsqd;
 	double cmax;
 
-
-	/* Parameter adjustments */
-	--order;
-	--tmp;
 
 	/* Function Body */
 	i1 = (general->nx-1)/2;
@@ -106,13 +102,16 @@ int covtable(int *order, float * tmp,
 	/* Initialize the covariance subroutine and cbb at the same time: */
 	/*    printf("Calling cova3\n"); */
 	krige_vars->cbb = (float) cova3(0, 0, 0, 0, 0, 0, covariance->varnum,
-			covariance->nugget, covariance->variogram, 
+			covariance->nugget, covariance->variogram,
 			krige_vars->rotmat, &cmax);
 	covariance->cmax = (float) cmax;
 	/* 		Now, set up the table and keep track of the node offsets that are */
 	/* 		within the search radius: */
 	/*    printf("loop 1/3\n"); */
- 
+
+
+	unsigned int tmp_count = 0;
+	value_index_t *tmp = (value_index_t *) tsi_malloc( sizeof(value_index_t) * general->nxyz );
 
 	covtable_lookup->nlooku = 0;
 	i1 = covtable_lookup->nctx;
@@ -128,7 +127,8 @@ int covtable(int *order, float * tmp,
 				zz = k * general->zsiz;
 				kc = covtable_lookup->nctz + 1 + k;
 
-				covtable_lookup->covtab[getPos(ic,jc,kc, general->nx, general->nxy)] = (float) cova3(0, 0 , 0, xx, yy, zz, 
+				loc = getPos(ic,jc,kc, general->nx, general->nxy);
+				covtable_lookup->covtab[loc] = (float) cova3(0, 0 , 0, xx, yy, zz,
 						covariance->varnum, covariance->nugget, covariance->variogram,
 						krige_vars->rotmat, &cmax);
 
@@ -137,12 +137,13 @@ int covtable(int *order, float * tmp,
 				hsqd = sqdist(0, 0, 0, xx, yy, zz, covariance->isrot, krige_vars->rotmat);
 
 				if ((float) hsqd <= search->radsqd) {
-					++covtable_lookup->nlooku;
-					/*	We want to search by closest variogram distance 
+					++tmp_count;
+					/*	We want to search by closest variogram distance
 						(and use the anisotropic Euclidean distance to break ties: */
-					loc = getPos(ic,jc,kc, general->nx, general->nxy);
-					tmp[covtable_lookup->nlooku] = -(covtable_lookup->covtab[loc] - (float) hsqd * 1e-10f);
-					order[covtable_lookup->nlooku] = loc;
+					float val = -(covtable_lookup->covtab[loc] - (float) hsqd * 1e-10f);
+					
+					tmp[tmp_count].index = loc;
+					tmp[tmp_count].value = val;
 				}
 
 			}
@@ -150,27 +151,23 @@ int covtable(int *order, float * tmp,
 	}
 
 	/* 		Finished setting up the look-up table, now order the nodes such */
-	/* 		that the closest ones, according to variogram distance, are searched */
-	/* 		first. Note: the "loc" array is used because I didn't want to make */
-	/* 		special allowance for 2 byte integers in the sorting subroutine: */
-	/*    printf("calling sortem\n"); */
+	/* 		that the closest ones, according to variogram distance, are searched first. */
 
-  /*	sortemi(&one, &covtable_lookup->nlooku, &tmp[1], &one, &order[1], &c__, &d__, &e, &f, &g, &h__); */
-	printf_dbg("covtable: covtable size: %d, sorting now...\n", covtable_lookup->nlooku);
-	sort_permute_int(1, covtable_lookup->nlooku, &tmp[1], &order[1]);
+	printf_dbg("covtable: covtable size: %d, sorting now...\n", tmp_count);
+			
+	qsort(tmp, tmp_count, sizeof(value_index_t), cmpvalue_index_by_value);
 
-	i1 = covtable_lookup->nlooku;  
-	for (il = 1; il <= i1; ++il) {
-		loc = order[il];
+	covtable_lookup->nlooku = tmp_count;
 
-		get3Dcoords(loc, general->nx, general->nxy, &ix, &iy, &iz);
+	for (il = 0; il <= covtable_lookup->nlooku; ++il) {
+		get3Dcoords( tmp[il].index, general->nx, general->nxy, &ix, &iy, &iz);
 
-		covtable_lookup->iznode[il - 1] = iz;
-		covtable_lookup->iynode[il - 1] = iy;
-		covtable_lookup->ixnode[il - 1] = ix;
-
+		covtable_lookup->iznode[il] = iz;
+		covtable_lookup->iynode[il] = iy;
+		covtable_lookup->ixnode[il] = ix;
 	}
 	printf_dbg2("covtable finished\n");
+	tsi_free(tmp);
 
 	if (covtable_lookup->nodmax > 64) {
 		fprintf(stderr, "covtable(): covtable_lookup->nodmax above limit of 64, setting to 64!");
