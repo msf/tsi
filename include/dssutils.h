@@ -17,6 +17,9 @@ int cmpharddata_point_val(const void *a, const void *b);
 int cmpharddata_point_gauss_cprob(const void *a, const void *b);
 
 int cmpvalue_index(const void *a, const void *b);
+int cmpvalue_index_by_value(const void *a, const void *b);
+
+int cmpvalue_point(const void *a, const void *b);
 
 
 #endif
