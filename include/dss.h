@@ -49,7 +49,7 @@ typedef struct general_vars_type {
 #define NVARI	4
 #define LTAIL	1
 #define UTAIL	1
-    int    nx,        /* GRID:XNUMBER */
+    unsigned int    nx,        /* GRID:XNUMBER */
            ny,        /* GRID:YNUMBER */
            nz;        /* GRID:ZNUMBER */
     float  xsiz,      /* GRID:XSIZE */
@@ -58,7 +58,7 @@ typedef struct general_vars_type {
            xmn,       /* GRID:XMN */
            ymn,       /* GRID:YMN */
            zmn;       /* GRID:ZMN */
-    int    nxy,       /* = nx * ny */
+    unsigned int    nxy,       /* = nx * ny */
            nxyz;      /* = nx * ny * nz */
 
     float  nosim_value;  /* MASK:NULL_VALUE */
@@ -84,7 +84,7 @@ typedef struct covariance_vars_type {
     float  cmax;
 
     /* parameters from registry */
-    int    varnum;   /* VARIOGRAM:NUMBER */
+    unsigned int    varnum;   /* VARIOGRAM:NUMBER */
     float  nugget;    /* VARIOGRAM:NUGGET */
 
     struct variogram_type *variogram;
@@ -121,8 +121,8 @@ typedef struct covtable_lookup_vars_type {
            *iznode;
     
     /* parameters from registry */
-    int    nodmax;  /* SEARCH:NODMAX */
-    int    ntry;    /* QUALITY:NTRY */
+    unsigned int    nodmax;  /* SEARCH:NODMAX */
+    unsigned int    ntry;    /* QUALITY:NTRY */
 
 } covtable_lookup_vars_t;
 

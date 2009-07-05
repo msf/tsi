@@ -36,7 +36,8 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	/* Local variables */
 	int i, j;
 	float x1, y1, z1, x2, y2, z2;
-	int na, ii, jj, kk, in, ix1, iy1, iz1, ix2, iy2, iz2, ind, neq;
+	unsigned int ii, jj, kk;
+	int na, in, ix1, iy1, iz1, ix2, iy2, iz2, ind, neq;
 	float cov;
 	int index;
 	float sfmin, sfmax;

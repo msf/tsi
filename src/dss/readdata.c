@@ -138,7 +138,7 @@ int readdata(log_t *l,
 	double cp = 0;
 	double oldcp = 0;
 	harddata->average = 0;
-	int x, y, z;
+	unsigned int x, y, z;
 	unsigned int ig = 0;
 	harddata_point_t point;
 	for (j = 0; j < harddata->point_count; ++j) {
@@ -149,9 +149,9 @@ int readdata(log_t *l,
 		x = getIndex(general->xmn, general->xsiz, point.x); 
 		y = getIndex(general->ymn, general->ysiz, point.y);
 		z = getIndex(general->zmn, general->zsiz, point.z);
-		if((x >= 0 && x < general->nx) &&
-		   (y >= 0 && y < general->ny) &&
-		   (z >= 0 && z < general->nz) ) {
+		if((x > 1 && x < general->nx) &&
+		   (y > 1 && y < general->ny) &&
+		   (z > 1 && z < general->nz) ) {
 
 			temp[ig].index = getPos(x,y,z,general->nx,general->nxy);
 			temp[ig].value = point.val;
