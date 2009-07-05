@@ -57,6 +57,15 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 	float *vra;
 
 
+	/* Parameter adjustments */
+	--bestAICube;
+
+	/* init vars */
+	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
+	
+	/* Function Body */
+	na = covtable_lookup->ncnode;
+
 	/* only alloc if needed */
 	if(na > 16) {
 		alloc = 1;
@@ -72,16 +81,6 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 		rr		  = stack_rr;
 		vra		  = stack_vra;
 	}
-
-
-	/* Parameter adjustments */
-	--bestAICube;
-
-	/* init vars */
-	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
-	
-	/* Function Body */
-	na = covtable_lookup->ncnode;
 
 	neq = na;
 	if (lktype == ORDINARY_KRIG || lktype == CO_KRIG) {
@@ -109,10 +108,10 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 
 		index = getPos(ix1, iy1, iz1, general->nx, general->nxy);
 		if(lktype == CO_KRIG) {
-			vra[index] -= harddata->average;
+			vra[j - 1] -= harddata->average;
 		}
 		if (lktype == SIMPLE_KRIG) {
-			vra[index] -= global_mean;
+			vra[j - 1] -= global_mean;
 		}
 		for (i = 1; i <= j; ++i) {
 			/* Sort out the actual location of point "i" */
