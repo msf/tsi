@@ -36,9 +36,9 @@ typedef struct {
 } value_index_t;
 
 typedef struct harddata_type {
-	int		point_count;
+	unsigned int	point_count;
 	harddata_point_t *point;
-	int		in_grid_count;
+	unsigned int	in_grid_count;
 	value_index_t	*in_grid;
 	float	min_value, max_value;
 	double	average;
