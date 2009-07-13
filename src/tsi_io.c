@@ -68,6 +68,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
     char header[64];
     char tsi_h[] = "TSI";
     int type, x1, y1, z1;
+    int t;
     unsigned int grid_size;
 
     /* load file header */
@@ -83,7 +84,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
         return 0;
     }
 
-    fscanf(fp, "%d %d %d %d\n", &type, &x1, &y1, &z1);
+    t = fscanf(fp, "%d %d %d %d\n", &type, &x1, &y1, &z1);
     if (type != 2) {
         fprintf(stderr,"\tread_tsi_grid(): incompatible format\n");
         return 0;
@@ -119,9 +120,10 @@ int write_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 
 int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
+    int t;
 	
     for (i=0; i < grid_size; i++) 
-	    fscanf(fp, "%f\n", &grid[i]);
+	    t = fscanf(fp, "%f\n", &grid[i]);
     return i;
 } /* read_cartesian_grid */
 
@@ -129,9 +131,10 @@ int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
 
 int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
+    int t;
 
     for (i = 0; i < grid_size; i++) 
-	    fprintf(fp, "%.4f\n", grid[i]);
+	    t = fprintf(fp, "%.4f\n", grid[i]);
     return i;
 } /* write_cartesian_grid */
 

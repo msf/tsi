@@ -25,9 +25,9 @@ CFLAGS  := -pipe
 LDFLAGS := -lm -lgcc 
 OPTS    := -O3 -fomit-frame-pointer -ffast-math  -march=native
 OPTS	+= -msse -msse2 -ftree-vectorize # use only with gcc-4 or above.
-OPTS	+= -g 
-OPTS	+= -DTSI_DEBUG
-DEBUG   := -g -ggdb -DTSI_DEBUG2
+OPTS	+= -g -ggdb
+OPTS	+= -DTSI_DEBUG -D_FORTIFY_SOURCE=2
+DEBUG   := -g -ggdb -DTSI_DEBUG2 -D_FORTIFY_SOURCE=2
 #DEBUG	+= -m32
 #DEBUG  += -pg
 DEBUG	+= -Wall -std=gnu99 
