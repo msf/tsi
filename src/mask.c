@@ -63,7 +63,15 @@ int mask_isset(mask_t *mask, int pos)
     return ( mask->map[n] >> off ) & 1 ;
 }
 
+int mask_setall(mask_t *m)
+{
+    memset(m->map, 0xff, m->map_size);
+}
 
+int mask_unsetall(mask_t *m)
+{
+    memset(m->map, 0, m->map_size);
+}
 
 
 

@@ -3,16 +3,6 @@
 
 #include "mask.h"
 
-int mask_setall(mask_t *m)
-{
-    memset(m->map, 0xff, m->map_size);
-}
-
-int mask_unsetall(mask_t *m)
-{
-    memset(m->map, 0, m->map_size);
-}
-
 int mask_test1(mask_t *m, int len)
 {
     int i;
