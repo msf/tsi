@@ -18,9 +18,7 @@ static int read_wavelet_file(si *s, char *filename);
 si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     si *s;
     reg_key *k, *kpath;
-    TSI_FILE *fp;
     char filename[512];
-    int i;
 
     printf_dbg("\tnew_si(): called\n");
     s = (si *) tsi_malloc(sizeof(si));

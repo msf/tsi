@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "dss.h"
 #include "dss_legacy.h"
 #include "debug.h"
@@ -109,7 +110,7 @@ int readdata(log_t *l,
 			harddata_t *harddata,
 			general_vars_t * general)
 {
-	int i, j;
+	unsigned int i, j;
 	double w;
 	float vrg;
 	int ierr;
@@ -137,8 +138,8 @@ int readdata(log_t *l,
 	double cp = 0;
 	double oldcp = 0;
 	harddata->average = 0;
-	int x, y, z;
-	int ig = -1;
+	unsigned int x, y, z;
+	unsigned int ig = 0;
 	harddata_point_t point;
 	for (j = 0; j < harddata->point_count; ++j) {
 		point = harddata->point[j];
@@ -148,13 +149,13 @@ int readdata(log_t *l,
 		x = getIndex(general->xmn, general->xsiz, point.x); 
 		y = getIndex(general->ymn, general->ysiz, point.y);
 		z = getIndex(general->zmn, general->zsiz, point.z);
-		if((x >= 0 && x < general->nx) &&
-		   (y >= 0 && y < general->ny) &&
-		   (z >= 0 && z < general->nz) ) {
+		if((x > 1 && x < general->nx) &&
+		   (y > 1 && y < general->ny) &&
+		   (z > 1 && z < general->nz) ) {
 
-			ig++;
 			temp[ig].index = getPos(x,y,z,general->nx,general->nxy);
 			temp[ig].value = point.val;
+			ig++;
 		}
 
 		cp = (double) (j+1) / (double) harddata->point_count;
@@ -175,52 +176,58 @@ int readdata(log_t *l,
 	}
 	harddata->average /= harddata->point_count;
 
-	/* sort by grid index, so that candidates to the same cell become adjacent */
-	qsort(temp, ig, sizeof(value_index_t), cmpvalue_index);
+	if( ig == 0) {
+		/* no in_grid points */
+		harddata->in_grid_count = 0;
+		harddata->in_grid = NULL;
+	} else {
+		/* sort by grid index, so that candidates to the same cell become adjacent */
+		qsort(temp, ig, sizeof(value_index_t), cmpvalue_index);
 
-	harddata->in_grid = (value_index_t *) tsi_malloc(sizeof(value_index_t) * ig);
-	if(harddata->in_grid == NULL) {
-		ERROR(l, "readdata", "NOT ENOUGH MEMORY");
-		exit(1);
-	}
-
-	/* temp might have several values candidate for same grid cell.
-	 * (when harddata has more resolution that our grid cells this is very common)
-	 * make shure in_grid has only one value (the 1st seen ) for each different index
-	 */
-	 
-	j = 0;
-	i = 0;
-	int last= -1;
-	do {
-		
-		if(last == temp[i++].index)
-			continue;
-	
-		last = temp[i-1].index;
-		harddata->in_grid[j].index = last;
-		harddata->in_grid[j].value = temp[i].value;
-		if(j < 100)
-			printf_dbg2("in_grid[%u] idx = %u, value = %f\n", 
-				j,
-				harddata->in_grid[j].index,
-				harddata->in_grid[j].value);
-		j++;
-	} while( i < ig) ;
-	harddata->in_grid_count = j;
-
-	tsi_free(temp);
-	/* trim in_grid to only the needed size */
-	if(ig > harddata->in_grid_count) {
-		unsigned int siz = harddata->in_grid_count * sizeof(value_index_t);
-		value_index_t *new = (value_index_t *) tsi_malloc(siz);
-		if(new == NULL) {
+		harddata->in_grid = (value_index_t *) tsi_malloc(sizeof(value_index_t) * ig);
+		if(harddata->in_grid == NULL) {
 			ERROR(l, "readdata", "NOT ENOUGH MEMORY");
 			exit(1);
 		}
-		memcpy(new, harddata->in_grid, siz);
-		tsi_free(harddata->in_grid);
-		harddata->in_grid = new;
+
+		/* temp might have several values candidate for same grid cell.
+		 * (when harddata has more resolution that our grid cells this is very common)
+		 * make shure in_grid has only one value (the 1st seen ) for each different index
+		 */
+		j = 0;
+		i = 0;
+		unsigned int last = UINT_MAX;
+		do {
+
+			/* skip other values for te same position */
+			if(last == temp[i++].index)
+				continue;
+
+			last = temp[i-1].index;
+			harddata->in_grid[j].index = last;
+			harddata->in_grid[j].value = temp[i-1].value;
+			if(j < 100)
+				printf_dbg2("in_grid[%u] idx = %u, value = %f\n", 
+						j,
+						harddata->in_grid[j].index,
+						harddata->in_grid[j].value);
+			j++;
+		} while( i < ig) ;
+		harddata->in_grid_count = j;
+
+		tsi_free(temp);
+		/* trim in_grid to only the needed size */
+		if(ig > harddata->in_grid_count) {
+			unsigned int siz = harddata->in_grid_count * sizeof(value_index_t);
+			value_index_t *new = (value_index_t *) tsi_malloc(siz);
+			if(new == NULL) {
+				ERROR(l, "readdata", "NOT ENOUGH MEMORY");
+				exit(1);
+			}
+			memcpy(new, harddata->in_grid, siz);
+			tsi_free(harddata->in_grid);
+			harddata->in_grid = new;
+		}
 	}
 
 	printf_dbg("harddata():\tharddata->in_grid_count: %d\tharddata->point_count: %d\n",

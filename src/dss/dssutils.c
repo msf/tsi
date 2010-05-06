@@ -134,3 +134,30 @@ int cmpvalue_index(const void *a, const void *b)
 	return v1->index - v2->index;
 }
 
+int cmpvalue_index_by_value(const void *a, const void *b)
+{
+	value_index_t *v1 = (value_index_t *) a;
+	value_index_t *v2 = (value_index_t *) b;
+
+	float r =  v1->value - v2->value;
+	if( r < 0)
+		return -1;
+	else if(r > 0)
+		return 1;
+	else
+		return 0;
+}
+
+int cmpvalue_point(const void *a, const void *b)
+{
+	value_point_t *v1 = (value_point_t *) a;
+	value_point_t *v2 = (value_point_t *) b;
+
+	float r =  v1->value - v2->value;
+	if( r < 0)
+		return -1;
+	else if(r > 0)
+		return 1;
+	else
+		return 0;
+}

@@ -65,7 +65,8 @@ int srchnod(int ix, int iy, int iz, float *sim,
 {
 
 	/* Local variables */
-	int i, j, k, il, ind;
+	unsigned int i, j, k;
+	int il, ind;
 	int nctx, ncty, nctz;
 
 	unsigned int count = 0;

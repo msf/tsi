@@ -276,7 +276,7 @@ long get_long(reg_key *k)
 long long int get_llint(reg_key *k)
 {
     if (k->type != 1) {
-        k->kval.lli = atoll(k->value);      /* parse as integer */
+        k->kval.lli = strtoll(k->value, (char **) NULL, 10);      /* parse as integer */
         k->type = 1;
     }
     return k->kval.lli;
