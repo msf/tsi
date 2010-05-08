@@ -6,110 +6,71 @@
 #include "dss.h"
 #include "dss_legacy.h"
 #include "tsi_io.h"
+#include "log.h"
 
-int  dss_parameters(dss *d, registry *r )
+int  dss_parameters(dss *d, log_t *l, registry *r )
 {
     int i, varnum;
-    char variogram[16];
     float aa1, aa2, aa, sill;
     reg_key *k;
 
     /* harddata parameters */
-    if ((k = get_key(r, "HARDDATA", "NVARI")) == NULL) return 1;
-    d->general->nvari = get_int(k);
+    if (get_key(r, "HARDDATA", "TMIN"))
+    	printf("[HARDDATA] TMIN is autodetected, value in file will be ignored\n");
+
+    if (get_key(r, "HARDDATA", "TMAX"))
+    	printf("[HARDDATA] TMAX is autodetected, value in file will be ignored\n");
+
+    if (get_key(r, "HARDDATA", "NVARI"))
+    	printf("[HARDDATA] NVARI is NOT used\n");
     
-    if ((k = get_key(r, "HARDDATA", "IXL")) == NULL) return 1;
-    d->general->ixl = get_int(k);
-
-    if ((k = get_key(r, "HARDDATA", "IYL")) == NULL) return 1;
-    d->general->iyl = get_int(k);
+    if (get_key(r, "HARDDATA", "IXL"))
+    	printf("[HARDDATA] IXL is NOT used\n");
     
-    if ((k = get_key(r, "HARDDATA", "IZL")) == NULL) return 1;
-    d->general->izl = get_int(k);
+     if (get_key(r, "HARDDATA", "IYL"))
+    	printf("[HARDDATA] IYL is NOT used\n");
     
-    if ((k = get_key(r, "HARDDATA", "IVRL")) == NULL) return 1;
-
-    d->general->ivrl = get_int(k);
-    if ((k = get_key(r, "HARDDATA", "IWT")) == NULL) return 1;
-    d->general->iwt = get_int(k);
-
-    if ((k = get_key(r, "HARDDATA", "ISECVR")) == NULL) return 1;
-    d->general->isecvr = get_int(k);
-
-    if ((k = get_key(r, "HARDDATA", "TMIN")) == NULL) return 1;
-    d->general->tmin = get_float(k);
-
-    if ((k = get_key(r, "HARDDATA", "TMAX")) == NULL) return 1;
-    d->general->tmax = get_float(k);
-
+    if (get_key(r, "HARDDATA", "IZL"))
+    	printf("[HARDDATA] IZL is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "IVRL"))
+    	printf("[HARDDATA] IVRL is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "IWT"))
+    	printf("[HARDDATA] IWT is NOT used\n");
+    
+    if (get_key(r, "HARDDATA", "ISECVR"))
+    	printf("[HARDDATA] ISECVR is NOT used\n");
+    
 
     /* harddata transformations */
-    if ((k = get_key(r, "HDTRANS", "ITRANS")) == NULL) return 1;
-    d->general->itrans = get_int(k);
+    if (get_key(r, "HDTRANS", "ITRANS"))
+    	printf("[HDTRANS] ITRANS is NOT used\n");
+ 
+    if (get_key(r, "HDTRANS", "ISMOOTH"))
+    	printf("[HDTRANS] ISMOOTH is NOT used\n");
 
-    if ((k = get_key(r, "HDTRANS", "ISMOOTH")) == NULL) return 1;
-    d->general->ismooth = get_int(k);
+    if (get_key(r, "HDTRANS", "ISVR"))
+    	printf("[HDTRANS] ISVR is NOT used\n");
+    
+    if (get_key(r, "HDTRANS", "ISWT"))
+    	printf("[HDTRANS] ISWT is NOT used\n");
 
-    if ((k = get_key(r, "HDTRANS", "ISVR")) == NULL) return 1;
-    d->general->isvr = get_int(k);
+    if (get_key(r, "HDTRANS", "LTAIL"))
+    	printf("[HDTRANS] LTAIL is NOT used\n");
 
-    if ((k = get_key(r, "HDTRANS", "ISWT")) == NULL) return 1;
-    d->general->iswt = get_int(k);
-
-    if ((k = get_key(r, "HDTRANS", "ZMIN")) == NULL) return 1;
-    d->general->zmin = get_float(k);
-
-    if ((k = get_key(r, "HDTRANS", "ZMAX")) == NULL) return 1;
-    d->general->zmax = get_float(k);
-
-    if ((k = get_key(r, "HDTRANS", "LTAIL")) == NULL) return 1;
-    d->general->ltail = get_int(k);
-
-    if ((k = get_key(r, "HDTRANS", "LTPAR")) == NULL) return 1;
-    d->general->ltpar = get_float(k);
-
-    if ((k = get_key(r, "HDTRANS", "UTAIL")) == NULL) return 1;
-    d->general->utail = get_int(k);
-
-    if ((k = get_key(r, "HDTRANS", "UTPAR")) == NULL) return 1;
-    d->general->utpar = get_float(k);
-
-    if ((d->general->ltail != 1) && (d->general->ltail != 2)) {
-        printf_dbg("ERROR invalid lower tail option: %d\n", (int) d->general->ltail);
-        printf_dbg("\t\tonly allowed 1 or 2 - see manual.\n");
-        return 1;
-    }
-    if ((d->general->utail != 1) && (d->general->utail != 2) && (d->general->utail != 4)) {
-        printf_dbg("ERROR invalid upper tail option: %d\n", (int) d->general->utail);
-        printf_dbg("\t\tonly allowed 1, 2 or 4 - see manual.\n");
-        return 1;
-    }
-    if ((d->general->utail == 4) && (d->general->utpar < 1)) {
-        printf_dbg("ERROR invalid power for hyperbolic tail: %f\n", d->general->utpar);
-        printf_dbg("\t\tmust be greater than 1.0.\n");
-        return 1;
-    }
-    if ((d->general->ltail == 2) && (d->general->ltpar < 0)) {
-        printf_dbg("ERROR invalid power for power model: %f\n",d->general->ltpar);
-        printf_dbg("\t\tmust be greater than 0.0.\n");
-        return 1;
-    }
-    if ((d->general->utail == 2) && (d->general->utpar < 0)) {
-        printf_dbg("ERROR invalid power for power model: %f\n",d->general->utpar);
-        printf_dbg("\t\tmust be greater than 0.0.\n");
-        return 1;
-    }
-
+    if (get_key(r, "HDTRANS", "UTAIL"))
+    	printf("[HDTRANS] UTAIL is NOT used\n");
     
     /* simulations quality */
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;
-    d->clookup->ntry = d->clookup->ntry_bk = get_int(k);
+    d->clookup->ntry = get_int(k);
 
-    if ((k = get_key(r, "QUALITY", "ICVAR")) == NULL) return 1;
-    d->clookup->icvar = d->clookup->icvar_bk = get_int(k);
+    if (get_key(r, "QUALITY", "ICVAR"))
+    	printf("[QUALITY] ICVAR is NOT used\n");
 
-    if ((k = get_key(r, "QUALITY", "ICMEAN")) == NULL) return 1;
-    d->clookup->icmean = d->clookup->icmean_bk = get_int(k);
+    if (get_key(r, "QUALITY", "ICMEAN"))
+    	printf("[QUALITY] ICMEAN is NOT used\n");
 
     
     /* grid parameters */
@@ -146,41 +107,30 @@ int  dss_parameters(dss *d, registry *r )
     
     /* mask */
     if ((k = get_key(r, "MASK", "NULL_VALUE")) == NULL) return 1;
-    d->general->nosvalue = get_float(k);
-
-	/* mask is not supported */
-    //if ((k = get_key(r, "MASK", "USE_MASK")) == NULL) return 1;
-    d->general->imask = 0;
+    d->general->nosim_value = get_float(k);
 
 
     /* search parameters */
     if ((k = get_key(r, "SEARCH", "NDMIN")) == NULL) return 1;
     d->search->ndmin = get_int(k);
 
-    if ((k = get_key(r, "SEARCH", "NDMAX")) == NULL) return 1;
-    d->search->ndmax = get_int(k);
+    if (get_key(r, "SEARCH", "NDMAX"))
+    	printf("[SEARCH] NDMAX is NOT used\n");
+    d->search->ndmax = 0;
 
     if ((k = get_key(r, "SEARCH", "NODMAX")) == NULL) return 1;
-    d->clookup->nodmax = d->clookup->nodmax_bk = get_int(k);
+    d->clookup->nodmax = get_int(k);
 
-    if ((k = get_key(r, "SEARCH", "SSTRAT")) == NULL) return 1;
-    d->search->sstrat = get_int(k);
-    if (d->search->sstrat == 1) 
-		d->search->ndmax = 0;
+    if (get_key(r, "SEARCH", "SSTRAT"))
+    	printf("[SEARCH] SSTRAT is NOT used\n");
 
-    if ((k = get_key(r, "SEARCH", "MULTS")) == NULL) return 1;
-    d->search->mults = get_int(k);
-
-    if ((k = get_key(r, "SEARCH", "NMULTS")) == NULL) return 1;
-    d->search->nmult = get_float(k);
-
-    if ((k = get_key(r, "SEARCH", "NOCT")) == NULL) return 1;
-    d->search->noct = get_int(k);
+    if (get_key(r, "SEARCH", "NOCT"))
+    	printf("[SEARCH] NOCT is NOT used\n");
 
     if ((k = get_key(r, "SEARCH", "RADIUS")) == NULL) return 1;
     d->search->radius = get_float(k);
     if (d->search->radius < 1e-20) {
-        printf("load_dss_configs(): ERROR - radius (%f) must be greater than EPSLON (1E-20)\n", d->search->radius);
+		ERROR(l, "load_dss_configs", "radius must be greater than EPSLON (1E-20)");
         return 1;
     }
     d->search->radsqd = d->search->radius * d->search->radius;
@@ -202,97 +152,93 @@ int  dss_parameters(dss *d, registry *r )
 
 
     /* kriging parameters */
-    if ((k = get_key(r, "KRIG", "TYPE")) == NULL) return 1;
-    d->general->ktype = get_int(k);
+    if (get_key(r, "KRIG", "TYPE"))
+    	printf("[KRIG] TYPE is NOT used\n");
 
-    if ((k = get_key(r, "KRIG", "COLOCORR")) == NULL) return 1;
-    d->general->colocorr = get_float(k);
+    if (get_key(r, "KRIG", "COLOCORR"))
+    	printf("[KRIG] COLOCORR is NOT used\n");
 
-    if ((k = get_key(r, "KRIG", "VARRED")) == NULL) return 1;
-    d->general->varred = get_float(k);
-
+    if (get_key(r, "KRIG", "VARRED"))
+    	printf("[KRIG] VARRED is NOT used\n");
 
     /* softdata parameters */
-    if ((k = get_key(r, "SOFT", "NVARIL")) == NULL) return 1;
-    d->general->nvaril = get_int(k);
-
-    if ((k = get_key(r, "SOFT", "ICOLLVM")) == NULL) return 1;
-    d->general->icollvm = get_int(k);
-
+    if (get_key(r, "SOFT", "NVARIL"))
+    	printf("[SOFT] NVARIL is NOT used\n");
+    
+    if (get_key(r, "SOFT", "ICOLLVM"))
+    	printf("[SOFT] ICOLLVM is NOT used\n");
 
     /* variogram models */
     if ((k = get_key(r, "VARIOGRAM", "NUMBER")) == NULL) return 1;
-    varnum = d->covariance->nst = get_int(k);
+    varnum = d->covariance->varnum = get_int(k);
     printf_dbg2("load_dss_configs(): varnum = %d\n", varnum);
 
     if ((k = get_key(r, "VARIOGRAM", "NUGGET")) == NULL) return 1;
-    sill = d->covariance->c0 = get_float(k);
+    sill = d->covariance->nugget = get_float(k);
 
-    d->covariance->it = (int *) tsi_malloc(varnum * sizeof(int));
-    d->covariance->cc = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->aa = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->ang1 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->ang2 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->ang3 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->anis1 = (float *) tsi_malloc(varnum * sizeof(float));
-    d->covariance->anis2 = (float *) tsi_malloc(varnum * sizeof(float));
-    if (!d->covariance->it ||
-        !d->covariance->cc ||
-        !d->covariance->aa ||
-        !d->covariance->ang1 ||
-        !d->covariance->ang2 ||
-        !d->covariance->ang3 ||
-        !d->covariance->anis1 ||
-        !d->covariance->anis2) {
-        printf("load_dss_configs(): ERROR - Failed to allocate space for variograms!\n");
+
+	variogram_t *variogram = (variogram_t *) tsi_malloc(varnum * sizeof(variogram_t));
+
+    if (!variogram ) {
+		ERROR(l, "load_dss_configs", "allocate space for variograms!");
         return 1;
     }
 
+    char varname[16];
+
     for (i = 0; i < varnum; i++) {
-        sprintf(variogram, "VARIOGRAM%d", i+1);
-        if ((k = get_key(r, variogram, "TYPE")) == NULL) return 1;
-        d->covariance->it[i] = get_int(k);
-		printf_dbg2("%s - type: %d\t %d\n",variogram,get_int(k),d->covariance->it[i]);
-        if (d->covariance->it[i] == 4) {
-            printf("load_dss_configs(): ERROR - A power model is not allowed! Choose a different model and re-start.\n");
+        sprintf(varname, "VARIOGRAM%d", i+1);
+        if ((k = get_key(r, varname, "TYPE")) == NULL) return 1;
+        variogram[i].type = get_int(k);
+        
+		printf_dbg2("%s - type: %d\t %d\n", varname, get_int(k), variogram[i].type);
+        if (variogram[i].type == 4) {
+			ERROR(l, "load_dss_configs", "A power model is not allowed! Choose a different model");
             return 1;
         }
 
-        if ((k = get_key(r, variogram, "COV")) == NULL) return 1;
-        d->covariance->cc[i] = get_float(k);
-        sill += d->covariance->cc[i];
+        if ((k = get_key(r, varname, "COV")) == NULL) return 1;
+        variogram[i].cov = get_float(k);
+        sill += variogram[i].cov;
 
-        if ((k = get_key(r, variogram, "ANG1")) == NULL) return 1;
-        d->covariance->ang1[i] = get_float(k);
+        if ((k = get_key(r, varname, "ANG1")) == NULL) return 1;
+        variogram[i].ang1 = get_float(k);
 
-        if ((k = get_key(r, variogram, "ANG2")) == NULL) return 1;
-        d->covariance->ang2[i] = get_float(k);
+        if ((k = get_key(r, varname, "ANG2")) == NULL) return 1;
+        variogram[i].ang2 = get_float(k);
 
-        if ((k = get_key(r, variogram, "ANG3")) == NULL) return 1;
-        d->covariance->ang3[i] = get_float(k);
+        if ((k = get_key(r, varname, "ANG3")) == NULL) return 1;
+        variogram[i].ang3 = get_float(k);
 
-        if ((k = get_key(r, variogram, "AA")) == NULL) return 1;
-        aa = d->covariance->aa[i] = get_float(k);
+        if ((k = get_key(r, varname, "AA")) == NULL) return 1;
+        aa = variogram[i].aa = get_float(k);
         if (aa < 1e-20)
 			aa = (float) 1e-20;
 
-        if ((k = get_key(r, variogram, "AA1")) == NULL) return 1;
+        if ((k = get_key(r, varname, "AA1")) == NULL) return 1;
         aa1 = get_float(k);
-        d->covariance->anis1[i] = aa1 / aa; 
+        variogram[i].anis1 = aa1 / aa;
 
-        if ((k = get_key(r, variogram, "AA2")) == NULL) return 1;
+        if ((k = get_key(r, varname, "AA2")) == NULL) return 1;
         aa2 = get_float(k);
-        d->covariance->anis2[i] = aa2 / aa;
+        variogram[i].anis2 = aa2 / aa;
+        
 		printf_dbg2("load_dss_configs(): variogram %d\n \ttype:\t%d\n \tcov:\t%.2f\n \tang1:\t%.2f\n \tang2:\t%.2f\n \tang3:\t%.2f\n \taa:\t%.2f\n \taa1:\t%.2f\n \taa2:\t%.2f\n\n",
-				i,d->covariance->it[i],d->covariance->cc[i], 
-				d->covariance->ang1[i],d->covariance->ang2[i],d->covariance->ang3[i],aa,aa1,aa2);
+				i,
+				variogram[i].type,
+				variogram[i].cov,
+				variogram[i].ang1,
+				variogram[i].ang2,
+				variogram[i].ang3,
+				aa,aa1,aa2);
     } /* for */
+    d->covariance->variogram = variogram;
 
     if ((sill < 1) || (sill > 1)) {
         printf("load_dss_configs(): WARNING: The sill of the variogram is not 1.0! sill = %f\n", sill);
     }
 
-    d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
+    //d->simulation->nsim = d->simulation->nsim_bk = 1;   /* number of simulations */
 
     return 0;
 }

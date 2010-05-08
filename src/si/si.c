@@ -13,13 +13,12 @@
 #include "si_math.h"
 #include "si_resume.h"
 
+static int read_wavelet_file(si *s, char *filename);
 
 si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     si *s;
     reg_key *k, *kpath;
-    TSI_FILE *fp;
     char filename[512];
-    int i;
 
     printf_dbg("\tnew_si(): called\n");
     s = (si *) tsi_malloc(sizeof(si));
@@ -54,19 +53,6 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 
     s->grid_size = (unsigned int)s->zsize * (unsigned int)s->ysize * (unsigned int)s->xsize;
 		
-    /* load wavelet */
-    if ((k = get_key(r, "WAVELET", "USED_VALUES")) == NULL) {
-        printf("\tnew_si(): failed to get WAVELET:USED_VALUES from registry!\n");
-        return NULL;
-    }
-
-    s->wavelet_used_values = get_int(k);
-    s->points = (int *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(int));
-    s->values = (float *) tsi_malloc((1 + s->wavelet_used_values) * sizeof(float));
-    if (!s->points || !s->values) {
-        printf("\tnew_si(): failed to allocate space for wavelet!\n");
-        return NULL;
-    }
     
     if ((kpath = get_key(r, "WAVELET", "PATH")) == NULL)
         kpath = get_key(r, "GLOBAL", "INPUT_PATH");
@@ -78,32 +64,11 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         sprintf(filename, "%s%s", get_string(kpath), get_string(k));
     else
         sprintf(filename, "%s", get_string(k));
-    fp = fopen(filename, "r");
-    if (!fp) {
-		ERROR(s->l, "fopen()", filename);
-        return NULL;
-    }
 
-	/* read wavelet, put this in a separate function */
-    i = 0;
-
-    /* ignore gslib header */
-	if( !read_gslib_header(l, fp, 2) ) {
-		ERROR(s->l, "load_wavelet", "read_gslib_header()");
+	if( read_wavelet_file(s, filename) ) {
+		ERROR(s->l, "new_si()", "read_wavelet_file()");
 		return NULL;
 	}
-
-	/* read all the others in pairs */
-    while (fscanf(fp,"%d %f\n", &(s->points[i]), &(s->values[i])) != EOF) {
-        printf_dbg2("Wavelet[%d] = Pair(%d, %f)\n", i, s->points[i], s->values[i]);
-        i++;
-    }
-    fclose(fp);
-
-    if (i < s->wavelet_used_values) {
-        ERROR(s->l, "new_si()","not enough points found in wavelet file.");
-        return NULL;
-    }
     
 	/* layers data */
 	s->random = 1;

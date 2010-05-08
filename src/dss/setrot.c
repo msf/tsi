@@ -27,20 +27,6 @@
 /*   MAXROT           maximum number of rotation matrices dimensioned */
 /*   rotmat           rotation matrices */
 /* ----------------------------------------------------------------------- */
-
-/** funcoes utilizadas
- */
-
-/** CUBOS utilizados
- */ 
-
-/** CUBOS _nao_ utilizados
- */
-
-/** structs globais utilizadas:
- */
-
-
 int setrot(float ang1, float ang2, float ang3, float anis1, float anis2,
 		int ind, double rotmat[5][3][3])
 {
@@ -89,11 +75,9 @@ int setrot(float ang1, float ang2, float ang3, float anis1, float anis2,
 	afac1 = 1.f / (double) MAX(anis1, 1e-20f);
 	afac2 = 1.f / (double) MAX(anis2, 1e-20f);
 
-	/* ind is 1-5 because of fortran, adjust to C array */
-	ind--;
 
 	if(ind < 0 || ind > 4) {
-		fprintf(stderr,"setrot() - ERROR, invalid rotation matrix: %d, only 0-4 (1-5) are valid\n",ind);
+		fprintf(stderr,"setrot() - ERROR, invalid rotation matrix: %d, only 0-4 are valid\n",ind);
 		return 1;
 	}
 

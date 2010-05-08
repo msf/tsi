@@ -1,6 +1,6 @@
-/* ----------------------------------------------------------------------- 
+/* -----------------------------------------------------------------------
    Direct Sequential Simulation and co-Simulation of a 3-D Rectangular Grid
- * ----------------------------------------------------------------------- */           
+ * ----------------------------------------------------------------------- */          
 
 
 /* This subroutine generates 3-D realizations of a Gaussian process with */
@@ -62,7 +62,7 @@
 /*                      vertical from "ang1" divided by the principal */
 /*                      radius in direction "ang1") */
 
-/* OUTPUT VARIABLES:  Simulated Values are written to "lout" 
+/* OUTPUT VARIABLES:  Simulated Values are written to "lout"
  *   sim 			The current simulation is the output of sdsim */
 
 /* EXTERNAL REFERENCES: */
@@ -82,35 +82,10 @@
  * gauinv() /
  * getindx
  * krige
- * picksup (apenas se search->sstrat == 0)
- * setsupr (apenas se search->sstrat == 0)
  * setrot
  * sortem
  * srchsupr
  * srchnod
- */
-
-/** CUBOS utilizados
- * sim
- * bestCorrCube
- * bestAICube
- * order
- * ??
- * 
- */ 
-
-/** CUBOS _nao_ utilizados
- * tmp - e' apenas passado para covtable(). 
- * -
- */
-
-/** structs globais utilizadas:
- * generl_1
- * search_1
- * simula_1
- * cova3d_1
- * clooku_1
- * krige_varsv_1
  */
 
 #include <stdio.h>
@@ -129,44 +104,39 @@
 
 /* Table of constant values */
 
-static int five = 5;
 
-int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *mask_data,
+int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int ktype,
 		general_vars_t			*	general,
+		harddata_t				*	harddata,
 		search_vars_t			*	search,
-		simulation_vars_t		*	simulation,
 		covariance_vars_t		*	covariance,
 		covtable_lookup_vars_t	*	covtable_lookup,
 		krige_vars_t			*	krige_vars)
 {
 
 	unsigned int toSim;
-	int i;
+	unsigned int i;
 
 
 	/* Local variables */
-	float xsizsup, ysizsup, zsizsup;
 	int kinicial;
-	int ixsbtosr[1000], iysbtosr[1000], izsbtosr[1000];
 	double p, zvariance;
 	int in;
 	int ix, iz, iy;
 	float xp, xx, yy, zz;
-	float vmy = 0, vms, sec2, sec3;
-	int nsec, nisb[125], ierr;
-	float cmean, gmean;
+	float vmy = 0, vms;
+	int ierr;
+	float cmean, global_mean;
 
 	double zmean;
-	int index, nxsup, nysup, nzsup;
-	float cstdev;
+	int index;
+	float std_deviation;
 	int lktype;
-	float xmnsup, ymnsup, zmnsup, clcorr;
+	float clcorr;
 	float simval = 0;
-	int nsbtosr;
 
 
 	/* Parameter adjustments */
-	--mask_data;
 	--order;
 	--bestCorrCube;
 	--bestAICube;
@@ -175,52 +145,44 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	printf_dbg2("\tdssim() called\n");
 
 	/* Function Body */
-	for (i = 1; i <= covariance->nst; ++i) {
-		setrot(covariance->ang1[i - 1], covariance->ang2[i - 1], covariance->ang3[i - 1],
-				covariance->anis1[i - 1], covariance->anis2[i - 1], i, krige_vars->rotmat);
+	for (i = 0; i < covariance->varnum; ++i) {
+		setrot( covariance->variogram[i].ang1,
+				covariance->variogram[i].ang2,
+				covariance->variogram[i].ang3,
+				covariance->variogram[i].anis1,
+				covariance->variogram[i].anis2,
+				i, krige_vars->rotmat);
 	}
-	covariance->isrot = 5;
+	covariance->isrot = 4;
 	setrot(search->sang1, search->sang2, search->sang3,
-			search->sanis1, search->sanis2, covariance->isrot, 
+			search->sanis1, search->sanis2, covariance->isrot,
 			krige_vars->rotmat);
-	/* !Set up the super block search: */
-	if (search->sstrat == 0) {
-		nsec = 1;
-		setsupr(&general->nx, &general->xmn, &general->xsiz, &general->ny,
-				&general->ymn, &general->ysiz, &general->nz, &general->zmn,
-				&general->zsiz, &general->nd, general->x, general->y, 
-				general->z, general->vr, general->wt, &nsec, general->sec,
-				&sec2, &sec3, &five, &five, &five, nisb, &nxsup, &xmnsup,
-				&xsizsup, &nysup, &ymnsup, &ysizsup, &nzsup, &zmnsup, &zsizsup)
-			;
-		picksup(nxsup, xsizsup, nysup, ysizsup, nzsup, zsizsup,
-				covariance->isrot, krige_vars->rotmat, search->radsqd,
-				&nsbtosr, ixsbtosr, iysbtosr, izsbtosr);
-	}
 
 	printf_dbg2("dssim() calling covtable\n");
-	/* !Set up the covariance table and the spiral search: */
-	covtable(&order[1], &sim[1], general, search, covariance, covtable_lookup, krige_vars);
 
-	/* codigo reescrito ..................................... */
+	/* !Set up the covariance table and the spiral search: */
+    covtable_lookup->covtab = (float *) tsi_malloc( sizeof(float) * general->nxyz);
+    covtable_lookup->ixnode = (short *) tsi_malloc( sizeof(short) * general->nxyz);
+    covtable_lookup->iynode = (short *) tsi_malloc( sizeof(short) * general->nxyz);
+    covtable_lookup->iznode = (short *) tsi_malloc( sizeof(short) * general->nxyz);
+	covtable(general, search, covariance, covtable_lookup, krige_vars);
+
+    order = (int *) tsi_malloc( sizeof(int) * general->nxyz);
 
 	/* prepare the random path */
 	/* init the sim table with NOSVALUE (no simulated value) */
 	for(i = 1; i <= general->nxyz; ++i) {
 		order[i] = i;
-		sim[i] = general->nosvalue;
+		sim[i] = general->nosim_value;
 	}
 
 	toSim = general->nxyz;
 	index = in = 0;
 
-	/* copy wells data to simulation grid */
-	for(i = 0; i < (int) general->wellsNPoints; i++) {
-		in = general->wellsDataPos[i];
-		/* there can be several wells datapoints for the same grid point */
-		if( sim[in] != general->nosvalue )
-			continue;
-		sim[in] = (float) general->wellsDataVal[i];
+	/* copy hard data to simulation grid */
+	for(i = 0; i < harddata->in_grid_count; i++) {
+		in = harddata->in_grid[i].index;
+		sim[in] = harddata->in_grid[i].value;
 
 		// mark point has simulated
 		order[in] = order[toSim];
@@ -228,21 +190,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		toSim--;
 	}
 
-	printf_dbg2("wellsNPoints: %d\tgeneral->nd: %d\n",general->wellsNPoints,general->nd);
 
-	/* codigo reescrito ..................................... FIM */
-
-/* !Assign a flag so that the node out of the mask boundaries does not get simulated: */
-	if (general->imask == 1) {
-		for (i = 1; i <= general->nxyz; ++i) {
-			if (mask_data[i] == 0) {
-				sim[i] = general->nosvalue;
-			}
-		}
-	}
-
-	printf_dbg("dssim(): hard data Points: %d\t hard data points in grid: %d\n",
-			general->nd, general->nxyz - toSim);
 	printf_dbg2("\tdssim(): Starting simulation now\n");
 	/* !MAIN LOOP OVER ALL THE NODES: */
 	ierr = 0;
@@ -250,16 +198,6 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 	zmean = 0.f;
 	zvariance = 0.f;
 	while( toSim > 0 ) {
-
-#ifdef TSI_DEBUG
-		if(toSim < (general->nxyz * 0.75)) {
-			printf_dbg("\tdsssim(): 1/4 completed.\n");
-		} else if(toSim < (general->nxyz / 2)) {
-			printf_dbg("\tdsssim(): 1/2 completed.\n");
-		} else if(toSim < (general->nxyz / 4)) {
-			printf_dbg("\tdsssim(): 3/4 completed.\n");
- 		}
-#endif
 
 		/* generate point to simulate */
 		in = ((int) tsi_random() % toSim) +1; /* +1 because of fortran offsets */
@@ -271,119 +209,99 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		toSim--;
 		
 
+#ifdef TSI_DEBUG
+		if(toSim == (general->nxyz * 0.75)) {
+			printf_dbg("\tdsssim(): 1/4 completed.\n");
+		} else if(toSim == (general->nxyz / 2)) {
+			printf_dbg("\tdsssim(): 1/2 completed.\n");
+		} else if(toSim == (general->nxyz / 4)) {
+			printf_dbg("\tdsssim(): 3/4 completed.\n");
+ 		}
+
 		if(index < 1)
 			printf("dssim(): ERROR, INDEX(%d) < 1\n", index);
 		/* if value has a value allready (like in the case of a hard data guiven point), skip simulation */
-		/* if( sim[index] >= general->tmin &&
-		    sim[index] <= general->tmax) { */
-		/*
-		 if (sim[index] > general->nosvalue + 1e-20f || 
-				 sim[index] < general->nosvalue * 2.f) {
+		if( sim[index] >= harddata->min_value &&
+		    sim[index] <= harddata->max_value) {
 			++ierr;
-			printf("dssim(): ERROR: index(%d) allready has valid data: %f\n",index,sim[index]);
+			printf("dssim(): ERROR: index(%d) with valid data: %f\n", index, sim[index]);
+		}
+		
+		if (sim[index] > general->nosim_value + 1e-20f ||
+				 sim[index] < general->nosim_value * 2.f) {
+			++ierr;
+			printf("dssim(): ERROR: index(%d) allready has data: %f\n",index,sim[index]);
 			continue;
 		}
-		*/
+#endif
+		
 
 		/* get relative x,y,z from index */
 		get3Dcoords(index, general->nx, general->nxy, &ix, &iy, &iz);
 
 		/* getting absolute coords from relative coords */
-		xx = general->xmn + (float) (ix - 1) * general->xsiz;
-		yy = general->ymn + (float) (iy - 1) * general->ysiz;
-		zz = general->zmn + (float) (iz - 1) * general->zsiz;
+		xx = getAbsolutePos(general->xmn, general->xsiz, ix);
+		yy = getAbsolutePos(general->ymn, general->ysiz, iy);
+		zz = getAbsolutePos(general->zmn, general->zsiz, iz);
 
 		/* !Now, we'll simulate the point ix,iy,iz.  First, get the close data */
 		/* !and make sure that there are enough to actually simulate a value, */
 		/* !we'll only keep the closest "ndmax" data, and look for previously */
 		/* !simulated grid nodes: */
-		if (search->sstrat == 0) {
-			srchsupr(xx, yy, zz, search->radsqd, covariance->isrot,
-					krige_vars->rotmat, nsbtosr, ixsbtosr, iysbtosr, 
-					izsbtosr, search->noct, general->x, 
-					general->y, general->z, general->wt, nisb,
-					nxsup, xmnsup, xsizsup,
-					nysup, ymnsup, ysizsup,
-					nzsup, zmnsup, zsizsup,
-					&search->nclose, general->close);
-			if (search->nclose < search->ndmin) {
-				ierr++;
-				printf("dssim(): SKIP2  %d\n",index);
-				continue;
-			}
-			if (search->nclose > search->ndmax) {
-				search->nclose = search->ndmax;
-			}
-		}
-		srchnod(ix, iy, iz, &sim[1], general, search, covtable_lookup);
+
+		covtable_lookup->ncnode = srchnod(ix, iy, iz, &sim[1],
+				general,
+				covtable_lookup,
+				covtable_lookup->node);
 		/* !WARNING:Para ter em atencao; bai c/ NOSIMVALUE, do simple kriging*/
-		kinicial = general->ktype;
-		if (general->ktype == 5 && bestAICube[index] == general->nosvalue) {
-			general->ktype = 0;
+		kinicial = ktype;
+		if (ktype == CO_KRIG && bestAICube[index] == general->nosim_value) {
+			ktype = SIMPLE_KRIG;
 		}
 		/* !Calculate the conditional mean and standard deviation.  This will be */
 		/* !done with kriging if there are data, otherwise, the global mean and */
 		/* !standard deviation will be used: */
-		if (general->ktype == 2 || general->ktype >= 4) {
-			gmean = bestAICube[index];
+		if ( ktype == CO_KRIG) {
+			global_mean = bestAICube[index];
 		} else {
-			gmean = simulation->vmedexp;
+			global_mean = harddata->average;
 		}
-		if (search->nclose + covtable_lookup->ncnode < 1) {
-			cmean = simulation->vmedexp;
-			cstdev = sqrt(simulation->vvarexp);
+		if (covtable_lookup->ncnode < 1) {
+			cmean = harddata->average;
+			std_deviation = sqrt(harddata->variance);
 		} else {
 			/* !Perform the kriging.  Note that if there are fewer than four data */
 			/* !then simple kriging is prefered so that the variance of the */
 			/* !realization does not become artificially inflated: */
-			lktype = general->ktype;
-			if (	general->ktype == 1 && 
-					search->nclose + covtable_lookup->ncnode < 4) {
-				lktype = 0;
+			lktype = ktype;
+			if ( ktype == ORDINARY_KRIG && covtable_lookup->ncnode < 4) {
+				lktype = SIMPLE_KRIG;
 			}
 			/* !Estimacao em xo (SDSIM) */
 			/* aceder ao bestCorrCube, apenas se ktype >= 4 */
-			if(general->ktype == 5) {
+			if(ktype == CO_KRIG) {
 				clcorr = bestCorrCube[index];
 			}
 				
-			krige(ix, iy, iz, xx, yy, zz, lktype, gmean, 
-					&cmean, &cstdev, // these are the output vars of krige
+			krige(ix, iy, iz, xx, yy, zz, lktype, global_mean,
+					&cmean, &std_deviation, // these are the output vars of krige
 					&bestAICube[1], clcorr,
-					general, search, simulation,
-					covariance, covtable_lookup, krige_vars);
+					general, harddata,
+					covariance, covtable_lookup, krige_vars, covtable_lookup->node);
 
-			/* this was used when dss did more than one simulation */
-			/*
-			if (simulation->nsim > 0) {
-				if (covtable_lookup->icmean == 1) {
-					cmean -= zmean / simulation->nsim - simulation->vmedexp;
-				}
-				// Computing 2nd power
-				d__1 = zmean / simulation->nsim;
-				cpdev = zvariance / simulation->nsim - d__1 * d__1;
-				if (cpdev > 0.f) {
-					cpdev = sqrt(cpdev);
-					if (covtable_lookup->icvar == 1) {
-						cstdev = cstdev * sqrt(simulation->vvarexp) / cpdev;
-					}
-				}
-			}
-			*/
 		}
 		general->ktype = kinicial;
-		vmy = compute_gaussian_equiv( cmean, general->nd, general->vrtr, general->vrgtr);
+		vmy = compute_gaussian_equiv( cmean, harddata->point_count, harddata->point);
 
 		/* !Gera um valor aleatorio com distribuicao Gaussiana */
 		vms = 0;
-		for (i = 1; i <= covtable_lookup->ntry; ++i) {
+		for (i = 0; i < covtable_lookup->ntry; ++i) {
 			p = tsi_random_real();
-			gauinv(&p, &xp, &ierr);
-			xp = xp * cstdev + vmy;
+			gauinv(p, &xp);
+			xp = xp * std_deviation + vmy;
 			/* !Transformada inversa final (iv)               (SDSIM) */
-			simval = backtr(xp, general->ntr, general->vrtr, general->vrgtr,
-					general->zmin, general->zmax, general->ltail, general->ltpar,
-					general->utail, general->utpar);
+			simval = backtr(xp, harddata->point_count, harddata->point,
+					harddata->min_value, harddata->max_value);
 			vms += simval;
 		}
 		vms /= covtable_lookup->ntry;
@@ -393,37 +311,36 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int *m
 		} else {
 			sim[index] = simval;
 		}
-		if (sim[index] < general->tmin) {
-			sim[index] = general->tmin;
-		} else if (sim[index] > general->tmax) {
-			sim[index] = general->tmax;
+		if (sim[index] < harddata->min_value) {
+			sim[index] = harddata->min_value;
+		} else if (sim[index] > harddata->max_value) {
+			sim[index] = harddata->max_value;
 		}
-		/* !Condicionamento as medias locais */
-		/* used only when doing more than 1 simulation */
-		/*
-		zmean += sim[index]; 
-		r__1 = sim[index];
-		zvariance += r__1 * r__1;
-		*/
-	
 	}	/* !END MAIN LOOP OVER NODES: */
+
+	/* free aux grids */
+	tsi_free(order);
+	tsi_free(covtable_lookup->ixnode);
+	tsi_free(covtable_lookup->iynode);
+	tsi_free(covtable_lookup->iznode);
+	tsi_free(covtable_lookup->covtab);
 
 	printf_dbg("dssim(): DEBUG: SKIP points: %d\n",ierr);
 
 #ifdef TSI_DEBUG
 	ierr = 0;
-	index = 0; //tmp
-	for(i = 0; i < general->wellsNPoints; i++) {
-		in = general->wellsDataPos[i];
-		simval = sim[in] - general->wellsDataVal[i];
-		if(simval != 0 && in != index ) {
-			printf_dbg("sim[%d] - wellsData = %f\n",in,simval);
+	for(i = 0; i < harddata->in_grid_count; i++) {
+		in = harddata->in_grid[i].index;
+		simval = sim[in] - harddata->in_grid[i].value;
+		if(simval != 0 ) {
+			printf_dbg("sim[%d] - harddata = %f\n",in,simval);
 			ierr++;
-		} 
-		index = in;
+		}
 	}	
 	printf_dbg("dssim(): sim grid disrespects %d wells data points\n",ierr);
 #endif
+
+
 
 	/* !Return to the main program: */
 	return 0;

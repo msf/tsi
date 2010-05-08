@@ -10,19 +10,17 @@
 #include "timer.h"
 #include "si.h"
 #include "si_math.h"
+#include "si_utils.h"
 
 /* prototypes */
-inline float point_value(si *s, int point);
-inline float index_value(si *s, int idx);
+float point_value(si *s, int point);
+float index_value(si *s, int idx);
 
 
-inline unsigned int getPoint(si *s, int x, int y, int z)
+unsigned int getPoint(si *s, int x, int y, int z)
 {
-//	return (x-1) + ( (y-1) * s->xsize) + ( (z-1) * s->xsize * s->ysize);
-//	return ((z)* s->xsize * s->ysize + (y) * s->xsize + (x+1)) - 1;
-	return (z * s->xsize * s->ysize + y * s->xsize + x);
+	return get_grid_point(s->xsize, s->ysize, x, y, z);
 }
-
 
 /**
  * make Reflection Coeficients grid
@@ -213,14 +211,14 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
 } /* expand_correlations_grid */
 
 
-inline float point_value(si* s, int point) 
+float point_value(si* s, int point) 
 {
    // printf_dbg2("Point %d is at array position %d.\n", point, (s->wavelet_used_values / 2) + point);
     return (s->values[(s->wavelet_used_values / 2) + point]);
 } /* point_value */
 
 
-inline float index_value(si *s, int idx) 
+float index_value(si *s, int idx) 
 {
     return s->values[idx];
 } /* index_value */

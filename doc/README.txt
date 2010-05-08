@@ -2,10 +2,15 @@
 
 -[BUILDING]-----------------------------------------------------------
 To build execute:
-$ make 
-or
+$ make clean
 $ make -j
 this will produce the binary file with name "tsi" in the current directory.
+----------------------------------------------------------------------
+-[BUILDING WITH MPI]--------------------------------------------------
+To build execute:
+$ make clean
+$ CC=mpicc make -j
+this will produce the binary file with name "tsi-mpi" in the current directory.
 ----------------------------------------------------------------------
 
 -[RUNNING]------------------------------------------------------------
@@ -39,7 +44,7 @@ To Run the aplication the following files are required:
  	Configuration file:
 		please see configuration files on "conf" directory for examples.
  	Seismic file:
-		ASCII format, one value per line.
+		gslib ASCII format, one value per line.
 	 	values are atributed in the folowing order ( grid[x,y,z] )
 	-----example--------
 	grid[1,0,0]
@@ -53,18 +58,12 @@ To Run the aplication the following files are required:
 	grid[XNUMBER,YNUMBER,ZNUMBER]
 	--------------------
 	wavelet file:
-		ASCII format, two values per line: "x value", expecting x in [-A,A] integer ranges
+		gslib ASCII format, two values per line: "x value", expecting x in [-A,A] integer ranges
 	Wells file:
-		ASCII format, 4 values per line: "x y z value".
+		gslib ASCII format, 4 values per line: "x y z value".
 
  The output of the application, is "bestAiCube.out", a grid of acoustic impedances in the same
- format has the SEISMIC grid, but the three first lines have the following signature:
- ---------example-------
- tsi
- 1
- cube
- -----------------------
- the file is saved in the directory indicated by the config file.
+ gslib format has the SEISMIC grid. the file is saved in the directory indicated by the config file.
 ----------------------------------------------------------------------
 
 
@@ -93,6 +92,7 @@ Software:
  - Aditional Tools
 	GNU make
 	file editor
+    openmpi for mpi environment.
 note: code is fairly POSIX, should build and work 
 on most UNIX systems, and even on cygwin..
 although this was not tested yet.

@@ -18,6 +18,8 @@
 
 /*   nright,nsb       number of columns in right hand side matrix. */
 /*                      for KB2D: nright=1, nsb=1 */
+#define	NRIGHT	1
+#define	NSB		1
 /*   neq              number of equations */
 /*   a()              upper triangular left hand side matrix (stored */
 /*                      columnwise) */
@@ -39,32 +41,7 @@
 /*   5. USE for ok and sk only, NOT for UK. */
 /* ----------------------------------------------------------------------- */
 
-/**
- * funcoes utilizadas
- * -
- */
-
-/** CUBOS utilizados
- * -
- */ 
-
-/** CUBOS _nao_ utilizados
- * sim
- * tmp
- * order
- * clc
- * lvm
- * e os cov*
- */
-
-/** structs globais utilizadas:
- * krigev_1 (krigev_1.{a,r__,s})
- */
-
-
-
-
-int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
+int ksol(int neq, double *a, double *r, double *s)
 {
 	/* System generated locals */
 	int i1;
@@ -76,15 +53,8 @@ int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
 	int ii, ij, kk, in, ll, nm, nn, lp, iv, km1, ll1, nm1, llb, ijm;
 	double tol, piv;
 
-
 	/* If there is only one equation then set ising and return: */
 
-	/* Parameter adjustments */
-	//--s;
-	//--r;
-	//--a;
-
-	/* Function Body */
 	if (neq <= 1) {
 		ising = -1;
 		return ising;
@@ -96,9 +66,8 @@ int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
 	tol = 1e-7f;
 	ising = 0;
 	nn = neq * (neq + 1) / 2;
-	nm = nsb * neq;
+	nm = NSB * neq;
 	m1 = neq - 1;
-	//m1 = neq;
 	kk = 0;
 
 	/* Start triangulation: */
@@ -111,9 +80,9 @@ int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
 			return ising;
 		}
 		km1 = k - 1;
-		for (iv = 1; iv <= nright; ++iv) {
-			nm1 = nm * (iv - 1);
-			ii = kk + nn * (iv - 1);
+		for (iv = 0; iv < NRIGHT; ++iv) {
+			nm1 = nm * iv;
+			ii = kk + nn * iv;
 			piv = 1.f / a[ii];
 			lp = 0;
 			for (i = k; i <= m1; ++i) {
@@ -141,7 +110,7 @@ int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
 
 	/* Error checking - singular matrix: */
 
-	ijm = ij - nn * (nright - 1);
+	ijm = ij - nn * (NRIGHT - 1);
 	if ((d1 = a[ijm], fabs(d1)) < tol) {
 		ising = neq;
 		return ising;
@@ -149,9 +118,9 @@ int ksol(int nright, int neq, int nsb, double *a, double *r, double *s)
 
 	/* Finished triangulation, start solving back: */
 
-	for (iv = 1; iv <= nright; ++iv) {
-		nm1 = nm * (iv - 1);
-		ij = ijm + nn * (iv - 1);
+	for (iv = 0; iv < NRIGHT; ++iv) {
+		nm1 = nm * iv;
+		ij = ijm + nn * iv;
 		piv = 1.f / a[ij];
 		for (llb = neq; llb <= nm; llb += neq) {
 			ll1 = llb + nm1;
