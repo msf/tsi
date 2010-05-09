@@ -291,15 +291,15 @@ tsi *new_tsi(registry *reg) {
 
 	int size = t->grid_size * sizeof(float) / (1024*1024);
 	int dss_extra = 3 * t->grid_size * sizeof(short) / (1024*1024);
-    int total_size = (size*swap_thr) * dss_extra + 32;
-	log_print(t->l, " grid_size: %d-> grid: %dMB, grid_heap: %uMB, dss-covtable: %dMB, total: %uMB\n",
-            t->grid_size,
-            size, (size * swap_thr),
-            dss_extra,
-            total_size);
+	int total_size = (size*swap_thr) + dss_extra + 32;
 
 	if(!usefs)
-        total_size = (size * heap_size) + dss_extra + 32;
+		total_size = (size * heap_size) + dss_extra + 32;
+
+	log_print(t->l, "MEM> grid: %dMB, grid_heap: %uMB, dss-covtable: %dMB, total: %uMB\n",
+			size, (size * swap_thr),
+			dss_extra,
+			total_size);
 
 	sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n", total_size);
 	log_string(t->l, buf);
