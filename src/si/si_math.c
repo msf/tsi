@@ -13,11 +13,11 @@
 #include "si_utils.h"
 
 /* prototypes */
-float point_value(si *s, int point);
-float index_value(si *s, int idx);
+static float point_value(si *s, int point);
+static float index_value(si *s, int idx);
 
 
-unsigned int getPoint(si *s, int x, int y, int z)
+static unsigned int getPoint(si *s, int x, int y, int z)
 {
 	return get_grid_point(s->xsize, s->ysize, x, y, z);
 }
@@ -25,13 +25,13 @@ unsigned int getPoint(si *s, int x, int y, int z)
 /**
  * make Reflection Coeficients grid
  */
-int make_reflections_grid(si *s, float *AI, float *RG) 
+int make_reflections_grid(si *s, float *AI, float *RG)
 {
     int x, y, z, z_;
     double value;
     struct my_time t1, t2;
 	unsigned int p1, p2;
-        
+
     getCurrTime(&t1);
 
     for (x = 0; x < s->xsize; x++)
@@ -52,7 +52,7 @@ int make_reflections_grid(si *s, float *AI, float *RG)
     getCurrTime(&t2);
 
 	log_action_time(s->l, 2, "make_reflections_grid() cpuTime",getElapsedTime(&t1,&t2));
-	
+
     return 1;
 } /* make_reflections_grid */
 
@@ -78,8 +78,8 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
 
     /* original code */
     it = 0;
-    for (x = 0; x < s->xsize; x++) 
-        for (y = 0; y < s->ysize; y++) 
+    for (x = 0; x < s->xsize; x++)
+        for (y = 0; y < s->ysize; y++)
             for (z = 0; z < s->zsize; z++) {
                 it = z + 1;
                 for (j = -wavelet_spots+1; j <= wavelet_spots; j++) {
@@ -101,7 +101,7 @@ int make_synthetic_grid(si *s, float *RG, float *SY) {
 
 
 /**
- * 	
+ *
  * 	calculates correlations by layers between two cubes.
  */
 int make_correlations_grid(si *s, float *seismic, float *synthetic, float *UNUSED)
@@ -128,7 +128,7 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *UNUSE
     corr_grid = s->cmg->cg;   /* compressed grid */
     nlayers = s->cmg->nlayers;
     layer_size = s->cmg->layer_size;
-        
+
     for (x = 0; x < s->xsize; x++)
         for (y = 0; y < s->ysize; y++) {
             z1 = 0;
@@ -157,25 +157,25 @@ int make_correlations_grid(si *s, float *seismic, float *synthetic, float *UNUSE
                 sum_y_2 = sum_y * sum_y;
 
                 denom = sqrt(
-						((n * sum_x2 ) - sum_x_2 ) * 
+						((n * sum_x2 ) - sum_x_2 ) *
 						((n * sum_y2 ) - sum_y_2)
 						);
                 if (denom > 0)
                     r = ((n * sum_xy) - ( sum_x *sum_y ))/denom;
-                else 
-                    r = 0; 
+                else
+                    r = 0;
 
 				temp = getPoint(s,x,y,i);
 				if (r < 0)
-					corr_grid[temp] = 0; 
+					corr_grid[temp] = 0;
 				else
-					corr_grid[temp] = r; 
-				
+					corr_grid[temp] = r;
+
                 // reposition Z pointer
                 z1 = z2;
             }
         }
-	
+
     //expand_correlations_grid(s->cmg, CM);
     getCurrTime(&t2);
 	log_action_time(s->l, 2, "make_correlations_grid() cpuTime",getElapsedTime(&t1,&t2));
@@ -211,14 +211,14 @@ int expand_correlations_grid(cm_grid *cmg, float *CM) {
 } /* expand_correlations_grid */
 
 
-float point_value(si* s, int point) 
+static float point_value(si* s, int point)
 {
    // printf_dbg2("Point %d is at array position %d.\n", point, (s->wavelet_used_values / 2) + point);
     return (s->values[(s->wavelet_used_values / 2) + point]);
 } /* point_value */
 
 
-float index_value(si *s, int idx) 
+static float index_value(si *s, int idx)
 {
     return s->values[idx];
 } /* index_value */

@@ -14,12 +14,12 @@ log_t *new_log(registry *reg, int proc_id) {
     char *log_path, empty_path;
     log_t *new_log;
     reg_key *k;
-    
+
     if ((new_log = (log_t *) tsi_malloc(sizeof(log_t))) == NULL) {
         printf_dbg("new_log: failed to allocate space for new log\n");
         return NULL;
     }
-    
+
     if ((new_log->logBuf = (char *) tsi_malloc(BUFFER_SIZE * sizeof(char))) == NULL) {
         printf_dbg("new_log: failed to allocate space for new log\n");
         delete_log(new_log);
@@ -27,7 +27,7 @@ log_t *new_log(registry *reg, int proc_id) {
     }
 
     new_log->procID = proc_id;
-	
+
     /* use log or output path */
     empty_path = 0;
     if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) {
@@ -53,7 +53,7 @@ log_t *new_log(registry *reg, int proc_id) {
             fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n using only stdout..\n", new_log->logBuf);
         } else {
             fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n enabling verbosive mode..\n", new_log->logBuf);
-        }   
+        }
 		new_log->logFile = stdout;
 		new_log->verbose = 0;
     }
@@ -74,7 +74,7 @@ void delete_log(log_t *l) {
         printf_dbg("delete_log: received NULL as parameter!\n");
     }
 }
- 
+
 void log_indent(char *buf, int level)
 {
     int i;
@@ -112,7 +112,7 @@ void log_simulation_number(log_t *l, int simulNum)
 void log_message(log_t *l, int level, char* message)
 {
 	char buf[20];
-			
+
 	log_indent(buf, level);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s\n", l->procID, l->iterNum, l->simulNum, buf, message);
 	if(l->verbose) {
@@ -125,7 +125,7 @@ void log_message(log_t *l, int level, char* message)
 void log_action_time(log_t *l, int nivel, char* action, float time)
 {
 	char buf[20];
-			
+
 	log_indent(buf, nivel);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s ..... [ %.3fs ]\n", l->procID, l->iterNum, l->simulNum, buf, action, time);
 	if(l->verbose) {
@@ -138,7 +138,7 @@ void log_action_time(log_t *l, int nivel, char* action, float time)
 void log_result(log_t *l, int nivel, char* name, double value)
 {
 	char buf[20];
-			
+
 	log_indent(buf, nivel);
 	fprintf(l->logFile, "(%d,%d,%d) %s+ - %s = %.5f\n", l->procID, l->iterNum, l->simulNum, buf, name, value);
 	if(l->verbose) {
@@ -161,20 +161,14 @@ void log_string(log_t *l, char* dump)
 
 void log_print(log_t *l, char *fmt, ...)
 {
-	char	buf[2048];
+    char buf[BUFFER_SIZE];
 	va_list	args;
 
 	va_start(args, fmt);
-	vsprintf(buf, fmt, args);
-	va_end(args); 
+    vsnprintf(buf, BUFFER_SIZE, fmt, args);
+	va_end(args);
 
-	fprintf(l->logFile, buf); 
-	if(l->verbose) {
-		printf(buf);
-		fflush(stdout);
-	}
-	fflush(l->logFile);
-
+    log_string(l, buf);
 }
 
 void log_separator(log_t *l)
@@ -184,14 +178,10 @@ void log_separator(log_t *l)
 
 	for(i = 0; i < 80; i++)
 		buf[i] = '=';
-	buf[i] = 0;
+	buf[i++] = '\n';
+    buf[i] = 0;
 
-	fprintf(l->logFile, "%s\n",buf);
-	if(l->verbose) {
-		printf("%s\n",buf);
-		fflush(stdout);
-	}
-	fflush(l->logFile);
+    log_string(l, buf);
 }
 
 void log_close(log_t *l)
