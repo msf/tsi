@@ -45,9 +45,9 @@ tsi *new_tsi(registry *reg) {
 	t->heap = NULL;
 
 	/* set a starting point for the rand() */
-	if ((k = get_key(reg, "GLOBAL", "SEED")) != NULL) 
-		timeSeed = get_long(k); 
-	else 
+	if ((k = get_key(reg, "GLOBAL", "SEED")) != NULL)
+		timeSeed = get_long(k);
+	else
 	{
 #ifndef WIN32
 	    fp = open_file("/dev/random");
@@ -56,31 +56,31 @@ tsi *new_tsi(registry *reg) {
 #else
     	timeSeed = 7919; /* used to get a deterministic behavior */
 #endif
-	} 
+	}
 
 	tsi_seed_random(timeSeed);
 	printf_dbg("new_tsi: seed : %lu\n",timeSeed);
 
-	t->empty_path = 0; 
+	t->empty_path = 0;
 
 	t->input_path = &t->empty_path;
-	if ((k = get_key(reg, "GLOBAL", "INPUT_PATH")) != NULL) 
+	if ((k = get_key(reg, "GLOBAL", "INPUT_PATH")) != NULL)
 		t->input_path = get_string(k);
 
 	t->output_path = &t->empty_path;
-	if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) != NULL) 
+	if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) != NULL)
 		t->output_path = get_string(k);
 
 	t->log_path = t->output_path;
-	if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) != NULL) 
+	if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) != NULL)
 		t->log_path = get_string(k);
 
 	t->seismic_path = t->input_path;
-	if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL) 
+	if ((k = get_key(reg, "SEISMIC", "PATH")) != NULL)
 		t->seismic_path = get_string(k);
 
 	t->dump_path = t->output_path;
-	if ((k = get_key(reg, "DUMP", "PATH")) != NULL) 
+	if ((k = get_key(reg, "DUMP", "PATH")) != NULL)
 		t->dump_path = get_string(k);
 
 
@@ -100,7 +100,7 @@ tsi *new_tsi(registry *reg) {
 		return NULL;
 	}
 	sprintf(buf,"TSI %s - started, seed: %lu\n",TSI_VERSION, timeSeed);
-	log_string(t->l, buf); 
+	log_string(t->l, buf);
 
 	t->global_best.value = t->last_corr.value = -999;
 	t->global_best.proc_id = t->last_corr.proc_id = t->proc_id;
@@ -200,13 +200,13 @@ tsi *new_tsi(registry *reg) {
 	t->dump_cm = 0;
 	t->dump_bai = 0;
 	t->dump_bcm = 0;
-	if ((k = get_key(reg, "DUMP", "AI"))   != NULL) 
+	if ((k = get_key(reg, "DUMP", "AI"))   != NULL)
 		t->dump_ai = get_int(k);
-	if ((k = get_key(reg, "DUMP", "CORR")) != NULL) 
+	if ((k = get_key(reg, "DUMP", "CORR")) != NULL)
 		t->dump_cm = get_int(k);
-	if ((k = get_key(reg, "DUMP", "BAI"))  != NULL) 
+	if ((k = get_key(reg, "DUMP", "BAI"))  != NULL)
 		t->dump_bai = get_int(k);
-	if ((k = get_key(reg, "DUMP", "BCM"))  != NULL) 
+	if ((k = get_key(reg, "DUMP", "BCM"))  != NULL)
 		t->dump_bcm = get_int(k);
 
 	k = get_key(reg, "GLOBAL", "RESUME");
@@ -289,13 +289,19 @@ tsi *new_tsi(registry *reg) {
 	sprintf(buf," TSI - grid size is %u\n",t->grid_size);
 	log_string(t->l, buf);
 
-	int size = t->grid_size / (1024*1024) * sizeof(float);
-	int dss_extra = 3 * t->grid_size / (1024*1024) * sizeof(short);
-	log_print(t->l, "grid_heap: %u MB, covtable: %u MB, total -> %u\n", size*swap_thr, dss_extra, size*swap_thr + dss_extra + 32);
-	if(usefs)
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*swap_thr) + dss_extra + 32);
-	else 
-		sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n",(size*heap_size) + dss_extra + 32); 
+	int size = t->grid_size * sizeof(float) / (1024*1024);
+	int dss_extra = 3 * t->grid_size * sizeof(short) / (1024*1024);
+    int total_size = (size*swap_thr) * dss_extra + 32;
+	log_print(t->l, " grid_size: %d-> grid: %dMB, grid_heap: %uMB, dss-covtable: %dMB, total: %uMB\n",
+            t->grid_size,
+            size, (size * swap_thr),
+            dss_extra,
+            total_size);
+
+	if(!usefs)
+        total_size = (size * heap_size) + dss_extra + 32;
+
+	sprintf(buf," TSI - predicted memory use is: <%u MegaBytes\n", total_size);
 	log_string(t->l, buf);
 
 
@@ -344,7 +350,7 @@ tsi *new_tsi(registry *reg) {
 	t->seismic_file = TSI_ASCII_FILE;
 	t->dump_file = TSI_BIN_FILE;     /* increases performance for dump/resume features */
 	t->result_file = TSI_ASCII_FILE;
-	/* TSI_ASCII is the GSLIB ascii format, has defined in: 
+	/* TSI_ASCII is the GSLIB ascii format, has defined in:
 	 * http://www.gslib.com/gslib_help/format.html
 	 */
 	if ((k = get_key(reg, "DUMP", "DUMP_TYPE")) != NULL) {
@@ -420,7 +426,7 @@ int run_tsi(tsi *t) {
 	log_action_time(t->l, 0, "run_tsi() - TOTAL Time for Eval Best Correlations",t->corr_time);
 	log_action_time(t->l, 0, "run_tsi() - TOTAL Time",getElapsedTime(&t1, &t2));
 	log_string(t->l,"\n");
-	log_result(t->l, 0, "run_tsi() - FINAL CORRELATION ",t->global_best.value); 
+	log_result(t->l, 0, "run_tsi() - FINAL CORRELATION ",t->global_best.value);
 
 	return 1;
 } /* run_tsi */
@@ -469,7 +475,7 @@ int tsi_simulation(tsi *t, int i, int s)
 	r = tsi_direct_sequential_simulation(t, i, s);
 	if (r) {
 		r = tsi_seismic_inversion(t, i, s);
-		if (r) 
+		if (r)
 			r = tsi_evaluate_best_correlations(t, i ,s);
 	}
 	getCurrTime(&t2);
@@ -480,7 +486,7 @@ int tsi_simulation(tsi *t, int i, int s)
 
 
 
-int tsi_setup_iteration(tsi *t, int iteration) 
+int tsi_setup_iteration(tsi *t, int iteration)
 {
 	struct my_time t1, t3, t4;
 	double run_time, par_time;
@@ -490,10 +496,10 @@ int tsi_setup_iteration(tsi *t, int iteration)
 	log_separator(t->l);
 	log_iteration_number(t->l, iteration);
 	log_message(t->l, 0, "tsi_setup_iteration() setup Direct Sequential [Co]-Simulation");
-	
+
 	getCurrTime(&t1);
 	if (iteration == 0) { /* first iteration */
-		t->currBAI_idx = -1; 
+		t->currBAI_idx = -1;
 		t->currBCM_idx = -1;
 	} else {
 		t->currBAI_idx = t->nextBAI_idx;
@@ -545,7 +551,7 @@ int tsi_setup_iteration(tsi *t, int iteration)
 
 
 
-int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation) 
+int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 {
 	struct my_time t1, t2, t3;
 	int result;
@@ -567,7 +573,7 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 
 	/* run simulation */
 	if (iteration == 0) { /* first iteration */
-		log_message(t->l, 1, "tsi_DSSimulation() running Direct Sequential Simulation"); 
+		log_message(t->l, 1, "tsi_DSSimulation() running Direct Sequential Simulation");
 		getCurrTime(&t2);
 		result = run_dss(t->dss_eng, t->ai);
 		getCurrTime(&t3);
@@ -582,7 +588,7 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 			delete_tsi(t);
 			return 0;
 		}
-		log_message(t->l, 1, "tsi_DSSimulation() running Direct Sequential Co-Simulation"); 
+		log_message(t->l, 1, "tsi_DSSimulation() running Direct Sequential Co-Simulation");
 		getCurrTime(&t2);
 		result = run_codss(t->dss_eng, t->currBAI, t->currBCM, t->ai);    /* 8 GRIDS -> too much  :-( */
 		getCurrTime(&t3);
@@ -615,8 +621,8 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 
 	if(mm_time > 0.01)
 		log_action_time(t->l, 1, "tsi_DSSimulation() Time in memory management", mm_time);
-	log_action_time(t->l, 1, "tsi_DSSimulation() Time",run_time); 
-	log_result(t->l, 1, "Thousands of points simulated per second", 
+	log_action_time(t->l, 1, "tsi_DSSimulation() Time",run_time);
+	log_result(t->l, 1, "Thousands of points simulated per second",
 			t->grid_size / 1000 / run_time);
 	log_string(t->l,"\n");
 
@@ -625,7 +631,7 @@ int tsi_direct_sequential_simulation(tsi *t, int iteration, int simulation)
 
 
 
-int tsi_seismic_inversion(tsi *t, int iteration, int simulation) 
+int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 {
 	struct my_time t1, t2, t3;
 	double mm_time, run_time;
@@ -645,7 +651,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 	}
 
 	/* load all grids needed for seismic inversion */
-	
+
 	if( iteration == 0 && simulation == 0) {
 		char buf[1024];
 		FILE *fp;
@@ -657,7 +663,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
 		}
 		t->seismic = load_grid(t->heap, t->seismic_idx);
 
-		sprintf(buf, "%s%s", t->seismic_path, 
+		sprintf(buf, "%s%s", t->seismic_path,
 				get_string( get_key(t->reg, "SEISMIC", "FILENAME") ) );
 		if ((fp = fopen(buf, "r")) == NULL) {
 			ERROR(t->l, "open seismic grid file", buf);
@@ -737,7 +743,7 @@ int tsi_seismic_inversion(tsi *t, int iteration, int simulation)
  * - calculate global correlation for AI grid from this simulation
  * - update Best Correlations Map and Best Acoustic Impedance Map with this AI & Corr Map
  */
-int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation) 
+int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 {
 	struct my_time t1, t2, t3, t4, t5, t6;
 	double mm_time, run_time;
@@ -772,7 +778,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 	clear_grid(t->heap, t->seismic_idx);
 	delete_grid(t->heap, t->sy_idx); /* not needed anymore, delete it */
-	t->sy_idx = -1; 
+	t->sy_idx = -1;
 
 	log_result(t->l, 1, "tsi_eval_best_correlations() grid global correlation",corr);
 
@@ -780,7 +786,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 	if (corr > t->global_best.value) {
 		t->global_best.value = corr;
 		t->global_best.proc_id = t->proc_id;
-		if (t->bestAI_idx > -1) 
+		if (t->bestAI_idx > -1)
 			delete_grid(t->heap, t->bestAI_idx);   /* new bestAI, delete old */
 
 		t->bestAI_idx = new_grid(t->heap);
@@ -799,7 +805,7 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 
 			getCurrTime(&t4);
 			getCurrTime(&t5);
-			
+
 			tsi_backup_simulation(t, iteration, simulation);
 
 			t->nextBAI_idx = t->ai_idx;    /* nextBxx = xx at this stage */
@@ -875,12 +881,12 @@ int tsi_evaluate_best_correlations(tsi *t, int iteration, int simulation)
 	log_action_time(t->l, 1, "tsi_eval_best_correlation() Time",run_time);
 
 	log_string(t->l,"\n");
-	return 1;    
+	return 1;
 } /* tsi_evaluate_best_correlations */
 
 
 
-int tsi_finish_iteration(tsi *t, int iteration) 
+int tsi_finish_iteration(tsi *t, int iteration)
 {
 	struct my_time t1, t2, t3;
 	double par_time;
@@ -905,7 +911,7 @@ int tsi_finish_iteration(tsi *t, int iteration)
 		if( !t->resume || iteration != 0)
 			tsi_backup_iteration(t, iteration);
 	}
-	
+
 	log_message(t->l, 0, "tsi_finish_iteration(): deleting currBAI & currBCM");
 	if (iteration > 0) {
 		delete_grid(t->heap, t->currBAI_idx);
@@ -997,7 +1003,7 @@ int tsi_compare(float *AI, cm_grid *CM_C, float *BAI, cm_grid *BCM_C) {
 		z1 += layer[i];
 		for (j = 0; j < nxy; j++) {
 			if (BCM[i*nxy+j] < CM[i*nxy+j]) {
-				/* new best correlation */ 
+				/* new best correlation */
 				BCM[i*nxy+j] = CM[i*nxy+j];
 				for (k = z0; k < z1; k++) {
 					BAI[k*nxy + j] = AI[k*nxy + j];
