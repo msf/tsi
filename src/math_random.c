@@ -1,14 +1,14 @@
-/* 
+/*
    A C-program for MT19937, with initialization improved 2002/2/10.
    Coded by Takuji Nishimura and Makoto Matsumoto.
    This is a faster version by taking Shawn Cokus's optimization,
    Matthe Bellew's simplification, Isaku Wada's real version.
 
-   Before using, initialize the state by using init_genrand(seed) 
+   Before using, initialize the state by using init_genrand(seed)
    or init_by_array(init_key, key_length).
 
    Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
-   All rights reserved.                          
+   All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -21,8 +21,8 @@
         notice, this list of conditions and the following disclaimer in the
         documentation and/or other materials provided with the distribution.
 
-     3. The names of its contributors may not be used to endorse or promote 
-        products derived from this software without specific prior written 
+     3. The names of its contributors may not be used to endorse or promote
+        products derived from this software without specific prior written
         permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -47,7 +47,7 @@
 
 #include "math_random.h"
 
-/* Period parameters */  
+/* Period parameters */
 #define M 397
 #define MATRIX_A 0x9908b0dfUL   /* constant vector a */
 #define UMASK 0x80000000UL /* most significant w-r bits */
@@ -64,7 +64,7 @@ static void mtrand_init(mtrand_t *mt, unsigned long s)
     int j;
     state[0]= s & 0xffffffffUL;
     for (j=1; j<N; j++) {
-        state[j] = (1812433253UL * (state[j-1] ^ (state[j-1] >> 30)) + j); 
+        state[j] = (1812433253UL * (state[j-1] ^ (state[j-1] >> 30)) + j);
         /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
         /* In the previous versions, MSBs of the seed affect   */
         /* only MSBs of the array state[].                     */
@@ -96,7 +96,7 @@ static void init_by_array(mtrand_t *mt, unsigned long init_key[], int key_length
 		   	state[0] = state[N-1];
 		   	i=1;
 	   	}
-        if (j>=key_length) 
+        if (j>=key_length)
 			j=0;
     }
     for (k=N-1; k; k--) {
@@ -104,13 +104,13 @@ static void init_by_array(mtrand_t *mt, unsigned long init_key[], int key_length
           - i; /* non linear */
         state[i] &= 0xffffffffUL; /* for WORDSIZE > 32 machines */
         i++;
-        if (i>=N) { 
+        if (i>=N) {
 			state[0] = state[N-1];
 		   	i=1;
 	   	}
     }
 
-    state[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */ 
+    state[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
     mt->left = 1;
     mt->initf = 1;
 }
@@ -225,7 +225,7 @@ double tsi_random_real(void)
 
 
 
-mtrand_t *genrand_new(long seed) 
+mtrand_t *genrand_new(long seed)
 {
     genrand_t *state = malloc(sizeof(genrand_t));
     if( ! state )
