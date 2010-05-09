@@ -16,7 +16,6 @@
 static float point_value(si *s, int point);
 static float index_value(si *s, int idx);
 
-
 static unsigned int getPoint(si *s, int x, int y, int z)
 {
 	return get_grid_point(s->xsize, s->ysize, x, y, z);

@@ -21,10 +21,6 @@ int make_correlations_grid(si *s, float *seismic, float *SY, float *CM);
 /* expands the correlations grid to a regular grid for DSS */
 int expand_correlations_grid(cm_grid *cmg, float *CM);
 
-/* give absolute index offset in grid based on x, y, z coordinates */
-/* coordinate start at 0,0,0 */
-unsigned int getPoint(si *s, int x, int y, int z);
-
 #endif /* _SI_MATH_H */
 
 /* end of file si_math.h */
