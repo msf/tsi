@@ -10,80 +10,82 @@
 
 #define BUFFER_SIZE	1024
 
-log_t *new_log(registry *reg, int proc_id) {
-    char *log_path, empty_path;
-    log_t *new_log;
-    reg_key *k;
+log_t *new_log(registry *reg, int proc_id)
+{
+	char *log_path, empty_path;
+	log_t *new_log;
+	reg_key *k;
 
-    if ((new_log = (log_t *) tsi_malloc(sizeof(log_t))) == NULL) {
-        printf_dbg("new_log: failed to allocate space for new log\n");
-        return NULL;
-    }
+	if ((new_log = (log_t *) tsi_malloc(sizeof(log_t))) == NULL) {
+		printf_dbg("new_log: failed to allocate space for new log\n");
+		return NULL;
+	}
 
-    if ((new_log->logBuf = (char *) tsi_malloc(BUFFER_SIZE * sizeof(char))) == NULL) {
-        printf_dbg("new_log: failed to allocate space for new log\n");
-        delete_log(new_log);
-        return NULL;
-    }
+	if ((new_log->logBuf = (char *) tsi_malloc(BUFFER_SIZE * sizeof(char))) == NULL) {
+		printf_dbg("new_log: failed to allocate space for new log\n");
+		delete_log(new_log);
+		return NULL;
+	}
 
-    new_log->procID = proc_id;
+	new_log->procID = proc_id;
 
-    /* use log or output path */
-    empty_path = 0;
-    if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) {
-       if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) == NULL) {
-           log_path = &empty_path;
-       } else {
-           log_path = get_string(k);
-       }
-    } else {
-        log_path = get_string(k);
-    }
+	/* use log or output path */
+	empty_path = 0;
+	if ((k = get_key(reg, "GLOBAL", "LOG_PATH")) == NULL) {
+		if ((k = get_key(reg, "GLOBAL", "OUTPUT_PATH")) == NULL) {
+			log_path = &empty_path;
+		} else {
+			log_path = get_string(k);
+		}
+	} else {
+		log_path = get_string(k);
+	}
 
-    sprintf(new_log->logBuf,"%stsi-proc-%d.log", log_path, proc_id);
+	sprintf(new_log->logBuf,"%stsi-proc-%d.log", log_path, proc_id);
 
-    if ((k = get_key(reg, "GLOBAL", "VERBOSE")) == NULL)
-        new_log->verbose = 0;
-    else
-        new_log->verbose = get_int(k);
+	if ((k = get_key(reg, "GLOBAL", "VERBOSE")) == NULL)
+		new_log->verbose = 0;
+	else
+		new_log->verbose = get_int(k);
 
-    new_log->logFile = fopen(new_log->logBuf, "w");
-    if (new_log->logFile == NULL) {
-        if (new_log->verbose) {
-            fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n using only stdout..\n", new_log->logBuf);
-        } else {
-            fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n enabling verbosive mode..\n", new_log->logBuf);
-        }
+	new_log->logFile = fopen(new_log->logBuf, "w");
+	if (new_log->logFile == NULL) {
+		if (new_log->verbose) {
+			fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n using only stdout..\n", new_log->logBuf);
+		} else {
+			fprintf(stderr,"new_log(): ERROR, could not open %s for writting\n enabling verbosive mode..\n", new_log->logBuf);
+		}
 		new_log->logFile = stdout;
 		new_log->verbose = 0;
-    }
+	}
 
-    new_log->simulNum = 0;
-    new_log->iterNum = 0;
-    return new_log;
+	new_log->simulNum = 0;
+	new_log->iterNum = 0;
+	return new_log;
 }
 
 
-void delete_log(log_t *l) {
-    if (l) {
-        /* close file */
-        if (l->logFile) log_close(l);
-        if (l->logBuf) tsi_free(l->logBuf);
-        tsi_free(l);
-    } else {
-        printf_dbg("delete_log: received NULL as parameter!\n");
-    }
+void delete_log(log_t *l)
+{
+	if (l) {
+		/* close file */
+		if (l->logFile) log_close(l);
+		if (l->logBuf) tsi_free(l->logBuf);
+		tsi_free(l);
+	} else {
+		printf_dbg("delete_log: received NULL as parameter!\n");
+	}
 }
 
 void log_indent(char *buf, int level)
 {
-    int i;
+	int i;
 
-    if (level > 8) level = 9; /* limit identation to 9 tabs */
-    for (i = 0; i < level; i++) {
-        buf[i] = '\t';
-    }
-    buf[i] = 0;
+	if (level > 8) level = 9; /* limit identation to 9 tabs */
+	for (i = 0; i < level; i++) {
+		buf[i] = '\t';
+	}
+	buf[i] = 0;
 }
 
 void log_iteration_number(log_t *l, int iterNum)
@@ -161,14 +163,14 @@ void log_string(log_t *l, char* dump)
 
 void log_print(log_t *l, char *fmt, ...)
 {
-    char buf[BUFFER_SIZE];
+	char buf[BUFFER_SIZE];
 	va_list	args;
 
 	va_start(args, fmt);
-    vsnprintf(buf, BUFFER_SIZE, fmt, args);
+	vsnprintf(buf, BUFFER_SIZE, fmt, args);
 	va_end(args);
 
-    log_string(l, buf);
+	log_string(l, buf);
 }
 
 void log_separator(log_t *l)
@@ -179,9 +181,9 @@ void log_separator(log_t *l)
 	for(i = 0; i < 80; i++)
 		buf[i] = '=';
 	buf[i++] = '\n';
-    buf[i] = 0;
+	buf[i] = 0;
 
-    log_string(l, buf);
+	log_string(l, buf);
 }
 
 void log_close(log_t *l)
