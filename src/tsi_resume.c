@@ -19,7 +19,7 @@ int tsi_backup_simulation(tsi *t, int i, int s)
         printf_dbg("\ttsi_backup_simulation(): dumping AI...\n");
         /* dump AI */
         g = load_grid(t->heap, t->ai_idx);
-        sprintf(desc, "AI_%d_%d", i, (s * t->n_procs + t->proc_id));        
+        sprintf(desc, "AI_%d_%d", i, (s * t->n_procs + t->proc_id));
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         fp = create_file(filename);
         if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
@@ -38,7 +38,7 @@ int tsi_backup_simulation(tsi *t, int i, int s)
         g_idx = new_grid(t->heap);
         g = load_grid(t->heap, g_idx);
         expand_correlations_grid(cmg, g);
-        sprintf(desc, "CC_%d_%d", i, (s * t->n_procs + t->proc_id));        
+        sprintf(desc, "CC_%d_%d", i, (s * t->n_procs + t->proc_id));
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         fp = create_file(filename);
         if (!tsi_write_grid(t, fp, g, t->dump_file, desc)) {
@@ -60,8 +60,8 @@ int tsi_backup_simulation(tsi *t, int i, int s)
         }
         if (t->global_best.value > t->last_corr.value) {
             printf_dbg("\ttsi_backup_simulation(): dumping BestAI...\n");
-            t->last_corr.value = t->global_best.value; 
-            t->last_corr.proc_id = t->global_best.proc_id; 
+            t->last_corr.value = t->global_best.value;
+            t->last_corr.proc_id = t->global_best.proc_id;
             /* dump bestAI (sim numbered for sequence eval on resume) */
             /* include correlation on 3rd line for fast resume (what about cart-grid format?) */
         }
@@ -81,7 +81,7 @@ int tsi_backup_iteration(tsi *t, int i)
 
     if (t->dump_bai) {
         printf_dbg("\ttsi_backup_iteration(): dumping BAI...\n");
-        sprintf(desc, "BAI_%d", i);        
+        sprintf(desc, "BAI_%d", i);
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         g_idx = t->nextBAI_idx;
         g = load_grid(t->heap, g_idx);
@@ -96,7 +96,7 @@ int tsi_backup_iteration(tsi *t, int i)
 
     if (t->dump_bcm) {
         printf_dbg("\ttsi_backup_iteration(): dumping BCM...\n");
-        sprintf(desc, "BCM_%d", i);        
+        sprintf(desc, "BCM_%d", i);
         sprintf(filename, "%s%s.tsi", t->dump_path, desc);
         g_idx = t->nextBCM_idx;
         g = load_grid(t->heap, g_idx);
@@ -128,7 +128,7 @@ int tsi_restore_iteration(tsi *t, int i)
 	log_message(t->l, 0, "RESUME: restoring Iteration from files");
 
 	/* load currBCM, currBAI
-	 * at the begginning of the iteration, nextBAI & nextBCM will be 
+	 * at the begginning of the iteration, nextBAI & nextBCM will be
 	 * adopted has the currBCM and currBAI, so what we load here, is the
 	 * next*
 	 */

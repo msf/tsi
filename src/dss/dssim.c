@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------
    Direct Sequential Simulation and co-Simulation of a 3-D Rectangular Grid
- * ----------------------------------------------------------------------- */          
+ * ----------------------------------------------------------------------- */
 
 
 /* This subroutine generates 3-D realizations of a Gaussian process with */
@@ -207,7 +207,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		order[in] = order[toSim];
 		order[toSim] = index;
 		toSim--;
-		
+
 
 #ifdef TSI_DEBUG
 		if(toSim == (general->nxyz * 0.75)) {
@@ -226,7 +226,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			++ierr;
 			printf("dssim(): ERROR: index(%d) with valid data: %f\n", index, sim[index]);
 		}
-		
+
 		if (sim[index] > general->nosim_value + 1e-20f ||
 				 sim[index] < general->nosim_value * 2.f) {
 			++ierr;
@@ -234,7 +234,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			continue;
 		}
 #endif
-		
+
 
 		/* get relative x,y,z from index */
 		get3Dcoords(index, general->nx, general->nxy, &ix, &iy, &iz);
@@ -282,7 +282,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			if(ktype == CO_KRIG) {
 				clcorr = bestCorrCube[index];
 			}
-				
+
 			krige(ix, iy, iz, xx, yy, zz, lktype, global_mean,
 					&cmean, &std_deviation, // these are the output vars of krige
 					&bestAICube[1], clcorr,
@@ -336,7 +336,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 			printf_dbg("sim[%d] - harddata = %f\n",in,simval);
 			ierr++;
 		}
-	}	
+	}
 	printf_dbg("dssim(): sim grid disrespects %d wells data points\n",ierr);
 #endif
 

@@ -40,7 +40,7 @@
 /** CUBOS utilizados
  * sim
  * -
- */ 
+ */
 
 /** CUBOS _nao_ utilizados
  * tmp
@@ -87,7 +87,7 @@ int srchnod(int ix, int iy, int iz, float *sim,
 		i = nctx + covtable_lookup->ixnode[il];
 		if( i < 1 || i > general->nx)
 			continue;
-		
+
 		j = ncty + covtable_lookup->iynode[il];
 		if( j < 1 || j > general->ny )
 			continue;

@@ -20,7 +20,7 @@ typedef struct si_type {
     registry  *reg;
     grid_heap *heap;
     log_t *l;                   /* reference to the log */
-    
+
     int n_procs,
         proc_id;
 
@@ -35,7 +35,7 @@ typedef struct si_type {
     float *values;
     int   wavelet_used_values,
           max_values;  /* max number of wavelet values (for point > 0) */
-          
+
     /* layers data */
     int random;
     int min_size;
@@ -43,7 +43,7 @@ typedef struct si_type {
 
     /* correlations grid */
     cm_grid *cmg;
-    
+
     /* execution log */
     int dump_sy,
         dump_rg;

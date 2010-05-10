@@ -119,7 +119,7 @@ typedef struct covtable_lookup_vars_type {
     short  *ixnode,
            *iynode,
            *iznode;
-    
+
     /* parameters from registry */
     unsigned int    nodmax;  /* SEARCH:NODMAX */
     unsigned int    ntry;    /* QUALITY:NTRY */

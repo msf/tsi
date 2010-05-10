@@ -48,7 +48,7 @@
 
 
 int sort_permute_float(int start,  int end, float *a, float *b)
-           
+
 {
 	/* System generated locals */
 	int i1;
@@ -96,7 +96,7 @@ L15:
 	p = (j + i) / 2;
 	ta = a[p];
 	a[p] = a[i];
-	
+
 	tb = b[p];
 	b[p] = b[i];
 

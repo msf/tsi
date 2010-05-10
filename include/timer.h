@@ -1,12 +1,12 @@
-/* timer.h 
+/* timer.h
    simple cpu timer api.
  */
 
 
 #ifdef WIN32
 
-#include <sys/types.h> 
-#include <sys/timeb.h> 
+#include <sys/types.h>
+#include <sys/timeb.h>
 
 struct timeval {
 	time_t	tv_sec;
@@ -14,7 +14,7 @@ struct timeval {
 };
 
 /* define gettimeofday() */
-static int gettimeofday(struct timeval *tv, void *ignore) 
+static int gettimeofday(struct timeval *tv, void *ignore)
 {
 	struct _timeb buf;
 	_ftime_s(&buf);

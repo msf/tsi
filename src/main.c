@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
         printf_dbg("No registry file passed as argument! Trying default file...\n");
         reg_file = default_registry_file;
     }
-    
+
     r = new_registry(reg_file);   /* attempts to load registry file */
 
     if (r)   /* evaluate if the first registry file was loaded successfully */

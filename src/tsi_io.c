@@ -5,7 +5,7 @@
 #include "tsi.h"
 #include "tsi_io.h"
 
-#ifdef WIN32  
+#ifdef WIN32
 #define strncasecmp strncmp
 #endif
 
@@ -34,10 +34,10 @@ int tsi_write_grid(tsi *t, TSI_FILE *fp, float *grid, int type, char *desc) {
 		default:
 			ERROR(t->l, "tsi_write_grid()", "unkown grid file type");
 			return 0;
-	} /* switch */ 
+	} /* switch */
 } /* tsi_write_grid */
 
-/**** 
+/****
  * open/close files ***
  */
 
@@ -60,7 +60,7 @@ int close_file(TSI_FILE *fp) {
 } /* close_file */
 
 
-/**** 
+/****
  * grid read/write functions ***
  */
 
@@ -78,7 +78,7 @@ int read_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 	}
 
 
-    // parse header 
+    // parse header
     if (strncasecmp(header, tsi_h, 3)) {
         fprintf(stderr,"\tread_tsi_grid(): unknown file format\n");
         return 0;
@@ -121,8 +121,8 @@ int write_tsi_grid(TSI_FILE *fp, float *grid, int x, int y, int z) {
 int read_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
     int t;
-	
-    for (i=0; i < grid_size; i++) 
+
+    for (i=0; i < grid_size; i++)
 	    t = fscanf(fp, "%f\n", &grid[i]);
     return i;
 } /* read_cartesian_grid */
@@ -133,7 +133,7 @@ int write_cartesian_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     unsigned int i;
     int t;
 
-    for (i = 0; i < grid_size; i++) 
+    for (i = 0; i < grid_size; i++)
 	    t = fprintf(fp, "%.4f\n", grid[i]);
     return i;
 } /* write_cartesian_grid */
@@ -183,7 +183,7 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
     grid_size = (unsigned int) x * (unsigned int) y * (unsigned int) z;
     if (desc) {
         if (!fprintf(fp,"TSI %d %d %d\n1\n%s\n", x, y, z, desc))
-            return 0; 
+            return 0;
     } else {
         if (!fprintf(fp,"TSI %d %d %d\n1\ngrid\n", x, y, z))
             return 0;
@@ -198,7 +198,7 @@ int write_gslib_grid(TSI_FILE *fp, float *grid, int x, int y, int z, char *desc)
 
 int dump_binary_grid(TSI_FILE *fp, float *grid, unsigned int grid_size) {
     printf_dbg2("\tdump_binary_grid(): %d\n", grid_size);
-    if (fseek(fp, (long) 0, SEEK_SET)) 
+    if (fseek(fp, (long) 0, SEEK_SET))
 		return 0;
 	if ( write_float(fp, grid, grid_size) < grid_size)
 		return 0;

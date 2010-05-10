@@ -65,7 +65,7 @@ float compute_gaussian_equiv(float cmean, unsigned size, harddata_point_t *point
 
     low = 0;
     i = size/2;
-    // binary search for value closer to cmean in global histogram 
+    // binary search for value closer to cmean in global histogram
     do {
         if(point[i].val < cmean) {
             j = (i-low)/2;

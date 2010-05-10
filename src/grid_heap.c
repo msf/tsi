@@ -12,7 +12,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
     int i;
     char filename[128];
     unsigned int fragment_size;
-    
+
     /* initializes the heap record */
     h = (grid_heap *) tsi_malloc(sizeof(grid_heap));
     if (!h) {
@@ -36,14 +36,14 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
 
     /* free grids stack */
     h->next_grid = 0;      /* free grids stack */
-    
+
     /* grid counters*/
     h->alloc_grids = 0;    /* allocated grids counter */
     h->curr_grids = 0;     /* grids in use counter */
     h->reads = 0;
     h->writes = 0;
     h->max_grids = 0;
-    
+
     /* initializes the grid records array */
     h->g = (grid *) tsi_malloc((size_t)heap_size*sizeof(grid));
     memset(h->g, 0, heap_size*sizeof(grid));
@@ -63,7 +63,7 @@ grid_heap *new_heap(int nodes, int rank, int heap_size, int swap_thr, int use_fs
             printf_dbg2("new_heap(): filename string >%s<\n", filename);
             h->g[i].fp = create_file(filename);
             h->g[i].filename = strdup(filename);
-            
+
             if (!h->g[i].fp) {
                 fprintf(stderr,"new_heap(): failed to create grid swap file (%s)!\n", filename);
                 delete_heap(h);
@@ -87,11 +87,11 @@ int new_grid(grid_heap *h) {
     int idx;
 
     idx = 0;
-    
+
     if (h->alloc_grids < h->heap_size) {       /* check if there are any grids available */
 
         h->alloc_grids++;        /* increase the number of allocated grids */
-        if (h->alloc_grids > h->max_grids) 
+        if (h->alloc_grids > h->max_grids)
             h->max_grids = h->alloc_grids;
         idx = h->next_grid;      /* get index from free grids stack */
 
@@ -127,7 +127,7 @@ void set_grid_size(grid_heap *h, int idx, unsigned int size)
 /* return a pointer to the grid */
 float *load_grid(grid_heap *h, int idx) {
     int i, j;
-    
+
     printf_dbg2("load_grid(): grid req=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);
     if (idx < h->heap_size && idx >= 0) {
 
@@ -135,7 +135,7 @@ float *load_grid(grid_heap *h, int idx) {
             printf_dbg("load_grid(): ERROR - grid %d is not a valid grid - not created with new_grid\n", idx);
             return NULL;
         }
-			
+
         if (h->g[idx].grid) {   /* check if this grid still has its space allocated */
             h->g[idx].swappable = 0;   /* mark grid in use flag */
             if (h->g[idx].first_load) {
@@ -155,7 +155,7 @@ float *load_grid(grid_heap *h, int idx) {
             return h->g[idx].grid;
         }
         /* we don't have grid in memory, and we've exceeded the threshold, lets try swap some unused grid */
-        
+
         /* seek for a cleared grid */
         j = h->heap_size;
         for (i = 0; i < h->heap_size; i++) {
@@ -178,7 +178,7 @@ float *load_grid(grid_heap *h, int idx) {
             h->g[j].dirty = 0;
             i = j;
         }
-		
+
         if (i == h->heap_size) {
             /* no grid available, allocate more ram */
             h->curr_grids++;
@@ -200,7 +200,7 @@ float *load_grid(grid_heap *h, int idx) {
                 memset(h->g[idx].grid, 0, h->grid_size*sizeof(float));
             }
         }
-        
+
         if ((h->use_fs) && (!h->g[idx].dirty)) {
             /* grid was swapped for disk, we need to load grid from disk */
             h->reads++;
@@ -249,7 +249,7 @@ int dirty_grid(grid_heap *h, int idx) {
         if (h->g[idx].grid == NULL) {
             printf_dbg("dirty_grid(): ERROR - grid %d space is NULL\n",idx);
             return 1;
-        }		
+        }
         h->g[idx].swappable = 1;   /* mark grid as not needed */
         h->g[idx].dirty = 1;       /* mark grid to be saved before being reused */
         printf_dbg2("dirty_grid(): idx=%d curr_grids=%d alloc_grids=%d\n", idx, h->curr_grids, h->alloc_grids);

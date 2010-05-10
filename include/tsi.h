@@ -31,7 +31,7 @@ typedef struct tsi_type {
     int iterations,           /* number of iterations */
         simulations;          /* number of simulations for each iteration */
     int root;
-    
+
     /* execution time counters */
     double mm_time;           /* time spent in memory management functions */
     double dss_time;          /* time for simulations */
@@ -70,7 +70,7 @@ typedef struct tsi_type {
     /* compressed grids */
     cm_grid *nextBCM_c,
             *cm_c;
-        
+
     /* data pointers */
     float *seismic,
           *bestAI,
@@ -95,7 +95,7 @@ typedef struct tsi_type {
          *log_path,
          *seismic_path,
          empty_path;
-    
+
     /* file formats */
     int result_file,
         seismic_file,

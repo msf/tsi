@@ -57,7 +57,7 @@
 
 /** CUBOS utilizados
  * -
- */ 
+ */
 
 /** CUBOS _nao_ utilizados
  * sim

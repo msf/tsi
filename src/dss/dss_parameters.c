@@ -23,36 +23,36 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
 
     if (get_key(r, "HARDDATA", "NVARI"))
     	printf("[HARDDATA] NVARI is NOT used\n");
-    
+
     if (get_key(r, "HARDDATA", "IXL"))
     	printf("[HARDDATA] IXL is NOT used\n");
-    
+
      if (get_key(r, "HARDDATA", "IYL"))
     	printf("[HARDDATA] IYL is NOT used\n");
-    
+
     if (get_key(r, "HARDDATA", "IZL"))
     	printf("[HARDDATA] IZL is NOT used\n");
-    
+
     if (get_key(r, "HARDDATA", "IVRL"))
     	printf("[HARDDATA] IVRL is NOT used\n");
-    
+
     if (get_key(r, "HARDDATA", "IWT"))
     	printf("[HARDDATA] IWT is NOT used\n");
-    
+
     if (get_key(r, "HARDDATA", "ISECVR"))
     	printf("[HARDDATA] ISECVR is NOT used\n");
-    
+
 
     /* harddata transformations */
     if (get_key(r, "HDTRANS", "ITRANS"))
     	printf("[HDTRANS] ITRANS is NOT used\n");
- 
+
     if (get_key(r, "HDTRANS", "ISMOOTH"))
     	printf("[HDTRANS] ISMOOTH is NOT used\n");
 
     if (get_key(r, "HDTRANS", "ISVR"))
     	printf("[HDTRANS] ISVR is NOT used\n");
-    
+
     if (get_key(r, "HDTRANS", "ISWT"))
     	printf("[HDTRANS] ISWT is NOT used\n");
 
@@ -61,7 +61,7 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
 
     if (get_key(r, "HDTRANS", "UTAIL"))
     	printf("[HDTRANS] UTAIL is NOT used\n");
-    
+
     /* simulations quality */
     if ((k = get_key(r, "QUALITY", "NTRY")) == NULL) return 1;
     d->clookup->ntry = get_int(k);
@@ -72,7 +72,7 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
     if (get_key(r, "QUALITY", "ICMEAN"))
     	printf("[QUALITY] ICMEAN is NOT used\n");
 
-    
+
     /* grid parameters */
     if ((k = get_key(r, "GRID", "XNUMBER")) == NULL) return 1;
     d->general->nx = get_int(k);
@@ -104,7 +104,7 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
     d->general->nxy = d->general->nx * d->general->ny;
     d->general->nxyz = d->general->nxy * d->general->nz;
 
-    
+
     /* mask */
     if ((k = get_key(r, "MASK", "NULL_VALUE")) == NULL) return 1;
     d->general->nosim_value = get_float(k);
@@ -164,7 +164,7 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
     /* softdata parameters */
     if (get_key(r, "SOFT", "NVARIL"))
     	printf("[SOFT] NVARIL is NOT used\n");
-    
+
     if (get_key(r, "SOFT", "ICOLLVM"))
     	printf("[SOFT] ICOLLVM is NOT used\n");
 
@@ -190,7 +190,7 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
         sprintf(varname, "VARIOGRAM%d", i+1);
         if ((k = get_key(r, varname, "TYPE")) == NULL) return 1;
         variogram[i].type = get_int(k);
-        
+
 		printf_dbg2("%s - type: %d\t %d\n", varname, get_int(k), variogram[i].type);
         if (variogram[i].type == 4) {
 			ERROR(l, "load_dss_configs", "A power model is not allowed! Choose a different model");
@@ -222,7 +222,7 @@ int  dss_parameters(dss *d, log_t *l, registry *r )
         if ((k = get_key(r, varname, "AA2")) == NULL) return 1;
         aa2 = get_float(k);
         variogram[i].anis2 = aa2 / aa;
-        
+
 		printf_dbg2("load_dss_configs(): variogram %d\n \ttype:\t%d\n \tcov:\t%.2f\n \tang1:\t%.2f\n \tang2:\t%.2f\n \tang3:\t%.2f\n \taa:\t%.2f\n \taa1:\t%.2f\n \taa2:\t%.2f\n\n",
 				i,
 				variogram[i].type,

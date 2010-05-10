@@ -16,9 +16,9 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
 
 /* -----------------------------------------------------------------------
  *
- * Evaluate the standard normal cdf given a normal deviate x.  gcum is 
- * the area under a unit normal curve to the left of x.  The results are 
- * accurate only to about 5 decimal places. 
+ * Evaluate the standard normal cdf given a normal deviate x.  gcum is
+ * the area under a unit normal curve to the left of x.  The results are
+ * accurate only to about 5 decimal places.
  *
  * ----------------------------------------------------------------------- */
 float gcum(float z)
@@ -27,14 +27,14 @@ float gcum(float z)
 
 	double t;
     double zd;
-        
+
     zd = (double) z;
-        
+
 
 	if (zd < 0) {   /* unpredictable branch */
 		if (zd >= -6) {   /* unpredictable branch */
 			t = 1 / (zd * -.2316419 + 1);
-			ret_val = t * (t * (t * (t * (t * 1.330274429 - 1.821255978) + 
+			ret_val = t * (t * (t * (t * (t * 1.330274429 - 1.821255978) +
 							1.781477937) - .356563782) + .31938153);
 			ret_val = exp(-zd * zd / 2) * .3989422803 * ret_val;
 		} else {
@@ -43,7 +43,7 @@ float gcum(float z)
 	} else {
 		if (zd <= 6) {   /* unpredictable branch */
 			t = 1 / (zd * .2316419 + 1);
-			ret_val = t * (t * (t * (t * (t * 1.330274429 - 1.821255978) + 
+			ret_val = t * (t * (t * (t * (t * 1.330274429 - 1.821255978) +
 							1.781477937) - .356563782) + .31938153);
 			ret_val = 1 - exp(-zd * zd / 2) * .3989422803 * ret_val;
 		} else {
@@ -57,14 +57,14 @@ float gcum(float z)
 
 
 
-/* ----------------------------------------------------------------------- 
+/* -----------------------------------------------------------------------
  *
- * Given an array "xx" of length "n", and given a value "x", this routine 
- * returns a value "j" such that "x" is between xx(j) and xx(j+1).  xx 
- * must be monotonic, either increasing or decreasing.  j=is-1 or j=ie is 
- * returned to indicate that x is out of range. 
+ * Given an array "xx" of length "n", and given a value "x", this routine
+ * returns a value "j" such that "x" is between xx(j) and xx(j+1).  xx
+ * must be monotonic, either increasing or decreasing.  j=is-1 or j=ie is
+ * returned to indicate that x is out of range.
  *
- * Bisection Concept From "Numerical Recipes", Press et. al. 1986  pp 90. 
+ * Bisection Concept From "Numerical Recipes", Press et. al. 1986  pp 90.
  * ----------------------------------------------------------------------- */
 int locate(harddata_point_t *xx, int n, int is, int ie, float x)
 {
@@ -108,10 +108,10 @@ int locate(harddata_point_t *xx, int n, int is, int ie, float x)
 
 
 
-/* ----------------------------------------------------------------------- 
+/* -----------------------------------------------------------------------
  *
- * Power interpolate the value of y between (xlow,ylow) and (xhigh,yhigh) 
- *                 for a value of x and a power pow. 
+ * Power interpolate the value of y between (xlow,ylow) and (xhigh,yhigh)
+ *                 for a value of x and a power pow.
  *
  * ----------------------------------------------------------------------- */
 float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float power)
@@ -132,23 +132,23 @@ float powint(float xlow, float xhigh, float ylow, float yhigh, float xval, float
 
 
 
-/* ----------------------------------------------------------------------- 
+/* -----------------------------------------------------------------------
  *
- *           Back Transform Univariate Data from Normal Scores 
- *           ************************************************* 
+ *           Back Transform Univariate Data from Normal Scores
+ *           *************************************************
  *
- * This subroutine backtransforms a standard normal deviate from a 
- * specified back transform table and option for the tails of the 
- * distribution.  Call once with "first" set to true then set to false 
- * unless one of the options for the tail changes. 
+ * This subroutine backtransforms a standard normal deviate from a
+ * specified back transform table and option for the tails of the
+ * distribution.  Call once with "first" set to true then set to false
+ * unless one of the options for the tail changes.
  *
- * INPUT VARIABLES: 
+ * INPUT VARIABLES:
  *
- *   vrgs             normal score value to be back transformed 
- *   nt               number of values in the back transform tbale 
- *   vr(nt)           original data values that were transformed 
- *   vrg(nt)          the corresponding transformed values 
- *   min_value,max_value        limits possibly used for linear or power model 
+ *   vrgs             normal score value to be back transformed
+ *   nt               number of values in the back transform tbale
+ *   vr(nt)           original data values that were transformed
+ *   vrg(nt)          the corresponding transformed values
+ *   min_value,max_value        limits possibly used for linear or power model
  *
  *
  * ----------------------------------------------------------------------- */
@@ -174,7 +174,7 @@ float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float
 		a = point[1].gauss_cprob;
 		cdflo = (float) gcum(a);
 		cdfbt = (float) gcum(b);
-		/* 
+		/*
 		if (LTAIL == 1) {
 			ret_val = powint(0, cdflo, min_value, point[1].val, cdfbt, 1);
 		} else if (LTAIL == 2) {
@@ -206,7 +206,7 @@ float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float
 			d__1 = (double) (lambda / (1 - gcum(b)));
 			d__2 = (double) (1 / max_value);
 			ret_val = (float) pow(d__1, d__2);
-		} 
+		}
 		*/
 		ret_val = powint(cdfhi, 1, point[nt].val, max_value, cdfbt, 1);
 	} else {
@@ -218,8 +218,8 @@ float backtr(float vrgs, int nt, harddata_point_t *point, float min_value, float
 		i = nt - 1;
 		t = MIN(i,j);
 		j = MAX( t, 1);
-		ret_val = powint( point[j].gauss_cprob, 
-						point[j + 1].gauss_cprob, 
+		ret_val = powint( point[j].gauss_cprob,
+						point[j + 1].gauss_cprob,
 						point[j].val,
 					   	point[j + 1].val,
 					   	vrgs, 1);

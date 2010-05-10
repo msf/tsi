@@ -35,13 +35,13 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
     d->reg = r;
     d->heap = h;
 	d->l = l;
-	
+
     printf_dbg2("new_dss(): Starting new DSS engine.\n Loading dss config settings\n");
 	if(dss_parameters(d, l, r)){
 		ERROR(l, "new_dss()", "dss_parameters()");
 		return NULL;
 	}
-	
+
     printf_dbg2("new_dss(): Reading harddata file.\n");
     /* read harddata file */
     kpath = NULL;
@@ -58,8 +58,8 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l) {
         printf("new_dss(): ERROR - failed to load harddata file!\n");
         return NULL;
     }
-       
-    /* parse and prepare harddata */   
+
+    /* parse and prepare harddata */
     readdata(l, d->harddata, d->general);
 
     printf_dbg2("new_dss(): DSS engine started sucessfully.\n");
@@ -81,9 +81,9 @@ int run_dss(dss *d, float *AI) {
           d->search,
           d->covariance,
           d->clookup,
-          d->krige);                                                                       
+          d->krige);
 
-   
+
     return 1;
 } /* run_dss */
 
@@ -111,7 +111,7 @@ int run_codss(dss *d, float *currBAI, float *currBCM, float *AI) {
           d->covariance,
           d->clookup,
           d->krige);
-                                                   
+
 	tsi_free(d->clookup->ixnode);
 	tsi_free(d->clookup->iynode);
 	tsi_free(d->clookup->iznode);

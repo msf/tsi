@@ -27,7 +27,7 @@ reg_key *get_key_from_klist(reg_key *key, char *section, char *parm);
 registry *new_registry (char *filename) {
     registry *reg;
     int l;
-    
+
     reg = NULL;
     if ((l = merge_registry(&reg, filename)) > 0) {
         delete_registry(reg);
@@ -106,7 +106,7 @@ int merge_registry(registry **r, char *filename)
                         /* save char from section ID */
                         buf[i++] = c;
                     else
-                        return nl; 
+                        return nl;
                     break;
                 case BEGIN_PARM:
                     if (c == '#') {
@@ -308,10 +308,10 @@ double get_double(reg_key *k)
 void dump_registry(registry *reg, char *filename) {
     FILE *f;
     reg_key *key;
-    
+
     f = fopen(filename, "w");
     if (f) {
-        fprintf(f, "# Registry dump to file %s\n\n", filename); 
+        fprintf(f, "# Registry dump to file %s\n\n", filename);
         while (reg) {
             fprintf(f, "[%s]\n", reg->name);
             key = reg->klist;
@@ -319,7 +319,7 @@ void dump_registry(registry *reg, char *filename) {
                 fprintf(f, "%s = %s\n", key->name, key->value);
                 key = key->next;
             } /* while */
-            fprintf(f, "\n\n"); 
+            fprintf(f, "\n\n");
             reg = reg->next;
         } /* while */
     } /* if */

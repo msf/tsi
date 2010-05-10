@@ -27,7 +27,7 @@ typedef struct grid_type {
 typedef struct grid_heap_type {
     grid *g;                 /* grid records array */
     unsigned int grid_size;  /* absolute grid size */
-    
+
     int nodes,               /* number of threads */
         rank;                /* thread rank */
 
@@ -63,7 +63,7 @@ int dirty_grid(grid_heap *h, int g);
 void delete_grid(grid_heap *h, int g);
 
 /* delete the heap */
-void delete_heap(grid_heap *h); 
+void delete_heap(grid_heap *h);
 
 /* print heap data */
 void print_heap_data(grid_heap *h);

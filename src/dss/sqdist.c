@@ -45,7 +45,7 @@
 
 /** CUBOS utilizados
  * -
- */ 
+ */
 
 /** CUBOS _nao_ utilizados
  * sim
@@ -60,8 +60,8 @@
  */
 
 
-double sqdist(float x1, float y1, float z1, 
-		float x2, float y2, float z2, 
+double sqdist(float x1, float y1, float z1,
+		float x2, float y2, float z2,
 		int ind, double rotmat[5][3][3])
 {
 	/* System generated locals */
@@ -93,7 +93,7 @@ double sqdist(float x1, float y1, float z1,
 		cont =  rotmat[ind][i][0] * dx;
 		cont += rotmat[ind][i][1] * dy;
 		cont += rotmat[ind][i][2] * dz;
-		
+
 		ret_val += cont * cont;
 	}
 	return ret_val;

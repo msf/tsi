@@ -14,7 +14,7 @@ int test_origin_coords(int nxy, int nx)
 {
     int i, j;
 
-    // dss origin coord is 1x1x1, tsi origin coord is 0x0x0 
+    // dss origin coord is 1x1x1, tsi origin coord is 0x0x0
     // So, we should allways have a +1 offset in each coordinate
     // in dss, grid starts at 1, up to MAX_LEN
     // in tsi, grid starts at 0, up to MAX_LEN-1
