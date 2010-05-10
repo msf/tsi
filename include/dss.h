@@ -5,6 +5,7 @@
 #include "grid_heap.h"
 #include "log.h"
 #include "registry.h"
+#include "mask.h"
 
 
 #define SIMPLE_KRIG		0
@@ -119,7 +120,7 @@ typedef struct covtable_lookup_vars_type {
     short  *ixnode,
            *iynode,
            *iznode;
-    
+
     /* parameters from registry */
     unsigned int    nodmax;  /* SEARCH:NODMAX */
     unsigned int    ntry;    /* QUALITY:NTRY */
@@ -152,7 +153,10 @@ typedef struct dss_type {
     covariance_vars_t       *covariance;
     covtable_lookup_vars_t  *clookup;
     krige_vars_t            *krige;
-	harddata_t				*harddata;
+    harddata_t		    *harddata;
+
+    /* mask data */
+    mask_t      *mask;
 
 } dss;
 

@@ -20,6 +20,7 @@ extern int readdata(log_t *l, harddata_t *, general_vars_t *);
 
 /* dss_sim */
 extern int dssim(float *, float *, float *, int *, int ktype,
+           mask_t               *,
 	   general_vars_t 	*,
 	   harddata_t		*,
 	   search_vars_t 	*,

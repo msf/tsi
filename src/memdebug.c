@@ -4,7 +4,7 @@
 #include "list.h"
 
 /* this code was adapted from
- * v9fs project 
+ * v9fs project
  * it is therefore GPL
  */
 
@@ -14,7 +14,7 @@
 #define MAGIC_FREE	0xDEADDEAD
 
 struct tsi_mem {
-	unsigned int		magichead;			
+	unsigned int		magichead;
 	unsigned int 		size;
 	void*			callerpc;
 	struct list_head	mem_list;
@@ -57,13 +57,13 @@ void debug_free(void *p)
 	magictail = (unsigned int *)((char *)m + sizeof(struct tsi_mem) + m->size);
 
 	if (m->magichead == MAGIC_FREE && *magictail == MAGIC_FREE) {
-		printf( "debug_free(): block %p already freed from function %p\n", 
+		printf( "debug_free(): block %p already freed from function %p\n",
 			p, m->callerpc);
 		return;
 	}
 
 	if (m->magichead != MAGIC_HEAD) {
-		printf( "debug_free(): freeing memory that wasn't allocated (or buffer has been underrun) %p function %p\n", 
+		printf( "debug_free(): freeing memory that wasn't allocated (or buffer has been underrun) %p function %p\n",
 			p, __builtin_return_address(0));
 		return;
 	}

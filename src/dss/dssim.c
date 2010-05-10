@@ -106,6 +106,7 @@
 
 
 int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int ktype,
+        mask_t                  *   mask,
 		general_vars_t			*	general,
 		harddata_t				*	harddata,
 		search_vars_t			*	search,
@@ -207,7 +208,7 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		order[in] = order[toSim];
 		order[toSim] = index;
 		toSim--;
-		
+
 
 #ifdef TSI_DEBUG
 		if(toSim == (general->nxyz * 0.75)) {
@@ -235,6 +236,11 @@ int dssim(float *sim, float *bestAICube, float *bestCorrCube, int *order, int kt
 		}
 #endif
 		
+
+		/* skip points that belong to mask */
+		if( mask && mask_isset(mask, index) )
+			continue;
+
 
 		/* get relative x,y,z from index */
 		get3Dcoords(index, general->nx, general->nxy, &ix, &iy, &iz);
