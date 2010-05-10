@@ -52,8 +52,8 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
     s->zsize = get_int(k);
 
     s->grid_size = (unsigned int)s->zsize * (unsigned int)s->ysize * (unsigned int)s->xsize;
-		
-    
+
+
     if ((kpath = get_key(r, "WAVELET", "PATH")) == NULL)
         kpath = get_key(r, "GLOBAL", "INPUT_PATH");
     if ((k = get_key(r, "WAVELET", "FILENAME")) == NULL) {
@@ -69,7 +69,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
 		ERROR(s->l, "new_si()", "read_wavelet_file()");
 		return NULL;
 	}
-    
+
 	/* layers data */
 	s->random = 1;
 
@@ -109,7 +109,7 @@ si *new_si(registry *r, grid_heap *h, log_t *l, int n_procs, int proc_id) {
         if (!strcmp(get_string(k), "gslib")) s->dump_file = TSI_ASCII_FILE;
         else if (!strcmp(get_string(k), "tsi-bin")) s->dump_file = TSI_BIN_FILE;
     }
-  
+
     return s;
 } /* new_si */
 
@@ -176,7 +176,7 @@ int run_si(si *s, float *AI, float *seismic, float *CM, float *SY, int it, int s
     result = make_synthetic_grid(s, RG, SY);   /* CM has reflections grid */
     if (s->dump_sy)
         dump_synthetic_grid(s, SY, it, sim);
-	
+
     /* build correlations cube, use CM has resulting correlations Grid */
     result = make_correlations_grid(s, seismic, SY, CM);
     return 1;
@@ -271,7 +271,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
     /* proper random layers...
      *
      * number of layers: number < N < max_size / min_size
-     */	
+     */
     n = s->zsize / s->min_size;
     temp = (int *) tsi_malloc(n * sizeof(int));
     for (i = 0; i < n; i++) temp[i] = 0;
@@ -316,7 +316,7 @@ cm_grid *new_cmgrid(si *s, int empty) {
         sum = 0;
         for (i = 0; i < n; i++) sum += temp[i];
     }
-    
+
     if (sum != s->zsize) {
           /* add the diference to max_size */
           i = s->zsize - sum;
@@ -336,12 +336,12 @@ cm_grid *new_cmgrid(si *s, int empty) {
 		return NULL;
     }
     g->nlayers = sum;
-	
+
     x = 0;
     for (i = 0; i < n; i++)
         if (temp[i] != 0)
             g->layer_size[x++] = temp[i];
-    
+
     tsi_free(temp);
 
     //if ((g->cg = (float *) memalign(16,g->nlayers * g->nxy * sizeof(float))) == NULL) {

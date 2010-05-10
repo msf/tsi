@@ -29,7 +29,7 @@ int new_tsi_parallel(int *n_procs, int *proc_id) {
         printf_dbg("new_tsi_parallel(): MPI_Comm_size failed!\n");
         return -1;
     } else if (MPI_Comm_rank(MPI_COMM_WORLD, proc_id) != MPI_SUCCESS) {
-        printf_dbg("new_tsi_parallel(): MPI_Comm_rank failed!\n");    
+        printf_dbg("new_tsi_parallel(): MPI_Comm_rank failed!\n");
         return -1;
     } else {
         printf_dbg("new_tsi_parallel(): MPI started...\n");
@@ -51,16 +51,16 @@ int delete_tsi_parallel(tsi *t) {
         log_message(t->l, 0, "delete_tsi_parallel(): failed to detect MPI status!\n");
         return -1;
     } else if (mpi_flag) {
-        printf_dbg("delete_tsi_parallel(): entering MPI_Barrier\n");    
+        printf_dbg("delete_tsi_parallel(): entering MPI_Barrier\n");
         if (MPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) {
-            log_message(t->l, 0, "delete_tsi_parallel(): MPI_Barrier failed!\n");    
+            log_message(t->l, 0, "delete_tsi_parallel(): MPI_Barrier failed!\n");
             return -1;
         }
         printf("delete_tsi_parallel() calling MPI_Finalize()\n");
         if (MPI_Finalize() != MPI_SUCCESS) {
             log_message(t->l, 0, "delete_tsi_parallel(): MPI_Finalize failed!\n");
             return -1;
-        } 
+        }
         printf_dbg("delete_tsi_parallel(): MPI FINISHED OK\n");
         fflush(stdout);
         return 1;
@@ -143,7 +143,7 @@ static void expand_bcm(tsi *t)
 }
 
 
-int tsi_compare_parallel(tsi *t) 
+int tsi_compare_parallel(tsi *t)
 {
 
 #ifdef TSI_MPI
@@ -185,7 +185,7 @@ int tsi_compare_parallel_collective(tsi *t) {
                  cc_size;        /* size of compressed correlations grid */
 
     unsigned int n, g, h, i, z0, z1;        /* aux variables */
-    unsigned int layer, last_layer;    
+    unsigned int layer, last_layer;
     struct my_time t1, t2, t3, t4, t5, t6, t7;
     double par_time, mm_time, run_time;
 
@@ -274,11 +274,11 @@ int tsi_compare_parallel_collective(tsi *t) {
             layer = last_layer = 0;
             for (g = 0; g < cc_size; g++) {        /* build z vectors AI array */
                 layer = g / bcm->nxy;
-                if (layer > last_layer) { 
+                if (layer > last_layer) {
                     last_layer = layer;
                     z0 = z1;
                     z1 += bcm->layer_size[layer];
-                    printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
+                    printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);
                 }
                 if (nv[g] == n) {
                     for (i = z0; i < z1; i++) {
@@ -317,11 +317,11 @@ int tsi_compare_parallel_collective(tsi *t) {
                 h = 0;
                 for (g = 0; g < cc_size; g++) {        /* unpack z vectors AI array */
                     layer = g / bcm->nxy;
-                    if (layer > last_layer) { 
+                    if (layer > last_layer) {
                         last_layer = layer;
                         z0 = z1;
                         z1 += bcm->layer_size[layer];
-                        printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);            
+                        printf_dbg("parallel_compare(%d): layer: %d, z0: %d, z1:%d\n", t->proc_id, layer, z0, z1);
                     }
                     if (nv[g] == n) {
                         for (i = z0; i < z1; i++) {
@@ -403,12 +403,12 @@ int tsi_compare_parallel_direct(tsi *t)
         log_message(t->l, 0, "compare_parallel_v4: WE HAVE REST!");
 
 
-    /* 
-       circular send & recieve of parcels of BCM + BAI 
+    /*
+       circular send & recieve of parcels of BCM + BAI
        we send the destination's parcel
        we recive _our_ parcel
-       total DATA through network: grid_size * 2 * sizeof(float) 
-       the last node in group also works the "rest" 
+       total DATA through network: grid_size * 2 * sizeof(float)
+       the last node in group also works the "rest"
        */
 
     to = t->proc_id;
@@ -476,19 +476,19 @@ int tsi_compare_parallel_direct(tsi *t)
         to = (to + 1) % clustersize;
         from = (from  + clustersize - 1) % clustersize;
         start = to * size_per_rank;
-    } 
+    }
 
     tsi_free(smallBCM);
     tsi_free(smallBAI);
 
 
     /* now, update BAI & BCM in the same fashion.. */
-    /* 
-       circular send & recieve of parcels of BCM + BAI 
+    /*
+       circular send & recieve of parcels of BCM + BAI
        we send _our_ parcel
        we recive the origin's parcel
-       total DATA through network: grid_size * 2 * sizeof(float) 
-       the last node in group also works the "rest" 
+       total DATA through network: grid_size * 2 * sizeof(float)
+       the last node in group also works the "rest"
        */
     to = t->proc_id;
     from = t->proc_id;
@@ -547,7 +547,7 @@ int tsi_compare_parallel_direct(tsi *t)
         to = (to + 1) % clustersize;
         from = (from  + clustersize - 1) % clustersize;
         start = to * size_per_rank;
-    } 
+    }
 
 
     getCurrTime(&t2);
@@ -573,7 +573,7 @@ void local_compare_update(float *lBCM, float *lBAI, float *rBCM, float *rBAI, in
 {
     int i;
     for(i = 0; i < size; i++) {
-        if(lBCM[i] < rBCM[i]) { // new best correlation 
+        if(lBCM[i] < rBCM[i]) { // new best correlation
             lBCM[i] = rBCM[i];
             lBAI[i] = rBAI[i];
         }

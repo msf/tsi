@@ -21,7 +21,7 @@
 /* EXTERNAL REFERENCES: ksol   Gaussian elimination system vra_weight */
 /* ----------------------------------------------------------------------- */
 int krige(int ix, int iy, int iz, float xx, float yy, float zz,
-		int lktype, float global_mean, float *cmean, float * std_deviation, 
+		int lktype, float global_mean, float *cmean, float * std_deviation,
 		float *bestAICube, float clcorr,
 		general_vars_t 	* general,
 		harddata_t		* harddata,
@@ -63,7 +63,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 
 	/* init vars */
 	ix1 = iy1 = iz1 = ix2 = iy2 = iz2 = 0;
-	
+
 	/* Function Body */
 	na = covtable_lookup->ncnode;
 
@@ -132,7 +132,7 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			iy2 += iy - covtable_lookup->ncty -1;
 			iz2 += iz - covtable_lookup->nctz -1;
 
-		
+
 			/* Now, get the covariance value: */
 			++in;
 
@@ -164,13 +164,13 @@ int krige(int ix, int iy, int iz, float xx, float yy, float zz,
 			kk < 1 || kk > general->nz) {
 			double cmax;
 			cov_vector[j - 1] = cova3(xx, yy, zz, x1, y1, z1, covariance->varnum,
-					covariance->nugget, covariance->variogram, 
+					covariance->nugget, covariance->variogram,
 					krige_vars->rotmat, &cmax);
 			covariance->cmax = (float) cmax;
 		} else {
 			cov_vector[j - 1] = (double) covtable_lookup->covtab[getPos(ii,jj,kk, general->nx, general->nxy)];
 		}
-		
+
 		rr[j - 1] = cov_vector[j - 1];
 	}
 	/* Addition of OK constraint: */

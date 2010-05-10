@@ -31,7 +31,7 @@
 #define FLOAT_MIN  1.40e-45
 
 
-int load_harddata_file(log_t *l, char *filename, harddata_t *harddata) 
+int load_harddata_file(log_t *l, char *filename, harddata_t *harddata)
 {
 
     int i, j, m;
@@ -43,7 +43,7 @@ int load_harddata_file(log_t *l, char *filename, harddata_t *harddata)
 		ERROR(l, "fopen()", filename);
         return 1;
     }
-	
+
     /* ignore gslib header, must have 4 points per line */
 	if( !read_gslib_header(l, fp, 4) ) {
 		ERROR(l, "load_harddata_file()", "read_gslib_header()");
@@ -69,7 +69,7 @@ int load_harddata_file(log_t *l, char *filename, harddata_t *harddata)
 		ERROR(l, "load_harddata_file()", "read_gslib_header()");
 		return 1;
 	}
-	
+
 	i = 0;
 	m = 0;
 	harddata->min_value = FLOAT_MAX; //ensure updates
@@ -106,7 +106,7 @@ int load_harddata_file(log_t *l, char *filename, harddata_t *harddata)
 } /* load_harddata_file */
 
 
-int readdata(log_t *l, 
+int readdata(log_t *l,
 			harddata_t *harddata,
 			general_vars_t * general)
 {
@@ -146,7 +146,7 @@ int readdata(log_t *l,
 		harddata->average += point.val;
 
 		/* see if value is inside grid */
-		x = getIndex(general->xmn, general->xsiz, point.x); 
+		x = getIndex(general->xmn, general->xsiz, point.x);
 		y = getIndex(general->ymn, general->ysiz, point.y);
 		z = getIndex(general->zmn, general->zsiz, point.z);
 		if((x > 1 && x < general->nx) &&
@@ -163,13 +163,13 @@ int readdata(log_t *l,
 		oldcp = cp;
 
 		ierr = gauinv( w, &vrg);
-		if (ierr == 1) 
+		if (ierr == 1)
 			harddata->point[j].gauss_cprob = general->nosim_value;
 		else
 			harddata->point[j].gauss_cprob = vrg;
 		if(j < 100 || harddata->point_count - j < 100)
 			printf_dbg2("readdata(): vrtr[%u] = %f,\tvrgtr[%u] = %f\n",
-				j, 
+				j,
 				harddata->point[j].val,
 				j,
 				harddata->point[j].gauss_cprob);
@@ -207,7 +207,7 @@ int readdata(log_t *l,
 			harddata->in_grid[j].index = last;
 			harddata->in_grid[j].value = temp[i-1].value;
 			if(j < 100)
-				printf_dbg2("in_grid[%u] idx = %u, value = %f\n", 
+				printf_dbg2("in_grid[%u] idx = %u, value = %f\n",
 						j,
 						harddata->in_grid[j].index,
 						harddata->in_grid[j].value);

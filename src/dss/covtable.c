@@ -141,7 +141,7 @@ int covtable(
 					/*	We want to search by closest variogram distance
 						(and use the anisotropic Euclidean distance to break ties: */
 					float val = -(covtable_lookup->covtab[loc] - (float) hsqd * 1e-10f);
-					
+
 					tmp[tmp_count].index = loc;
 					tmp[tmp_count].value = val;
 				}
@@ -154,7 +154,7 @@ int covtable(
 	/* 		that the closest ones, according to variogram distance, are searched first. */
 
 	printf_dbg("covtable: covtable size: %d, sorting now...\n", tmp_count);
-			
+
 	qsort(tmp, tmp_count, sizeof(value_index_t), cmpvalue_index_by_value);
 
 	covtable_lookup->nlooku = tmp_count;

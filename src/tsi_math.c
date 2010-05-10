@@ -5,7 +5,7 @@
 
 /**
  * calculate the global correlation between two grids
- */ 
+ */
 double grid_correlation(float *A, float *B, unsigned int size) {
     unsigned int i;
     double sum_AB = 0;
@@ -40,7 +40,7 @@ double grid_correlation(float *A, float *B, unsigned int size) {
     }
     if (nom < 0)
         printf_dbg("grid_correlation(): negative correlation\n");
-                                                                                                                                                                        
+
     return (nom / sqrt(denom));
 } /* grid_correlation */
 

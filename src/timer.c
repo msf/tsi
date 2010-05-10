@@ -21,7 +21,7 @@ double getElapsedTime(struct my_time *start, struct my_time *stop)
 {
 	return getTimeDiff(*start, *stop);
 }
-	
+
 struct my_time getTime(void)
 {
 	struct my_time tv;

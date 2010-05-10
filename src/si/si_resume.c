@@ -14,7 +14,7 @@ int si_write_grid(si *t, TSI_FILE *fp, float *grid, int type, char *desc) {
 		default:
 			fprintf(stderr, "ERROR: Unknown grid file type!\n");
 			return 0;
-	} /* switch */ 
+	} /* switch */
 } /* si_write_grid */
 
 
@@ -24,7 +24,7 @@ int dump_synthetic_grid(si *s, float *g, int it, int sim)
     TSI_FILE *fp;
 
     printf_dbg("\tdump_synthetic_grid(): dumping SY... type:%d\n", s->dump_file);
-    sprintf(desc, "SY_%d_%d", it, (sim * s->n_procs + s->proc_id));        
+    sprintf(desc, "SY_%d_%d", it, (sim * s->n_procs + s->proc_id));
     sprintf(filename, "%s%s.tsi", s->dump_path, desc);
     fp = create_file(filename);
     if (!si_write_grid(s, fp, g, s->dump_file, desc)) {
@@ -43,7 +43,7 @@ int dump_reflections_grid(si *s, float *g, int it, int sim)
     TSI_FILE *fp;
 
     printf_dbg("\tdump_reflections_grid(): dumping RG...\n");
-    sprintf(desc, "SY_CR_%d_%d", it, (sim * s->n_procs + s->proc_id));        
+    sprintf(desc, "SY_CR_%d_%d", it, (sim * s->n_procs + s->proc_id));
     sprintf(filename, "%s%s.tsi", s->dump_path, desc);
     fp = create_file(filename);
     if (!si_write_grid(s, fp, g, s->dump_file, desc)) {
