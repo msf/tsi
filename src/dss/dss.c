@@ -25,7 +25,7 @@ mask_t * load_mask_file(log_t *l, general_vars_t *general, char *filename)
 
     /* check gslib header */
     if( !read_gslib_header(l, fp, 3) ) {
-        ERROR(l, "load_harddata_file()", "read_gslib_header()");
+        ERROR(l, "load_mask_file()", "read_gslib_header()");
         return NULL;
     }
 
@@ -111,11 +111,11 @@ dss *new_dss(registry *r, grid_heap *h, log_t *l)
         printf_dbg("new_dss(): not using mask.\n");
     } else {
         snprintf(filename, 512, "%s%s", get_string(kpath), get_string(k));
-        printf_dbg("new_dss(): using mask: %s\n", filename);
+        log_print(l, "new_dss(): using mask: %s\n", filename);
         d->mask = load_mask_file(l, d->general, filename);
         if( NULL == d->mask ) {
             ERROR( l, "new_dss()", "load_mask_file()");
-            printf_dbg("new_dss(): FAILED to load mask, running without mask.\n");
+            log_print(l, "new_dss(): FAILED to load mask, running without mask.\n");
         }
     }
  
